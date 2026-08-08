@@ -159,10 +159,10 @@ def api_indices_backtest():
             w = 3
         wr = int(w * rpy)
 
-        # 读最优参数
+        # 统一使用沪深300最优参数 (大道至简, 一套策略适配所有宽基)
         BEST_PARAMS = (0.15, 0.30, 0.40, 0.70, 0.70, 0.85, 0.95, 1.0, 0.50, 0.70, 0.12, 0.04)
         for base_dir in [str(BASE / "backtest" / "output"), str(BASE / "backtest" / "output_20*")]:
-            for csv_path in sorted(_glob.glob(os.path.join(base_dir, f"*{code}*", "dj_top20.csv")), reverse=True):
+            for csv_path in sorted(_glob.glob(os.path.join(base_dir, "*000300*", "dj_top20.csv")), reverse=True):
                 try:
                     dfp = pd.read_csv(csv_path)
                     if 'window_years' not in dfp.columns:
@@ -196,11 +196,18 @@ def api_indices_backtest():
         if not result or result.get("trades", 0) < 2:
             continue
 
+        # 修正回报: include 累积卖出所得现金
+        flows_raw = result.get("cash_flows", [])
+        cum_cash = sum(abs(t[2]) for t in flows_raw if t[1] in ("sell", "clear"))
+        total_val = result.get("final_value", 0) + cum_cash
+        inv = result.get("total_invested", 0)
+        corrected_return = (total_val - inv) / inv if inv > 0 else 0
+
         results.append({
             "code": code, "name": name, "category": category,
             "window_years": w,
             "xirr": result.get("xirr", 0),
-            "final_return": result.get("final_return", 0),
+            "final_return": round(corrected_return, 4),
             "trades": result.get("trades", 0),
             "buys": result.get("buys", 0),
             "pe_buy_floor": BEST_PARAMS[0], "pe_buy_high": BEST_PARAMS[3],
@@ -400,11 +407,11 @@ def api_analysis_backtest(code: str):
         w = 3
     wr = int(w * rpy)
 
-    # 从 CSV 读取该窗口的最优参数
+    # 统一使用沪深300最优参数
     BEST_PARAMS = (0.15, 0.30, 0.40, 0.70, 0.70, 0.85, 0.95, 1.0, 0.50, 0.70, 0.12, 0.04)
     import glob as _glob
     for base_dir in [str(BASE / "backtest" / "output"), str(BASE / "backtest" / "output_20*")]:
-        for csv_path in sorted(_glob.glob(os.path.join(base_dir, f"*{code}*", "dj_top20.csv")), reverse=True):
+        for csv_path in sorted(_glob.glob(os.path.join(base_dir, "*000300*", "dj_top20.csv")), reverse=True):
             try:
                 df = pd.read_csv(csv_path)
                 if 'window_years' not in df.columns: continue
@@ -525,7 +532,7 @@ def api_analysis_backtest(code: str):
                 continue
             eq = last_shares * cur_price if last_shares > 0 else 0
             total_value = eq + total_cash
-            net_principal = last_cum - total_cash
+            net_principal = max(last_cum - total_cash, 0)
             ret = (total_value - last_cum) / last_cum * 100 if last_cum > 0 else 0
             dx = _xirr(cf, cur_date, eq) if len(cf) >= 3 and eq > 0 else 0.0
             daily.append({
