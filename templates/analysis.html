@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">分析页</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+header { background: #1e293b; padding: 14px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #334155; }
+header a { color: #94a3b8; text-decoration: none; font-size: 14px; }
+header a:hover { color: #e2e8f0; }
+header h1 { font-size: 20px; font-weight: 600; }
+.meta { font-size: 13px; color: #94a3b8; margin-left: auto; }
+.container { max-width: 1600px; margin: 0 auto; padding: 16px 24px; }
+.info-bar { display: flex; gap: 20px; padding: 12px 0; font-size: 14px; border-bottom: 1px solid #334155; margin-bottom: 16px; flex-wrap: wrap; }
+.info-bar span { color: #64748b; }
+.info-bar .val { color: #e2e8f0; font-weight: 600; margin-left: 4px; }
+.chart-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 12px; }
+.chart-box { background: #1e293b; border-radius: 10px; border: 1px solid #334155; height: 520px; }
+.loading { text-align: center; padding: 100px; color: #64748b; }
+.green { color: #4ade80; } .yellow { color: #facc15; } .red { color: #f87171; }
+@media (max-width: 1000px) { .chart-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/detail/{{CODE}}">← 详情页</a>
+  <h1 id="index-title">加载中...</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+  <div class="info-bar" id="info-bar"></div>
+  <div class="chart-row">
+    <div class="chart-box" id="chart-kline"></div>
+    <div class="chart-box" id="chart-pe"></div>
+    <div class="chart-box" id="chart-pct"></div>
+  </div>
+  <h3 style="color:#94a3b8;margin:16px 0 8px;font-weight:400">回测结果 (蛋卷最优参数)</h3>
+  <div id="bt-params" style="font-size:11px;color:#94a3b8;padding:4px 0 8px;line-height:1.6;word-break:break-all"></div>
+  <div class="chart-box" id="chart-invest"></div>
+  <div class="chart-box" id="chart-xirr" style="margin-top:16px;height:300px"></div>
+</div>
+<script>
+const CODE = '{{CODE}}';
+
+async function load() {
+  const r = await fetch('/api/analysis/' + CODE);
+  const data = await r.json();
+  if (!data.length) { document.body.innerHTML = '无数据'; return; }
+  render(data);
+}
+
+function render(data) {
+  const dates = data.map(d => d.date);
+  const opens = data.map(d => d.open);
+  const peDJ = data.map(d => d.pe_dj);
+  const pePct = data.map(d => d.pe_pct_10yr);
+
+  fetch('/api/indices').then(r => r.json()).then(indices => {
+    const idx = indices.find(i => i.code === CODE);
+    if (idx) {
+      document.getElementById('index-title').textContent = idx.code + ' ' + idx.name + ' 分析';
+      document.getElementById('page-title').textContent = idx.name + ' 分析 - PE-DCA';
+    }
+  });
+
+  document.getElementById('meta-info').textContent = `K线: ${dates[0]} ~ ${dates[dates.length-1]} | ${data.length}条`;
+
+  const lastRow = data[data.length-1];
+  const rawPct = lastRow.pe_pct_10yr;
+  const pctColor = rawPct != null ? (rawPct < 0.3 ? 'green' : rawPct < 0.7 ? 'yellow' : 'red') : '';
+  document.getElementById('info-bar').innerHTML =
+    `<span>开盘价<span class="val">${opens[opens.length-1]?.toFixed(2)||'—'}</span></span>` +
+    `<span>蛋卷PE<span class="val">${lastRow.pe_dj?.toFixed(2)||'—'}</span></span>` +
+    `<span>PE百分位(10yr)<span class="val ${pctColor}">${rawPct != null ? (rawPct*100).toFixed(0)+'%' : '—'}</span></span>`;
+
+  // --- K线图 ---
+  const kChart = echarts.init(document.getElementById('chart-kline'));
+  kChart.setOption({
+    title: { text: 'K线 (开盘价)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+      tooltip: { trigger: 'axis', axisPointer: { type: 'cross' },
+        formatter: function(params) {
+          const d = params[0]; if (!d) return '';
+          const idx = d.dataIndex;
+          const c = opens[idx], p = peDJ[idx], pc = pePct[idx];
+          return `<b>${d.axisValue}</b><br/>` +
+            `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#60a5fa;margin-right:4px"></span>开盘: ${c.toFixed(2)}<br/>` +
+            `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316;margin-right:4px"></span>PE: ${p != null ? p.toFixed(2) : '—'}<br/>` +
+            `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#94a3b8;margin-right:4px"></span>PE百分位: ${pc != null ? (pc*100).toFixed(0)+'%' : '—'}`;
+        }
+      },
+    grid: { left: 70, right: 20, top: 50, bottom: 30 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
+    yAxis: { type: 'value', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    series: [{ type: 'line', data: opens, lineStyle: { color: '#60a5fa', width: 1.5 }, areaStyle: { color: 'rgba(96,165,250,0.08)' }, symbol: 'none' }],
+  });
+
+  // --- PE图 ---
+  const peVals = peDJ.filter(v => v != null);
+  const peMin = Math.floor(Math.min(...peVals) * 0.9);
+  const peMax = Math.ceil(Math.max(...peVals) * 1.05);
+  const peChart = echarts.init(document.getElementById('chart-pe'));
+  peChart.setOption({
+    title: { text: '蛋卷 PE TTM (周频)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+      tooltip: { trigger: 'axis', axisPointer: { type: 'cross' },
+        formatter: function(params) {
+          const d = params[0]; if (!d) return '';
+          const idx = d.dataIndex;
+          return `<b>${d.axisValue}</b><br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316;margin-right:4px"></span>PE: ${peDJ[idx]?.toFixed(2)}`;
+        }
+      },
+    grid: { left: 60, right: 20, top: 50, bottom: 30 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
+    yAxis: { type: 'value', min: peMin, max: peMax, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    series: [{ type: 'line', data: peDJ, name: 'PE', lineStyle: { color: '#f97316', width: 1.5 }, symbol: 'none', smooth: true }],
+  });
+
+  // --- PE百分位图 ---
+  const pctChart = echarts.init(document.getElementById('chart-pct'));
+  pctChart.setOption({
+    title: { text: 'PE 百分位 (10yr窗口)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+      tooltip: { trigger: 'axis', axisPointer: { type: 'cross' },
+        formatter: function(params) {
+          const d = params[0]; if (!d) return '';
+          const idx = d.dataIndex;
+          const v = pePct[idx];
+          const clr = v != null ? (v < 0.3 ? '#4ade80' : v < 0.7 ? '#facc15' : '#f87171') : '#94a3b8';
+          return `<b>${d.axisValue}</b><br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${clr};margin-right:4px"></span>百分位: ${v != null ? (v*100).toFixed(0)+'%' : '—'}`;
+        }
+      },
+    grid: { left: 60, right: 20, top: 50, bottom: 30 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
+    yAxis: { type: 'value', min: 0, max: 1, axisLabel: { color: '#94a3b8', formatter: v => (v*100).toFixed(0)+'%' }, splitLine: { lineStyle: { color: '#334155' } } },
+    visualMap: { show: false, pieces: [{ lt: 0.3, color: '#4ade80' }, { lt: 0.7, color: '#facc15' }, { gte: 0.7, color: '#f87171' }] },
+    series: [{ type: 'line', data: pePct, name: '百分位', lineStyle: { width: 1.5 }, areaStyle: { opacity: 0.2 }, symbol: 'none', smooth: true,
+      markLine: { silent: true, symbol: 'none',
+        data: [
+          { yAxis: 0.3, label: { formatter: '低估 30%', color: '#4ade80' }, lineStyle: { color: '#4ade80', type: 'dashed' } },
+          { yAxis: 0.7, label: { formatter: '高估 70%', color: '#f87171' }, lineStyle: { color: '#f87171', type: 'dashed' } },
+        ],
+      }
+    }],
+  });
+
+  // 回测图
+  renderBacktest(dates);
+}
+
+async function renderBacktest(dates) {
+  let resp;
+  try { const r = await fetch('/api/analysis/' + CODE + '/backtest'); resp = await r.json(); } catch(e) { console.log(e); return; }
+  if (!resp || !resp.daily || resp.daily.length < 2) {
+    document.getElementById('bt-params').textContent = '回测数据加载失败 (daily=' + (resp?resp.daily?.length||0:0) + ')';
+    return;
+  }
+  const daily = resp.daily;
+  const meta = resp.meta;
+
+  // 对齐到dates (DAILY 数据已按K线日期展开, 直接前向填充即可)
+  const dMap = {};
+  for (const d of daily) { dMap[d.date] = d; }
+  // 第一笔投入日期, 用于判断数据跨度
+  let firstInvDate = null;
+  for (const d of daily) { if (d.cum_invested > 0) { firstInvDate = d.date; break; } }
+  let lPrin = 0, lEq = 0, lTotal = 0, lRet = 0, lXirr = null;
+  const btPrin = [], btEq = [], btTotal = [], btXirr = [];
+  for (const d of dates) {
+    const v = dMap[d];
+    if (v) { lPrin = v.net_principal; lEq = v.equity; lTotal = v.total_value; lRet = v.return_pct;
+             if (v.xirr != null && v.xirr !== 0) lXirr = v.xirr; }
+    btPrin.push(lPrin);
+    btEq.push(lEq);
+    btTotal.push(lTotal);
+    // < 1 年: 用简单收益率; ≥ 1 年: 用年化 XIRR
+    const daysSince = firstInvDate ? (new Date(d) - new Date(firstInvDate)) / 86400000 : 0;
+    if (daysSince < 365) {
+      btXirr.push(v ? lRet : null);
+    } else {
+      btXirr.push(lXirr != null ? lXirr * 100 : null);
+    }
+  }
+
+  // 买卖标记 (纯数字, 保持 scatter 渲染兼容)
+  // 独立 labels 数组, label 通过 p.dataIndex 索引
+  const buyMarkers = [], sellMarkers = [];
+  const buyLabels = [], sellLabels = [];
+  for (let i = 0; i < dates.length; i++) {
+    const v = dMap[dates[i]];
+    if (v && v.buy_amount > 0) { buyMarkers.push(btPrin[i]); buyLabels.push('¥' + (v.buy_amount/10000).toFixed(2) + '万'); }
+    else { buyMarkers.push(null); buyLabels.push(''); }
+    if (v && v.sell_amount > 0) { sellMarkers.push(btPrin[i]); sellLabels.push('¥' + (v.sell_amount/10000).toFixed(2) + '万'); }
+    else { sellMarkers.push(null); sellLabels.push(''); }
+  }
+
+  const p = meta.params;
+  const paramStr = `w=${meta.window_years}yr | 买入 floor=${(p.pe_buy_floor*100).toFixed(0)}% low=${(p.pe_buy_low*100).toFixed(0)}% mid=${(p.pe_buy_mid*100).toFixed(0)}% high=${(p.pe_buy_high*100).toFixed(0)}% | 卖出 heavy=${(p.pe_sell_heavy*100).toFixed(0)}% extreme=${(p.pe_sell_extreme*100).toFixed(0)}% | FED=${p.fed_buy_threshold} PB否决=${(p.pb_veto_threshold*100).toFixed(0)}% | XIRR=${(meta.xirr*100).toFixed(2)}%`;
+
+  // 当前本金 & 持仓市值 (合并图)
+  (function() {
+    const c = echarts.init(document.getElementById('chart-invest'));
+    c.setOption({
+      title: { text: '本金 & 市值 & 总资产 (元)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
+      legend: { data: ['当前本金','持仓市值','总资产'], bottom: 0, textStyle: { color: '#94a3b8', fontSize: 11 }, itemWidth: 18, itemHeight: 3 },
+      tooltip: { trigger: 'axis',
+        formatter: function(params) {
+          const idx = params[0].dataIndex;
+          const d = dates[idx];
+          let s = '<b>' + d + '</b>';
+          for (const p of params) {
+            if (p.seriesName === '买入' || p.seriesName === '卖出') continue;
+            s += '<br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + p.color + ';margin-right:4px"></span>' + p.seriesName + ': ¥' + (p.value||0).toLocaleString();
+          }
+          if (buyLabels[idx]) s += '<br/><span style="color:#f87171">● 买入 ' + buyLabels[idx] + '</span>';
+          if (sellLabels[idx]) s += '<br/><span style="color:#4ade80">● 卖出 ' + sellLabels[idx] + '</span>';
+          return s;
+        }
+      },
+      grid: { left: 70, right: 15, top: 45, bottom: 40 },
+      xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
+      yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: v => (v/10000).toFixed(0)+'万' }, splitLine: { lineStyle: { color: '#334155' } } },
+      series: [
+        { name: '当前本金', type: 'line', data: btPrin, lineStyle: { color: '#facc15', width: 1.5 }, symbol: 'none' },
+        { name: '持仓市值', type: 'line', data: btEq, lineStyle: { color: '#c084fc', width: 1.5 }, symbol: 'none' },
+        { name: '总资产', type: 'line', data: btTotal, lineStyle: { color: '#60a5fa', width: 1.5 }, areaStyle: { color: 'rgba(96,165,250,0.12)' }, symbol: 'none' },
+        { name: '买入', type: 'scatter', data: buyMarkers, symbolSize: 8, itemStyle: { color: '#f87171' }, z: 10,
+          label: { show: false },
+          emphasis: { label: { show: true, position: 'top', color: '#f87171', fontSize: 12, distance: 3,
+            formatter: function(p) { return buyLabels[p.dataIndex] || ''; } } } },
+        { name: '卖出', type: 'scatter', data: sellMarkers, symbolSize: 8, itemStyle: { color: '#4ade80' }, z: 10,
+          label: { show: false },
+          emphasis: { label: { show: true, position: 'top', color: '#4ade80', fontSize: 12, distance: 3,
+            formatter: function(p) { return sellLabels[p.dataIndex] || ''; } } } },
+      ],
+    });
+  })();
+
+  // 收益率 — 不足1年=简单收益, >=1年=年化XIRR
+  (function() {
+    const c = echarts.init(document.getElementById('chart-xirr'));
+    c.setOption({
+      title: { text: '收益率 (%)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
+      tooltip: { trigger: 'axis',
+        formatter: function(p) {
+          const idx = p[0].dataIndex;
+          const d = dates[idx];
+          const xv = p[0].data;
+          const daysSince = firstInvDate ? (new Date(d) - new Date(firstInvDate)) / 86400000 : 0;
+          if (xv == null) return d + '<br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316;margin-right:4px"></span>收益率: —';
+          if (daysSince < 365) {
+            const v = dMap[d];
+            const inv = v ? v.cum_invested : 0, tv = v ? v.total_value : 0;
+            return '<b>' + d + '</b><br/>' +
+              '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316;margin-right:4px"></span>简单收益率: ' + xv.toFixed(2) + '%' +
+              '<br/><span style="color:#94a3b8;font-size:10px">非年化 · 数据不足1年 · (总资产 ¥' + tv.toLocaleString() + ' - 投入 ¥' + inv.toLocaleString() + ') / 投入</span>';
+          }
+          return '<b>' + d + '</b><br/>' +
+            '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316;margin-right:4px"></span>年化 XIRR: ' + xv.toFixed(2) + '%' +
+            '<br/><span style="color:#94a3b8;font-size:10px">Σ CF<sub>t</sub>/(1+r)<sup>t</sup> + 市值/(1+r)<sup>T</sup> = 0, 二分法求解</span>';
+        }
+      },
+      grid: { left: 60, right: 15, top: 45, bottom: 25 },
+      xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
+      yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: '{value}%' }, splitLine: { lineStyle: { color: '#334155' } } },
+      series: [{ type: 'line', data: btXirr, lineStyle: { color: '#f97316', width: 1.5 }, areaStyle: { color: 'rgba(249,115,22,0.08)' }, symbol: 'none',
+        connectNulls: true,
+        markLine: { silent: true, symbol: 'none', data: [{ yAxis: 0, label: { formatter: '0%', color: '#94a3b8' }, lineStyle: { color: '#94a3b8', type: 'dashed' } }] }
+      }],
+    });
+  })();
+
+  document.getElementById('bt-params').textContent = paramStr;
+  // 七图联动 (所有图均用同一 dates 轴)
+  setTimeout(() => echarts.connect('analysis'), 500);
+}
+
+// 各图创建时自动归入 'analysis' group
+const origInit = echarts.init;
+echarts.init = function(el) {
+  const instance = origInit.call(this, el);
+  instance.group = 'analysis';
+  el._echart = instance;
+  return instance;
+};
+
+window.addEventListener('resize', () => {
+  ['chart-kline','chart-pe','chart-pct','chart-invest','chart-xirr'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el._echart) el._echart.resize();
+  });
+});
+
+load();
+</script>
+</body>
+</html>

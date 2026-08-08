@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PE-DCA 指标数据库</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+header { background: #1e293b; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+header h1 { font-size: 20px; font-weight: 600; }
+header .sub { font-size: 13px; color: #94a3b8; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.card { background: #1e293b; border-radius: 12px; padding: 20px; cursor: pointer; transition: transform .15s, box-shadow .15s; border: 1px solid #334155; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,.4); border-color: #475569; }
+.card .code { font-size: 13px; color: #64748b; }
+.card .name { font-size: 18px; font-weight: 700; margin: 4px 0 12px; }
+.card .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
+.card .label { color: #94a3b8; }
+.card .val { font-weight: 600; }
+.peg-green { color: #4ade80; }
+.peg-yellow { color: #facc15; }
+.peg-red { color: #f87171; }
+.fed-positive { color: #4ade80; }
+.fed-negative { color: #f87171; }
+.category-section { margin-bottom: 32px; }
+.category-section h2 { font-size: 16px; color: #94a3b8; margin-bottom: 12px; padding-left: 4px; border-left: 3px solid #3b82f6; padding: 4px 12px; }
+.loading { text-align: center; padding: 60px; color: #64748b; }
+a { text-decoration: none; color: inherit; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>PE-DCA 指标数据库</h1>
+    <span class="sub">数据更新: <span id="update-time">加载中...</span></span>
+  </div>
+</header>
+<div class="container">
+  <div id="content" class="loading">加载中...</div>
+</div>
+<script>
+async function load() {
+  try {
+    const r = await fetch('/api/indices');
+    const data = await r.json();
+    render(data);
+  } catch(e) {
+    document.getElementById('content').innerHTML = '加载失败: ' + e.message;
+  }
+}
+
+function pctClass(v) {
+  if (v == null) return '';
+  if (v < 30) return 'peg-green';
+  if (v < 70) return 'peg-yellow';
+  return 'peg-red';
+}
+
+function fedClass(v) {
+  if (v == null) return '';
+  return v > 0 ? 'fed-positive' : 'fed-negative';
+}
+
+function pctLabel(v) {
+  if (v == null) return '—';
+  return v.toFixed(0) + '%';
+}
+
+function fedPctColor(fed, pct) {
+  // FED percentile: high = stocks cheap = green
+  if (pct == null) return '';
+  if (pct > 70) return 'peg-green';
+  if (pct < 30) return 'peg-red';
+  return 'peg-yellow';
+}
+
+function render(data) {
+  const cats = {};
+  for (const item of data) {
+    const c = item.category;
+    if (!cats[c]) cats[c] = [];
+    cats[c].push(item);
+  }
+  const catOrder = ['宽基', '红利', '港股通', '港股', '美股', '质量'];
+  const catNames = {宽基:'宽基指数', 红利:'红利指数', 港股通:'港股通指数', 港股:'港股指数', 美股:'美股指数', 质量:'质量成长'};
+
+  let html = '';
+  for (const cat of catOrder) {
+    if (!cats[cat]) continue;
+    html += `<div class="category-section"><h2>${catNames[cat]||cat}</h2><div class="summary">`;
+    for (const item of cats[cat]) {
+      let w = item.date || '—';
+      if (w.length > 10) w = w.slice(0,10);
+      html += `
+      <a href="/detail/${item.code}">
+        <div class="card">
+          <div class="code">${item.code}</div>
+          <div class="name">${item.name}</div>
+          <div class="row"><span class="label">PE</span><span class="val">${item.pe != null ? item.pe.toFixed(2) : '—'}</span></div>
+          <div class="row"><span class="label">PE百分位</span><span class="val ${pctClass(item.pe_pct)}">${pctLabel(item.pe_pct)}</span></div>
+          <div class="row"><span class="label">PB</span><span class="val">${item.pb_dj != null ? item.pb_dj.toFixed(4) : '—'}</span></div>
+          <div class="row"><span class="label">PB百分位</span><span class="val ${pctClass(item.pb_pct_dj)}">${pctLabel(item.pb_pct_dj)}</span></div>
+          <div class="row"><span class="label">FED</span><span class="val ${fedClass(item.fed)}">${item.fed != null ? item.fed.toFixed(2)+'%' : '—'}</span></div>
+          <div class="row"><span class="label">FED百分位</span><span class="val ${fedPctColor(item.fed, item.fed_pct_csi || item.fed_pct_dj)}">${pctLabel(item.fed_pct_csi || item.fed_pct_dj)}</span></div>
+          <div class="row"><span class="label">更新</span><span class="val" style="font-size:12px;font-weight:400">${w}</span></div>
+        </div>
+      </a>`;
+    }
+    html += '</div></div>';
+  }
+  document.getElementById('content').innerHTML = html;
+  document.getElementById('update-time').textContent = '数据更新: ' + new Date().toLocaleString();
+}
+
+load();
+</script>
+</body>
+</html>

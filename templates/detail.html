@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">指数详情</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+header { background: #1e293b; padding: 14px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #334155; }
+header a { color: #94a3b8; text-decoration: none; font-size: 14px; }
+header a:hover { color: #e2e8f0; }
+header h1 { font-size: 20px; font-weight: 600; }
+.meta { font-size: 13px; color: #94a3b8; margin-left: auto; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+.stats-row { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat { background: #1e293b; border-radius: 10px; padding: 16px 24px; border: 1px solid #334155; min-width: 140px; flex: 1; }
+.stat .label { font-size: 12px; color: #94a3b8; }
+.stat .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-box { background: #1e293b; border-radius: 12px; border: 1px solid #334155; height: 420px; }
+.chart-full { height: 380px; }
+.green { color: #4ade80; }
+.yellow { color: #facc15; }
+.red { color: #f87171; }
+@media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/analysis/{{CODE}}" style="color:#f97316">📊 分析</a>
+  <h1 id="index-title">加载中...</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+  <div class="stats-row" id="stats"></div>
+  <div class="chart-row">
+    <div class="chart-box" id="chart-pe"></div>
+    <div class="chart-box" id="chart-pct"></div>
+  </div>
+  <div class="chart-box chart-full" id="chart-fed"></div>
+  <div class="chart-box chart-full" id="chart-pb" style="margin-top:16px"></div>
+</div>
+<script>
+const CODE = '{{CODE}}';
+
+async function load() {
+  const r = await fetch('/api/indices/' + CODE);
+  const data = await r.json();
+  if (!data.length) { document.body.innerHTML = '无数据'; return; }
+  let windData = [], alignedData = [];
+  try {
+    const wr = await fetch('/api/wind/' + CODE);
+    windData = await wr.json();
+    const ar = await fetch('/api/aligned/' + CODE);
+    alignedData = await ar.json();
+  } catch(e) {}
+  render(data, windData, alignedData);
+}
+
+function render(data, windData, alignedData) {
+  const latest = data[data.length - 1];
+  const dates = data.map(d => d.date);
+
+  fetch('/api/indices').then(r => r.json()).then(indices => {
+    const idx = indices.find(i => i.code === CODE);
+    if (idx) {
+      document.getElementById('index-title').textContent = idx.code + ' ' + idx.name;
+      document.getElementById('page-title').textContent = idx.name + ' - PE-DCA';
+    }
+  });
+
+  document.getElementById('meta-info').textContent = `数据: ${dates[0]} ~ ${dates[dates.length-1]} | ${data.length}条`;
+
+  // Determine which PE sources are available in the merged data
+  const hasDJ = data.some(d => d.pe_ttm_dj != null);
+  const hasCSI = data.some(d => d.pe_ttm_csi != null);
+  const peKey = hasCSI ? 'pe_ttm_csi' : 'pe_ttm_dj';  // primary for stats/FED
+  const pbKey = 'pb_dj';
+  const fedKey = peKey === 'pe_ttm_csi' ? 'fed_csi' : 'fed_dj';
+  const pctKey = peKey === 'pe_ttm_csi' ? 'pe_pct_csi' : 'pe_pct_dj';
+
+  const peVal = latest[peKey], pbVal = latest[pbKey], fedVal = latest[fedKey], pctVal = latest[pctKey];
+  const fedPctKey = peKey === 'pe_ttm_csi' ? 'fed_pct_csi' : 'fed_pct_dj';
+  const pbPctKey = 'pb_pct_dj';
+  const fedPctVal = latest[fedPctKey], pbPctVal = latest[pbPctKey];
+  const pctColor = pctVal != null ? (pctVal < 30 ? 'green' : pctVal < 70 ? 'yellow' : 'red') : '';
+  const fedPctColor = fedPctVal != null ? (fedPctVal < 30 ? 'red' : fedPctVal < 70 ? 'yellow' : 'green') : '';
+  const pbPctColor = pbPctVal != null ? (pbPctVal < 30 ? 'green' : pbPctVal < 70 ? 'yellow' : 'red') : '';
+
+  let statsHtml = '';
+  statsHtml += `<div class="stat"><div class="label">PE</div><div class="value">${peVal != null ? peVal.toFixed(2) : '—'}</div></div>`;
+  statsHtml += `<div class="stat"><div class="label">PE 百分位</div><div class="value ${pctColor}">${pctVal != null ? pctVal.toFixed(0)+'%' : '—'}</div></div>`;
+  statsHtml += `<div class="stat"><div class="label">PB</div><div class="value">${pbVal != null ? pbVal.toFixed(4) : '—'}</div></div>`;
+  statsHtml += `<div class="stat"><div class="label">PB 百分位</div><div class="value ${pbPctColor}">${pbPctVal != null ? pbPctVal.toFixed(0)+'%' : '—'}</div></div>`;
+  statsHtml += `<div class="stat"><div class="label">FED</div><div class="value ${fedVal != null && fedVal > 0 ? 'green' : 'red'}">${fedVal != null ? fedVal.toFixed(2)+'%' : '—'}</div></div>`;
+  statsHtml += `<div class="stat"><div class="label">FED 百分位</div><div class="value ${fedPctColor}">${fedPctVal != null ? fedPctVal.toFixed(0)+'%' : '—'}</div></div>`;
+  document.getElementById('stats').innerHTML = statsHtml;
+
+  // --- PE 走势图 (time轴, 各系列独立日期) ---
+  const windMap = {};
+  for (const w of windData) { windMap[w.date] = w.pe_ttm_wind; }
+
+  // Build data pairs for each available PE series
+  const djSeries = hasDJ ? data.filter(d => d.pe_ttm_dj != null).map(d => [d.date, d.pe_ttm_dj]) : [];
+  const csiSeries = hasCSI ? data.filter(d => d.pe_ttm_csi != null).map(d => [d.date, d.pe_ttm_csi]) : [];
+  const windSeries = windData.filter(w => w.pe_ttm_wind != null).map(w => [w.date, w.pe_ttm_wind]);
+
+  const allPeVals = [];
+  if (hasDJ) allPeVals.push(...data.map(d => d.pe_ttm_dj));
+  if (hasCSI) allPeVals.push(...data.map(d => d.pe_ttm_csi));
+  allPeVals.push(...windData.map(w => w.pe_ttm_wind));
+  const cleanVals = allPeVals.filter(v => v != null);
+  const peAllMin = Math.floor(Math.min(...cleanVals) * 0.95);
+  const peAllMax = Math.ceil(Math.max(...cleanVals) * 1.05);
+
+  // Wind comparison stats
+  let compareHtml = '';
+  if (windData.length > 0) {
+    const pairs = [];
+    for (const r of data) {
+      const wv = windMap[r.date];
+      if (wv != null && r[peKey] != null) pairs.push([r[peKey], wv]);
+    }
+    if (pairs.length > 10) {
+      const n = pairs.length;
+      const diffs = pairs.map(p => p[0] - p[1]);
+      const bias = diffs.reduce((a,b) => a+b, 0) / n;
+      const rmse = Math.sqrt(diffs.reduce((s,d) => s + d*d, 0) / n);
+      const maxDiff = Math.max(...diffs.map(Math.abs));
+      const meanOur = pairs.reduce((s,p) => s + p[0], 0) / n;
+      const meanWind = pairs.reduce((s,p) => s + p[1], 0) / n;
+      const rTop = pairs.reduce((s,p) => s + (p[0]-meanOur)*(p[1]-meanWind), 0);
+      const rBot1 = Math.sqrt(pairs.reduce((s,p) => s + (p[0]-meanOur)**2, 0));
+      const rBot2 = Math.sqrt(pairs.reduce((s,p) => s + (p[1]-meanWind)**2, 0));
+      const r = rTop / (rBot1 * rBot2 || 1);
+      compareHtml = `<div style="display:flex;gap:8px;font-size:12px;color:#94a3b8;margin-top:2px"><span>vs Wind: </span><span>r=${r.toFixed(4)}</span><span>|</span><span>偏差 ${bias>=0?'+':''}${bias.toFixed(2)}</span><span>|</span><span>RMSE ${rmse.toFixed(2)}</span><span>|</span><span>MaxΔ ${maxDiff.toFixed(2)}</span><span>|</span><span>重合 ${n}天</span></div>`;
+    }
+  }
+
+  const peChart = echarts.init(document.getElementById('chart-pe'));
+  const peSeries = [];
+  if (hasDJ && djSeries.length > 0) {
+    peSeries.push({
+      name: '蛋卷PE', type: 'line', data: djSeries,
+      lineStyle: { color: '#60a5fa', width: 1, type: 'dashed' },
+      symbol: 'none', smooth: true,
+    });
+  }
+  if (hasCSI && csiSeries.length > 0) {
+    peSeries.push({
+      name: '中证PE', type: 'line', data: csiSeries,
+      lineStyle: { color: '#a78bfa', width: 1.5 },
+      symbol: 'none', smooth: true,
+    });
+  }
+  if (windSeries.length > 0) {
+    peSeries.push({
+      name: 'Wind PE', type: 'line', data: windSeries,
+      lineStyle: { color: '#f97316', width: 1, type: 'dashed' },
+      symbol: 'none', smooth: true,
+    });
+  }
+  peChart.setOption({
+    title: { text: 'PE TTM 走势（蓝=蛋卷 紫=中证 橙=Wind）', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis' },
+    grid: { left: 60, right: 30, top: 50, bottom: 30 },
+    xAxis: {
+      type: 'time', axisLabel: { color: '#94a3b8' },
+      splitLine: { lineStyle: { color: '#334155' } }
+    },
+    yAxis: { type: 'value', min: peAllMin, max: peAllMax, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    series: peSeries,
+  });
+  document.getElementById('chart-pe').insertAdjacentHTML('afterend', compareHtml);
+
+  // --- PE 百分位走势图 (time轴, 各系列独立日期) ---
+  // Existing percentile line
+  const pctDj = data.filter(d => d[pctKey] != null).map(d => [d.date, d[pctKey]]);
+  // Wind percentile
+  let windPct = [];
+  if (windData.length > 0) {
+    const windPEs = windData.map(w => w.pe_ttm_wind).filter(v => v != null).sort((a,b) => a-b);
+    windPct = windData.filter(w => w.pe_ttm_wind != null).map(w => {
+      let rank = windPEs.filter(v => v <= w.pe_ttm_wind).length;
+      return [w.date, Math.round(rank / windPEs.length * 10000) / 100];
+    });
+  }
+
+  const pctSeries = [{
+    name: '现有百分位', type: 'line', data: pctDj,
+    lineStyle: { color: '#60a5fa', width: 1, type: 'dashed' }, symbol: 'none', smooth: true,
+  }];
+  if (windPct.length > 0) {
+    pctSeries.push({
+      name: 'Wind 百分位', type: 'line', data: windPct,
+      lineStyle: { color: '#f97316', width: 1, type: 'dashed' }, symbol: 'none', smooth: true,
+    });
+  }
+
+  const pctChart = echarts.init(document.getElementById('chart-pct'));
+  pctChart.setOption({
+    title:     { text: 'PE 百分位历史走势' + (windData.length > 0 ? '（虚线=Wind）' : ''), left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis' },
+    grid: { left: 60, right: 30, top: 50, bottom: 30 },
+    xAxis: { type: 'time', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    yAxis: { type: 'value', min: 0, max: 100, axisLabel: { color: '#94a3b8', formatter: '{value}%' }, splitLine: { lineStyle: { color: '#334155' } } },
+    series: pctSeries,
+  });
+
+  // --- FED 走势图 ---
+  if (data.some(d => d[fedKey] != null)) {
+    const fedPairs = data.filter(d => d[fedKey] != null).map(d => [d.date, d[fedKey]]);
+    const fedChart = echarts.init(document.getElementById('chart-fed'));
+    fedChart.setOption({
+      title: { text: 'FED 股债性价比', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+       tooltip: { trigger: 'axis', formatter: p => { const d = p[0].data; return (d ? d[0] : '') + '<br/>FED: ' + (d[1] != null ? d[1].toFixed(2)+'%' : '—'); } },
+      grid: { left: 60, right: 30, top: 50, bottom: 30 },
+      xAxis: { type: 'time', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+      yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: '{value}%' }, splitLine: { lineStyle: { color: '#334155' } } },
+      visualMap: { show: false, pieces: [{ gt: 0, color: '#4ade80' }, { lte: 0, color: '#f87171' }] },
+      series: [{ name: 'FED', type: 'bar', data: fedPairs, barWidth: '70%' }],
+    });
+  } else {
+    document.getElementById('chart-fed').innerHTML = '<div style="text-align:center;padding-top:160px;color:#64748b">暂无 FED 数据</div>';
+  }
+
+  // --- PB 走势图 ---
+  const hasPB = data.some(d => d[pbKey] != null);
+  const hasPBPct = data.some(d => d[pbPctKey] != null);
+  if (hasPB) {
+    const pbPairs = data.filter(d => d[pbKey] != null).map(d => [d.date, d[pbKey]]);
+    const pbChart = echarts.init(document.getElementById('chart-pb'));
+    const pbSeries = [{
+      name: 'PB', type: 'line', data: pbPairs,
+      lineStyle: { color: '#a78bfa', width: 1.5 },
+      areaStyle: { color: 'rgba(167,139,250,0.1)' },
+      symbol: 'none', smooth: true,
+    }];
+    if (hasPBPct) {
+      const pbPctPairs = data.filter(d => d[pbPctKey] != null).map(d => [d.date, d[pbPctKey]]);
+      // Normalize PB percentile to PB's y-axis range
+      const pbVals = pbPairs.map(p => p[1]);
+      const pbMin = Math.min(...pbVals), pbMax = Math.max(...pbVals);
+      const scaledPct = pbPctPairs.map(p => [p[0], pbMin + (p[1]/100) * (pbMax - pbMin)]);
+      pbSeries.push({
+        name: 'PB百分位', type: 'line', data: scaledPct,
+        lineStyle: { color: '#f97316', width: 1, type: 'dashed' }, symbol: 'none',
+      });
+    }
+    pbChart.setOption({
+      title: { text: 'PB 走势' + (hasPBPct ? '（虚线=百分位参考）' : ''), left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+      tooltip: { trigger: 'axis' },
+      grid: { left: 60, right: 30, top: 50, bottom: 30 },
+      xAxis: { type: 'time', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+      yAxis: { type: 'value', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+      series: pbSeries,
+    });
+    document.getElementById('chart-pb').style.display = '';
+  } else {
+    document.getElementById('chart-pb').innerHTML = '<div style="text-align:center;padding-top:160px;color:#64748b">暂无 PB 数据（该指数不在蛋卷覆盖范围）</div>';
+  }
+}
+
+function pctValAt(data, key, p) {
+  const vals = data.map(d => d[key]).filter(v => v != null).sort((a,b) => a-b);
+  const idx = Math.floor(vals.length * p / 100);
+  return vals[Math.min(idx, vals.length - 1)] || 0;
+}
+
+window.addEventListener('resize', () => {
+  ['chart-pe', 'chart-pct', 'chart-fed', 'chart-pb'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el._echart) el._echart.resize();
+  });
+});
+const origInit = echarts.init;
+echarts.init = function(el) { const i = origInit.call(this, el); el._echart = i; return i; };
+
+load();
+</script>
+</body>
+</html>
