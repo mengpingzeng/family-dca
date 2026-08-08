@@ -502,7 +502,7 @@ def api_analysis_backtest(code: str):
         flow_idx = 0
         for _, pr_row in price_sorted.iterrows():
             cur_date = pr_row["date"].strftime("%Y-%m-%d")
-            cur_price = pr_row.get("index_open")
+            cur_price = pr_row.get(price_col2)
             buy_amt = 0
             sell_amt = 0
             while flow_idx < len(flows):
