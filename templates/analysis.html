@@ -17,8 +17,8 @@ header h1 { font-size: 20px; font-weight: 600; }
 .info-bar { display: flex; gap: 20px; padding: 12px 0; font-size: 14px; border-bottom: 1px solid #334155; margin-bottom: 16px; flex-wrap: wrap; }
 .info-bar span { color: #64748b; }
 .info-bar .val { color: #e2e8f0; font-weight: 600; margin-left: 4px; }
-.chart-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 12px; }
-.chart-box { background: #1e293b; border-radius: 10px; border: 1px solid #334155; height: 520px; }
+.chart-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.chart-box { background: #1e293b; border-radius: 10px; border: 1px solid #334155; height: 340px; }
 .loading { text-align: center; padding: 100px; color: #64748b; }
 .green { color: #4ade80; } .yellow { color: #facc15; } .red { color: #f87171; }
 @media (max-width: 1000px) { .chart-row { grid-template-columns: 1fr; } }
@@ -33,15 +33,14 @@ header h1 { font-size: 20px; font-weight: 600; }
 </header>
 <div class="container">
   <div class="info-bar" id="info-bar"></div>
+  <div id="bt-params" style="font-size:11px;color:#94a3b8;padding:4px 0 6px;line-height:1.5;word-break:break-all"></div>
   <div class="chart-row">
     <div class="chart-box" id="chart-kline"></div>
     <div class="chart-box" id="chart-pe"></div>
     <div class="chart-box" id="chart-pct"></div>
+    <div class="chart-box" id="chart-invest"></div>
+    <div class="chart-box" id="chart-xirr"></div>
   </div>
-  <h3 style="color:#94a3b8;margin:16px 0 8px;font-weight:400">回测结果 (蛋卷最优参数)</h3>
-  <div id="bt-params" style="font-size:11px;color:#94a3b8;padding:4px 0 8px;line-height:1.6;word-break:break-all"></div>
-  <div class="chart-box" id="chart-invest"></div>
-  <div class="chart-box" id="chart-xirr" style="margin-top:16px;height:300px"></div>
 </div>
 <script>
 const CODE = '{{CODE}}';
@@ -92,9 +91,10 @@ function render(data) {
             `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#94a3b8;margin-right:4px"></span>PE百分位: ${pc != null ? (pc*100).toFixed(0)+'%' : '—'}`;
         }
       },
-    grid: { left: 70, right: 20, top: 50, bottom: 30 },
+    grid: { left: 70, right: 20, top: 50, bottom: 40 },
     xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
     yAxis: { type: 'value', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 41, end: 100, height: 16, bottom: 0 }],
     series: [{ type: 'line', data: opens, lineStyle: { color: '#60a5fa', width: 1.5 }, areaStyle: { color: 'rgba(96,165,250,0.08)' }, symbol: 'none' }],
   });
 
@@ -112,9 +112,10 @@ function render(data) {
           return `<b>${d.axisValue}</b><br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316;margin-right:4px"></span>PE: ${peDJ[idx]?.toFixed(2)}`;
         }
       },
-    grid: { left: 60, right: 20, top: 50, bottom: 30 },
+    grid: { left: 60, right: 20, top: 50, bottom: 40 },
     xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
     yAxis: { type: 'value', min: peMin, max: peMax, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 41, end: 100, height: 16, bottom: 0 }],
     series: [{ type: 'line', data: peDJ, name: 'PE', lineStyle: { color: '#f97316', width: 1.5 }, symbol: 'none', smooth: true }],
   });
 
@@ -131,9 +132,10 @@ function render(data) {
           return `<b>${d.axisValue}</b><br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${clr};margin-right:4px"></span>百分位: ${v != null ? (v*100).toFixed(0)+'%' : '—'}`;
         }
       },
-    grid: { left: 60, right: 20, top: 50, bottom: 30 },
+    grid: { left: 60, right: 20, top: 50, bottom: 40 },
     xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
     yAxis: { type: 'value', min: 0, max: 1, axisLabel: { color: '#94a3b8', formatter: v => (v*100).toFixed(0)+'%' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 41, end: 100, height: 16, bottom: 0 }],
     visualMap: { show: false, pieces: [{ lt: 0.3, color: '#4ade80' }, { lt: 0.7, color: '#facc15' }, { gte: 0.7, color: '#f87171' }] },
     series: [{ type: 'line', data: pePct, name: '百分位', lineStyle: { width: 1.5 }, areaStyle: { opacity: 0.2 }, symbol: 'none', smooth: true,
       markLine: { silent: true, symbol: 'none',
@@ -202,8 +204,7 @@ async function renderBacktest(dates) {
   (function() {
     const c = echarts.init(document.getElementById('chart-invest'));
     c.setOption({
-      title: { text: '本金 & 市值 & 总资产 (元)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
-      legend: { data: ['当前本金','持仓市值','总资产'], bottom: 0, textStyle: { color: '#94a3b8', fontSize: 11 }, itemWidth: 18, itemHeight: 3 },
+      title: { text: '本金 & 市值 & 总资产 (元)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 12 } },
       tooltip: { trigger: 'axis',
         formatter: function(params) {
           const idx = params[0].dataIndex;
@@ -218,9 +219,10 @@ async function renderBacktest(dates) {
           return s;
         }
       },
-      grid: { left: 70, right: 15, top: 45, bottom: 40 },
+      grid: { left: 70, right: 15, top: 45, bottom: 42 },
       xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
       yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: v => (v/10000).toFixed(0)+'万' }, splitLine: { lineStyle: { color: '#334155' } } },
+      dataZoom: [{ type: 'slider', start: 41, end: 100, height: 16, bottom: 0 }],
       series: [
         { name: '当前本金', type: 'line', data: btPrin, lineStyle: { color: '#facc15', width: 1.5 }, symbol: 'none' },
         { name: '持仓市值', type: 'line', data: btEq, lineStyle: { color: '#c084fc', width: 1.5 }, symbol: 'none' },
@@ -261,9 +263,10 @@ async function renderBacktest(dates) {
             '<br/><span style="color:#94a3b8;font-size:10px">Σ CF<sub>t</sub>/(1+r)<sup>t</sup> + 市值/(1+r)<sup>T</sup> = 0, 二分法求解</span>';
         }
       },
-      grid: { left: 60, right: 15, top: 45, bottom: 25 },
+      grid: { left: 60, right: 15, top: 45, bottom: 42 },
       xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/12) } },
       yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: '{value}%' }, splitLine: { lineStyle: { color: '#334155' } } },
+      dataZoom: [{ type: 'slider', start: 41, end: 100, height: 16, bottom: 0 }],
       series: [{ type: 'line', data: btXirr, lineStyle: { color: '#f97316', width: 1.5 }, areaStyle: { color: 'rgba(249,115,22,0.08)' }, symbol: 'none',
         connectNulls: true,
         markLine: { silent: true, symbol: 'none', data: [{ yAxis: 0, label: { formatter: '0%', color: '#94a3b8' }, lineStyle: { color: '#94a3b8', type: 'dashed' } }] }
