@@ -315,8 +315,9 @@ def api_analysis_data(code: str):
     merged["date"] = pd.to_datetime(merged["date"])
     price["date"] = pd.to_datetime(price["date"])
 
-    # K线数据（开盘价）
-    kline = price[["date", "index_open", "index_price"]].dropna()
+    # K线数据
+    price_col = "index_open" if "index_open" in price.columns else "index_price"
+    kline = price[["date", price_col]].dropna()
     if kline.empty:
         raise HTTPException(404, "无K线数据")
 
@@ -343,7 +344,7 @@ def api_analysis_data(code: str):
     for _, r in result.iterrows():
         item = {
             "date": r["date"].strftime("%Y-%m-%d") if pd.notna(r["date"]) else None,
-            "open": round(float(r["index_open"]), 2) if r.get("index_open") is not None and pd.notna(r.get("index_open")) else None,
+            "open": round(float(r[price_col]), 2) if r.get(price_col) is not None and pd.notna(r.get(price_col)) else None,
             "pe_dj": round(float(r[dj_col]), 2) if r.get(dj_col) is not None and pd.notna(r.get(dj_col)) else None,
             "pe_pct_10yr": round(float(r["pe_pct_10yr"]), 2) if r.get("pe_pct_10yr") is not None and pd.notna(r.get("pe_pct_10yr")) else None,
         }
@@ -375,16 +376,17 @@ def api_analysis_backtest(code: str):
     # 蛋卷数据 (周频)
     dj_mask = merged[dj_col].notna()
     dj = merged[dj_mask][["date", dj_col, "fed_dj", "pb_dj"]].copy()
-    # 用 merge_asof 给蛋卷日期匹配最近的开盘价
-    price_sorted = price[["date", "index_open"]].dropna().sort_values("date")
+    # 用 merge_asof 给蛋卷日期匹配最近的价格
+    price_col2 = "index_open" if "index_open" in price.columns else "index_price"
+    price_sorted = price[["date", price_col2]].dropna().sort_values("date")
     dj_sorted = dj.sort_values("date")
     bt_df = pd.merge_asof(dj_sorted, price_sorted, on="date", direction="backward")
-    bt_df = bt_df.dropna(subset=["index_open"]).reset_index(drop=True)
+    bt_df = bt_df.dropna(subset=[price_col2]).reset_index(drop=True)
 
     if len(bt_df) < 50:
         return []
 
-    bt_df["price"] = bt_df["index_open"].values
+    bt_df["price"] = bt_df[price_col2].values
     bt_df["fed_val"] = bt_df["fed_dj"].values
     bt_df["pb_val"] = bt_df["pb_dj"].values if "pb_dj" in bt_df.columns else np.nan
 
