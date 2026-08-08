@@ -117,6 +117,98 @@ def api_indices():
     return result
 
 
+@app.get("/api/indices/backtest")
+def api_indices_backtest():
+    """返回所有可回测指数的摘要 (meta only, 不含 daily)"""
+    import numpy as np, glob as _glob, sys
+    sys.path.insert(0, str(BASE / "backtest"))
+    from backtest import vec_rolling_pct, vec_rolling_mean_std, run_one, WINDOW_YEARS_LIST
+
+    results = []
+    for code, (name, category) in sorted(INDEX_NAMES.items()):
+        merged_path = MERGED_DIR / f"{code}.parquet"
+        price_path = BASE / "data-store" / "parquet" / "index_price" / f"{code}.parquet"
+        if not merged_path.exists() or not price_path.exists():
+            continue
+        merged = pd.read_parquet(merged_path)
+        price = pd.read_parquet(price_path)
+        merged["date"] = pd.to_datetime(merged["date"])
+        price["date"] = pd.to_datetime(price["date"])
+        dj_col = "pe_ttm_dj"
+        if dj_col not in merged.columns or merged[dj_col].notna().sum() < 50:
+            continue
+        dj_mask = merged[dj_col].notna()
+        dj = merged[dj_mask][["date", dj_col, "fed_dj", "pb_dj"]].copy()
+        price_col = "index_open" if "index_open" in price.columns else "index_price"
+        price_sorted = price[["date", price_col]].dropna().sort_values("date")
+        dj_sorted = dj.sort_values("date")
+        bt_df = pd.merge_asof(dj_sorted, price_sorted, on="date", direction="backward")
+        bt_df = bt_df.dropna(subset=[price_col]).reset_index(drop=True)
+        if len(bt_df) < 50:
+            continue
+        bt_df["price"] = bt_df[price_col].values
+        bt_df["fed_val"] = bt_df["fed_dj"].values
+        bt_df["pb_val"] = bt_df["pb_dj"].values if "pb_dj" in bt_df.columns else np.nan
+
+        total_days = (bt_df["date"].max() - bt_df["date"].min()).days
+        rpy = len(bt_df) / max(total_days / 365.25, 1)
+        w = 8
+        if total_days / 365.25 < 8:
+            w = 5
+        if total_days / 365.25 < 5:
+            w = 3
+        wr = int(w * rpy)
+
+        # 读最优参数
+        BEST_PARAMS = (0.15, 0.30, 0.40, 0.70, 0.70, 0.85, 0.95, 1.0, 0.50, 0.70, 0.12, 0.04)
+        for base_dir in [str(BASE / "backtest" / "output"), str(BASE / "backtest" / "output_20*")]:
+            for csv_path in sorted(_glob.glob(os.path.join(base_dir, f"*{code}*", "dj_top20.csv")), reverse=True):
+                try:
+                    dfp = pd.read_csv(csv_path)
+                    if 'window_years' not in dfp.columns:
+                        continue
+                    sub = dfp[dfp['window_years'] == w]
+                    if len(sub) > 0:
+                        r = sub.iloc[0]
+                        BEST_PARAMS = (r['pe_buy_floor'], r['pe_buy_low'],
+                            r['pe_buy_mid'], r['pe_buy_high'],
+                            r['pe_sell_warn'], r['pe_sell_heavy'],
+                            r['pe_sell_extreme'], r['fed_buy_threshold'],
+                            r['pb_veto_threshold'], r['pb_confirm_threshold'],
+                            r['drawdown_standard'], r['drawdown_tight'])
+                        break
+                except:
+                    pass
+            if BEST_PARAMS != (0.15, 0.30, 0.40, 0.70, 0.70, 0.85, 0.95, 1.0, 0.50, 0.70, 0.12, 0.04):
+                break
+
+        pe_arr = bt_df[dj_col].values.astype(float)
+        pb_arr = bt_df["pb_val"].values.astype(float)
+        fed_arr = bt_df["fed_val"].values.astype(float)
+        bt_df[f"pe_pct_w{w}"] = vec_rolling_pct(pe_arr, wr)
+        bt_df[f"pb_pct_w{w}"] = vec_rolling_pct(pb_arr, wr) if not np.isnan(pb_arr).all() else np.full(len(bt_df), np.nan)
+        m, s = vec_rolling_mean_std(fed_arr, wr)
+        bt_df[f"fed_mean_w{w}"] = m
+        bt_df[f"fed_std_w{w}"] = s
+
+        w_idx = WINDOW_YEARS_LIST.index(w)
+        result = run_one(bt_df, BEST_PARAMS, w_idx, 0)
+        if not result or result.get("trades", 0) < 2:
+            continue
+
+        results.append({
+            "code": code, "name": name, "category": category,
+            "window_years": w,
+            "xirr": result.get("xirr", 0),
+            "final_return": result.get("final_return", 0),
+            "trades": result.get("trades", 0),
+            "buys": result.get("buys", 0),
+            "pe_buy_floor": BEST_PARAMS[0], "pe_buy_high": BEST_PARAMS[3],
+            "pe_sell_heavy": BEST_PARAMS[5], "pe_sell_extreme": BEST_PARAMS[6],
+        })
+    return results
+
+
 @app.get("/api/indices/{code}")
 def api_index_detail(
     code: str,
