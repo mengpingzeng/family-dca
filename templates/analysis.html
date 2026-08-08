@@ -17,11 +17,11 @@ header h1 { font-size: 20px; font-weight: 600; }
 .info-bar { display: flex; gap: 20px; padding: 12px 0; font-size: 14px; border-bottom: 1px solid #334155; margin-bottom: 16px; flex-wrap: wrap; }
 .info-bar span { color: #64748b; }
 .info-bar .val { color: #e2e8f0; font-weight: 600; margin-left: 4px; }
-.chart-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.chart-row { display: grid; gap: 10px; }
 .chart-box { background: #1e293b; border-radius: 10px; border: 1px solid #334155; height: 340px; }
 .loading { text-align: center; padding: 100px; color: #64748b; }
 .green { color: #4ade80; } .yellow { color: #facc15; } .red { color: #f87171; }
-@media (max-width: 1000px) { .chart-row { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) { .chart-row { grid-template-columns: 1fr !important; } }
 </style>
 </head>
 <body>
@@ -34,10 +34,12 @@ header h1 { font-size: 20px; font-weight: 600; }
 <div class="container">
   <div class="info-bar" id="info-bar"></div>
   <div id="bt-params" style="font-size:11px;color:#94a3b8;padding:4px 0 6px;line-height:1.5;word-break:break-all"></div>
-  <div class="chart-row">
+  <div class="chart-row" style="grid-template-columns:1.5fr 1fr 1fr">
     <div class="chart-box" id="chart-kline"></div>
     <div class="chart-box" id="chart-pe"></div>
     <div class="chart-box" id="chart-pct"></div>
+  </div>
+  <div class="chart-row" style="grid-template-columns:1fr 1fr">
     <div class="chart-box" id="chart-invest"></div>
     <div class="chart-box" id="chart-xirr"></div>
   </div>
