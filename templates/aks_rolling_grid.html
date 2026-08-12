@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动窗口鲁棒性 — Family-DCA</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:18px;font-weight:600}
+.container{max-width:1400px;margin:0 auto;padding:16px 24px}
+.panel{background:#1e293b;border-radius:10px;border:1px solid #334155;margin-bottom:16px;overflow:hidden}
+.panel-hdr{padding:10px 16px;font-size:14px;font-weight:600;border-bottom:1px solid #334155;background:#1a2332}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#1e293b;color:#94a3b8;padding:7px 8px;text-align:center;border:1px solid #334155}
+td{padding:5px 8px;border:1px solid #334155;color:#e2e8f0;text-align:center}
+tr:hover td{background:#1e293b}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#fbbf24}.blue{color:#60a5fa}
+a.chart-link{color:#60a5fa;text-decoration:none}
+a.chart-link:hover{color:#93c5fd}
+.bar-bg{display:inline-block;width:100%;height:10px;background:#1e293b;border-radius:4px;position:relative;min-width:60px}
+.bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:4px;background:linear-gradient(90deg,#dc2626,#f59e0b,#4ade80)}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <h1>滚动窗口鲁棒性分析</h1>
+</header>
+<div class="container">
+  <div style="color:#94a3b8;font-size:12px;margin-bottom:12px;line-height:1.8">
+    固定策略：<b style="color:#e2e8f0">B8/12/22/40 · S75/85 · FED/PB=off · ¥500/笔 · 闲置2%</b><br>
+    每个窗口独立回测（零仓位起步），滑动步长=3个月
+  </div>
+  <div id="content"></div>
+</div>
+<script>
+async function init() {
+  try {
+    const r = await fetch('/api/aks-rolling/grid-search');
+    const data = await r.json();
+    if (data.error) {
+      document.getElementById('content').innerHTML = '<p style="padding:20px;color:#94a3b8">' + data.error + '</p>';
+      return;
+    }
+    render(data);
+  } catch(e) {
+    document.getElementById('content').innerHTML = '<p style="padding:20px;color:#f87171">加载失败: ' + e + '</p>';
+  }
+}
+
+function render(data) {
+  var codes = Object.keys(data).sort();
+  var holdKeys = ['hold_3yr','hold_5yr','hold_10yr'];
+  var holdLabels = {'hold_3yr':'3年','hold_5yr':'5年','hold_10yr':'10年'};
+
+  var html = '';
+
+  // ---- 汇总表 ----
+  html += '<div class="panel"><div class="panel-hdr">各指数 × 持有期 汇总</div>';
+  html += '<table><thead><tr><th>指数</th><th>持有期</th><th>窗口数</th><th>XIRR 最低</th><th>XIRR 中位</th><th>XIRR 最高</th><th>标准差</th><th>胜率</th><th>分布</th><th>详情</th></tr></thead><tbody>';
+
+  for (var ci = 0; ci < codes.length; ci++) {
+    var c = codes[ci];
+    var entry = data[c];
+    for (var hi = 0; hi < holdKeys.length; hi++) {
+      var hk = holdKeys[hi];
+      var h = entry.holds[hk];
+      if (!h || h.windows === 0) { html += '<tr><td>' + entry.name + '</td><td colspan="9">无数据</td></tr>'; continue; }
+
+      var barPct = Math.min(Math.max((h.xirr_median + 20) / 80 * 100, 5), 100);
+      var clsMin = h.xirr_min < 0 ? 'red' : (h.xirr_min > 10 ? 'green' : 'yellow');
+      var clsMed = h.xirr_median < 0 ? 'red' : (h.xirr_median > 10 ? 'green' : 'yellow');
+      var clsMax = h.xirr_max > 30 ? 'green' : (h.xirr_max > 10 ? 'yellow' : 'red');
+      var clsWin = h.win_rate >= 90 ? 'green' : (h.win_rate >= 70 ? 'yellow' : 'red');
+
+      html += '<tr>';
+      html += '<td><b>' + entry.name + '</b></td>';
+      html += '<td>' + holdLabels[hk] + '</td>';
+      html += '<td>' + h.windows + '</td>';
+      html += '<td class="' + clsMin + '">' + (h.xirr_min != null ? h.xirr_min.toFixed(2) + '%' : '-') + '</td>';
+      html += '<td class="' + clsMed + '"><b>' + (h.xirr_median != null ? h.xirr_median.toFixed(2) + '%' : '-') + '</b></td>';
+      html += '<td class="' + clsMax + '">' + (h.xirr_max != null ? h.xirr_max.toFixed(2) + '%' : '-') + '</td>';
+      html += '<td>' + (h.xirr_std != null ? h.xirr_std.toFixed(2) + '%' : '-') + '</td>';
+      html += '<td class="' + clsWin + '">' + (h.win_rate != null ? h.win_rate.toFixed(0) + '%' : '-') + '</td>';
+      html += '<td><div class="bar-bg"><div class="bar-fill" style="width:' + barPct + '%"></div></div></td>';
+      html += '<td><a class="chart-link" href="/aks-rolling/grid-search/' + c + '">查看</a></td>';
+      html += '</tr>';
+    }
+  }
+  html += '</tbody></table></div>';
+
+  document.getElementById('content').innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>

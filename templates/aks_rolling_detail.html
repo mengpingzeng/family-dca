@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动窗口 {{CODE}} — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.container{max-width:1600px;margin:0 auto;padding:16px 24px}
+.row{display:grid;gap:12px;margin-bottom:12px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:380px}
+.stat-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:#94a3b8}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px 16px;min-width:130px}
+.stat-card .val{font-size:22px;font-weight:700;margin-top:4px}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#fbbf24}
+</style>
+</head>
+<body>
+<header>
+  <a href="/aks-rolling/grid-search">← 滚动窗口</a>
+  <h1 id="title">滚动窗口鲁棒性 {{CODE}}</h1>
+</header>
+<div class="container">
+  <div class="stat-row" id="stats"></div>
+  <div class="row" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="chart-box" id="chart-3yr"></div>
+    <div class="chart-box" id="chart-5yr"></div>
+    <div class="chart-box" id="chart-10yr"></div>
+  </div>
+  <div class="row" style="grid-template-columns:1fr">
+    <div class="chart-box" id="chart-dist" style="height:340px"></div>
+  </div>
+</div>
+<script>
+const CODE = '{{CODE}}';
+const names = {'000300':'沪深300','000016':'上证50','000905':'中证500'};
+const name = names[CODE] || CODE;
+
+async function load() {
+  const r = await fetch('/api/aks-rolling/grid-search/' + CODE);
+  const data = await r.json();
+  document.getElementById('title').textContent = '滚动窗口鲁棒性 ' + name;
+
+  var html = '<div class="stat-card"><div>策略</div><div class="val" style="font-size:14px">B8/12/22/40 S75/85</div></div>';
+  html += '<div class="stat-card"><div>¥500/笔 · 闲置2%</div></div>';
+  document.getElementById('stats').innerHTML = html;
+
+  var holdKeys = ['hold_3yr','hold_5yr','hold_10yr'];
+  var holdLabels = ['3年持有期','5年持有期','10年持有期'];
+  var chartIds = ['chart-3yr','chart-5yr','chart-10yr'];
+
+  var allCharts = [];
+  var allXirrs = [];
+
+  for (var hi = 0; hi < holdKeys.length; hi++) {
+    var hk = holdKeys[hi];
+    var h = data.holds[hk];
+    if (!h || !h.xirr_series || h.xirr_series.length < 3) continue;
+
+    var series = h.xirr_series;
+    var dates = series.map(function(s) { return s.start; });
+    var xirrs = series.map(function(s) { return s.xirr !== null ? +(s.xirr * 100).toFixed(2) : null; });
+    var trades = series.map(function(s) { return s.trades; });
+    for (var j = 0; j < xirrs.length; j++) { allXirrs.push(xirrs[j]); }
+
+    var cht = echarts.init(document.getElementById(chartIds[hi]));
+    allCharts.push(cht);
+    cht.setOption({
+      title: { text: holdLabels[hi] + ' (' + h.windows + ' 窗口)',
+               left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
+      tooltip: { trigger: 'axis',
+        formatter: function(p) {
+          var d = p[0]; var idx = d.dataIndex;
+          return '起点: ' + dates[idx] + '<br/>XIRR: ' + xirrs[idx].toFixed(2) + '%<br/>交易: ' + trades[idx] + ' 笔';
+        }
+      },
+      grid: { left: 70, right: 20, top: 40, bottom: 50 },
+      xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: function(v) { return v.slice(0,7); }, interval: Math.floor(dates.length/6) } },
+      yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: function(v) { return v + '%'; } },
+               splitLine: { lineStyle: { color: '#334155' } } },
+      dataZoom: [{ type: 'slider', start: 0, end: 100, height: 16, bottom: 4 }],
+      series: [
+        { type: 'bar', data: xirrs, itemStyle: { color: function(p) {
+            var v = p.value; return v < 0 ? '#f87171' : (v < 10 ? '#fbbf24' : '#4ade80');
+          }}, name: 'XIRR' },
+        { type: 'line', data: dates.map(function() { return 0; }), lineStyle: { color: '#64748b', type: 'dashed', width: 0.5 }, symbol: 'none', name: '0%' },
+      ],
+    });
+  }
+
+  // Distribution box-plot
+  var ds = document.getElementById('chart-dist');
+  if (ds && allXirrs.length > 5) {
+    var ctd = echarts.init(ds);
+    allCharts.push(ctd);
+
+    // Compute bins
+    var minV = Math.min.apply(null, allXirrs.filter(function(v){return v!=null}));
+    var maxV = Math.max.apply(null, allXirrs.filter(function(v){return v!=null}));
+    var binCount = 30;
+    var binW = (maxV - minV) / binCount;
+    var bins = {};
+    for (var i = 0; i < allXirrs.length; i++) {
+      if (allXirrs[i] == null) continue;
+      var b = Math.floor((allXirrs[i] - minV) / binW);
+      b = Math.min(b, binCount - 1);
+      bins[b] = (bins[b] || 0) + 1;
+    }
+    var histData = [];
+    for (var b = 0; b <= binCount; b++) {
+      histData.push([parseFloat((minV + b * binW).toFixed(1)), bins[b] || 0]);
+    }
+
+    ctd.setOption({
+      title: { text: 'XIRR 分布直方图（全部窗口合并）', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
+      tooltip: { trigger: 'axis' },
+      grid: { left: 70, right: 20, top: 40, bottom: 50 },
+      xAxis: { type: 'value', name: 'XIRR %', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+      yAxis: { type: 'value', name: '频次', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+      series: [
+        { type: 'bar', data: histData, barWidth: '95%',
+          itemStyle: { borderRadius: [2,2,0,0],
+            color: function(p) { return p.value[0] < 0 ? '#f87171' : '#4ade80'; }
+          }, name: '窗口数' },
+      ],
+    });
+  }
+
+  echarts.connect('rolling_group');
+  for (var ci = 0; ci < allCharts.length; ci++) {
+    allCharts[ci].group = 'rolling_group';
+  }
+}
+
+load();
+</script>
+</body>
+</html>

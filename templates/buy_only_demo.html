@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buy-Only {{CODE}} — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+header { background: #1e293b; padding: 14px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #334155; }
+header a { color: #94a3b8; text-decoration: none; font-size: 14px; }
+header a:hover { color: #e2e8f0; }
+header h1 { font-size: 20px; font-weight: 600; }
+.meta { font-size: 13px; color: #94a3b8; margin-left: auto; }
+.container { max-width: 1600px; margin: 0 auto; padding: 16px 24px; }
+.info-row { display: flex; gap: 24px; padding: 10px 0; font-size: 13px; border-bottom: 1px solid #334155; margin-bottom: 12px; flex-wrap: wrap; }
+.info-row span { color: #64748b; }
+.info-row .val { color: #e2e8f0; font-weight: 600; margin-left: 4px; }
+.rules-box { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 12px; line-height: 1.8; color: #94a3b8; }
+.rules-box b { color: #e2e8f0; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 0 2px; }
+.tag-buy { background: #166534; color: #4ade80; }
+.tag-warn { background: #713f12; color: #facc15; }
+.chart-row { display: grid; gap: 10px; margin-bottom: 10px; }
+.chart-box { background: #1e293b; border-radius: 10px; border: 1px solid #334155; height: 340px; }
+.green { color: #4ade80; } .yellow { color: #facc15; } .red { color: #f87171; }
+@media (max-width: 1000px) { .chart-row { grid-template-columns: 1fr !important; } }
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/grid-search/buy-only">← 对比</a>
+  <h1>Buy-Only {{CODE}} 回测</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+  <div class="rules-box">
+    <b>Buy-Only 策略 · W=8yr · 永不卖出</b><br>
+    买入: <span class="tag tag-buy">&lt;10%→3x</span><span class="tag tag-buy">10-15%→2x</span><span class="tag tag-buy">15-35%→1x</span><span class="tag tag-buy">35-70%→0.5x</span><span class="tag tag-warn">≥70%→停</span>
+    | FED门控: fed &lt; mean - 0.5×std 时不买
+  </div>
+  <div class="info-row" id="info-row"></div>
+
+  <div class="chart-row" style="grid-template-columns:1.5fr 1fr 1fr">
+    <div class="chart-box" id="chart-kline"></div>
+    <div class="chart-box" id="chart-pb-val"></div>
+    <div class="chart-box" id="chart-pb-pct"></div>
+  </div>
+  <div class="chart-row" style="grid-template-columns:1fr 1fr">
+    <div class="chart-box" id="chart-invest"></div>
+    <div class="chart-box" id="chart-xirr"></div>
+  </div>
+
+  <div id="trades-section" style="margin-top:20px">
+    <h2 style="font-size:14px;color:#94a3b8;border-bottom:1px solid #334155;padding-bottom:6px;margin-bottom:12px">
+      交易明细 (共 <span id="trades-count">0</span> 笔, 全部为买入)
+      <input type="text" id="trades-filter" placeholder="搜索..." style="margin-left:12px;background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:4px 10px;border-radius:4px;font-size:12px;width:200px">
+    </h2>
+    <div id="trades-table" style="max-height:500px;overflow-y:auto;font-size:11px"></div>
+  </div>
+</div>
+<script>
+const CODE = '{{CODE}}';
+
+async function load() {
+  const [r1, r2] = await Promise.all([
+    fetch('/api/analysis/' + CODE),
+    fetch('/api/grid-search/buy-only/' + CODE)
+  ]);
+  const rawData = await r1.json();
+  const bt = await r2.json();
+  if (!rawData.length || !bt.daily) {
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#64748b">数据不足</div>';
+    return;
+  }
+  render(rawData, bt);
+  renderTrades(bt);
+}
+
+function render(data, bt) {
+  const dates = data.map(d => d.date);
+  const opens = data.map(d => d.open);
+
+  const dMap = {};
+  for (const d of bt.daily) { dMap[d.date] = d; }
+  let firstInvDate = null;
+  for (const d of bt.daily) { if (d.cum_invested > 0) { firstInvDate = d.date; break; } }
+
+  const pbRaw = bt.daily.map(d => d.pb_raw || null);
+
+  document.getElementById('meta-info').textContent =
+    'K线: ' + dates[0] + ' ~ ' + dates[dates.length-1] + ' | ' + data.length + '条';
+
+  const meta = bt.meta;
+  const lastDaily = bt.daily[bt.daily.length-1] || {};
+  document.getElementById('info-row').innerHTML =
+    '<span>总投入<span class="val">¥' + (meta.total_invested||0).toLocaleString() + '</span></span>' +
+    '<span>最终市值<span class="val">¥' + (meta.final_value||0).toLocaleString() + '</span></span>' +
+    '<span>买入次数<span class="val">' + (meta.buys||0) + '</span></span>' +
+    '<span>回报率<span class="val ' + ((lastDaily.return_pct||0)>=0?'green':'red') + '">' + (lastDaily.return_pct||0).toFixed(2) + '%</span></span>' +
+    '<span>XIRR<span class="val ' + ((lastDaily.xirr||0)>=0?'green':'red') + '">' + ((lastDaily.xirr||0)*100).toFixed(4) + '%</span></span>';
+
+  // --- K线 ---
+  echarts.init(document.getElementById('chart-kline')).setOption({
+    title: { text: 'K线 (开盘价)', left:'center', textStyle:{ color:'#e2e8f0', fontSize:14 } },
+    tooltip: { trigger:'axis' },
+    grid: { left:70, right:20, top:50, bottom:40 },
+    xAxis: { type:'category', data:dates, axisLabel:{ color:'#94a3b8', formatter:v=>v.slice(0,7), interval:Math.floor(dates.length/12) } },
+    yAxis: { type:'value', axisLabel:{ color:'#94a3b8' }, splitLine:{ lineStyle:{ color:'#334155' } } },
+    dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+    series: [{ type:'line', data:opens, lineStyle:{ color:'#60a5fa', width:1.5 }, areaStyle:{ color:'rgba(96,165,250,0.08)' }, symbol:'none' }],
+  });
+
+  // --- PB原始值 ---
+  const pbVals = pbRaw.filter(v => v != null);
+  echarts.init(document.getElementById('chart-pb-val')).setOption({
+    title: { text: 'PB 市净率', left:'center', textStyle:{ color:'#e2e8f0', fontSize:14 } },
+    tooltip: { trigger:'axis', formatter: p => p[0] ? '<b>'+p[0].axisValue+'</b><br/>PB: '+(p[0].value||0).toFixed(2) : '' },
+    grid: { left:60, right:20, top:50, bottom:40 },
+    xAxis: { type:'category', data:dates, axisLabel:{ color:'#94a3b8', formatter:v=>v.slice(0,7), interval:Math.floor(dates.length/12) } },
+    yAxis: { type:'value', axisLabel:{ color:'#94a3b8' }, splitLine:{ lineStyle:{ color:'#334155' } } },
+    dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+    series: [{ type:'line', data:pbRaw, lineStyle:{ color:'#a78bfa', width:1.5 }, symbol:'none', smooth:true }],
+  });
+
+  // --- PB百分位 ---
+  const pbPctAll = bt.daily.map(d => d.pb_pct != null ? d.pb_pct : null);
+  echarts.init(document.getElementById('chart-pb-pct')).setOption({
+    title: { text: 'PB百分位 (8yr)', left:'center', textStyle:{ color:'#e2e8f0', fontSize:14 } },
+    tooltip: { trigger:'axis', formatter:function(ps){ const v=ps[0].value; if(v==null)return''; var c=v<0.1?'#4ade80':v<0.7?'#facc15':'#f87171'; return '<b>'+dates[ps[0].dataIndex]+'</b><br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+c+';margin-right:4px"></span>PB%: '+(v*100).toFixed(0)+'%'; } },
+    grid: { left:60, right:20, top:50, bottom:40 },
+    xAxis: { type:'category', data:dates, axisLabel:{ color:'#94a3b8', formatter:v=>v.slice(0,7), interval:Math.floor(dates.length/12) } },
+    yAxis: { type:'value', min:0, max:1, axisLabel:{ color:'#94a3b8', formatter:v=>(v*100).toFixed(0)+'%' }, splitLine:{ lineStyle:{ color:'#334155' } } },
+    dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+    visualMap: { show:false, pieces:[{ lt:0.1,color:'#4ade80' },{ lt:0.7,color:'#facc15' },{ gte:0.7,color:'#f87171' }] },
+    series: [{ type:'line', data:pbPctAll, lineStyle:{ width:1.5 }, areaStyle:{ opacity:0.12 }, symbol:'none', connectNulls:true,
+      markLine: { silent:true, symbol:'none',
+        data:[
+          { yAxis:0.10, label:{ formatter:'3x 10%', color:'#4ade80', fontSize:9 }, lineStyle:{ color:'#4ade80', type:'dashed' } },
+          { yAxis:0.15, label:{ formatter:'2x 15%', color:'#22c55e', fontSize:9 }, lineStyle:{ color:'#22c55e', type:'dashed' } },
+          { yAxis:0.35, label:{ formatter:'1x 35%', color:'#a3e635', fontSize:9 }, lineStyle:{ color:'#a3e635', type:'dashed' } },
+          { yAxis:0.70, label:{ formatter:'停止 70%', color:'#facc15', fontSize:9 }, lineStyle:{ color:'#facc15', type:'dashed' } },
+        ],
+      }
+    }],
+  });
+
+  // --- 资金曲线 ---
+  let lPrin=0, lEq=0, lTotal=0, lRet=0, lXirr=null;
+  const btPrin=[], btEq=[], btTotal=[], btXirr=[], buyMk=[], buyLb=[];
+  for (let i=0; i<dates.length; i++) {
+    const v = dMap[dates[i]];
+    if (v) { lPrin=v.net_principal; lEq=v.equity; lTotal=v.total_value; lRet=v.return_pct;
+             if (v.xirr!=null && v.xirr!==0) lXirr=v.xirr; }
+    btPrin.push(lPrin); btEq.push(lEq); btTotal.push(lTotal);
+    const daysSince = firstInvDate ? (new Date(dates[i])-new Date(firstInvDate))/86400000 : 0;
+    if (daysSince < 365) btXirr.push(v ? lRet : null);
+    else btXirr.push(lXirr != null ? lXirr*100 : null);
+    if (v && v.buy_amount>0) { buyMk.push(btPrin[i]); buyLb.push('¥'+(v.buy_amount/10000).toFixed(2)+'万'); }
+    else { buyMk.push(null); buyLb.push(''); }
+  }
+
+  echarts.init(document.getElementById('chart-invest')).setOption({
+    title: { text: '本金 & 市值 (元)', left:'center', textStyle:{ color:'#e2e8f0', fontSize:12 } },
+    tooltip: { trigger:'axis', formatter:function(ps){ var idx=ps[0].dataIndex, s='<b>'+dates[idx]+'</b>'; for(var p of ps){if(p.seriesName==='买入')continue; s+='<br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+p.color+';margin-right:4px"></span>'+p.seriesName+': ¥'+(p.value||0).toLocaleString();} if(buyLb[idx]) s+='<br/><span style="color:#4ade80">● 买入 '+buyLb[idx]+'</span>'; return s; }},
+    grid: { left:70, right:15, top:45, bottom:42 },
+    xAxis: { type:'category', data:dates, axisLabel:{ color:'#94a3b8', formatter:v=>v.slice(0,7), interval:Math.floor(dates.length/12) } },
+    yAxis: { type:'value', axisLabel:{ color:'#94a3b8', formatter:v=>(v/10000).toFixed(0)+'万' }, splitLine:{ lineStyle:{ color:'#334155' } } },
+    dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+    series: [
+      { name:'本金', type:'line', data:btPrin, lineStyle:{ color:'#facc15', width:1.5 }, symbol:'none' },
+      { name:'市值', type:'line', data:btEq, lineStyle:{ color:'#c084fc', width:2 }, symbol:'none' },
+      { name:'买入', type:'scatter', data:buyMk, symbolSize:6, itemStyle:{ color:'#4ade80' }, z:10, emphasis:{ label:{ show:true, position:'top', color:'#4ade80', fontSize:11, formatter:p=>buyLb[p.dataIndex]||'' } } },
+    ],
+  });
+
+  // --- XIRR ---
+  echarts.init(document.getElementById('chart-xirr')).setOption({
+    title: { text: '收益率 (%)', left:'center', textStyle:{ color:'#e2e8f0', fontSize:13 } },
+    tooltip: { trigger:'axis', formatter:function(p){ var idx=p[0].dataIndex, d=dates[idx], xv=p[0].data; var daysSince=firstInvDate?(new Date(d)-new Date(firstInvDate))/86400000:0; if(xv==null)return d+'<br/>收益率: —'; if(daysSince<365)return '<b>'+d+'</b><br/>简单收益率: '+xv.toFixed(2)+'%'; return '<b>'+d+'</b><br/>年化 XIRR: '+xv.toFixed(2)+'%'; }},
+    grid: { left:60, right:15, top:45, bottom:42 },
+    xAxis: { type:'category', data:dates, axisLabel:{ color:'#94a3b8', formatter:v=>v.slice(0,7), interval:Math.floor(dates.length/12) } },
+    yAxis: { type:'value', axisLabel:{ color:'#94a3b8', formatter:'{value}%' }, splitLine:{ lineStyle:{ color:'#334155' } } },
+    dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+    series: [{ type:'line', data:btXirr, lineStyle:{ color:'#f97316', width:1.5 }, areaStyle:{ color:'rgba(249,115,22,0.08)' }, symbol:'none', connectNulls:true,
+      markLine: { silent:true, symbol:'none', data:[{ yAxis:0, label:{ formatter:'0%', color:'#94a3b8' }, lineStyle:{ color:'#94a3b8', type:'dashed' } }] }
+    }],
+  });
+
+  setTimeout(() => echarts.connect('buy-only-demo'), 800);
+}
+
+function renderTrades(bt) {
+  const trades = bt.trades || [];
+  document.getElementById('trades-count').textContent = trades.length;
+  if (!trades.length) { document.getElementById('trades-table').innerHTML='<span style="color:#64748b">无交易</span>'; return; }
+  function buildTable(filter) {
+    var f = (filter||'').toLowerCase(), html = '<table style="width:100%;border-collapse:collapse"><tr style="position:sticky;top:0;z-index:1;background:#1e293b">';
+    html += '<th>日期</th><th>PB%</th><th>金额</th><th>份额</th><th>价格</th><th>累计投入</th><th style="min-width:280px">计算方式</th></tr>';
+    for (var i=0; i<trades.length; i++) {
+      var t = trades[i];
+      if (f && t.date.indexOf(f)<0 && t.reason.toLowerCase().indexOf(f)<0) continue;
+      html += '<tr><td>'+t.date+'</td><td>'+(t.pb_pct!=null?(t.pb_pct*100).toFixed(1)+'%':'—')+'</td>';
+      html += '<td style="color:#4ade80">¥'+t.amount.toLocaleString()+'</td><td>'+t.shares.toFixed(0)+'</td><td>'+t.price.toFixed(2)+'</td>';
+      html += '<td>¥'+t.cum_invested.toLocaleString()+'</td>';
+      html += '<td style="color:#94a3b8;white-space:normal">'+t.reason+'</td></tr>';
+    }
+    html += '</table>'; document.getElementById('trades-table').innerHTML = html;
+  }
+  buildTable('');
+  document.getElementById('trades-filter').addEventListener('input', function(e) { buildTable(e.target.value); });
+}
+
+var origInit = echarts.init;
+echarts.init = function(el) { var inst = origInit.call(this, el); inst.group = 'buy-only-demo'; el._echart = inst; return inst; };
+window.addEventListener('resize', () => {
+  ['chart-kline','chart-pb-val','chart-pb-pct','chart-invest','chart-xirr'].forEach(id=>{
+    var el=document.getElementById(id); if(el&&el._echart) el._echart.resize();
+  });
+});
+
+load();
+</script>
+</body>
+</html>

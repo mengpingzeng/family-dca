@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卖出参数遍历 — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.container{max-width:1500px;margin:0 auto;padding:16px 24px}
+.section h2{font-size:14px;color:#94a3b8;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid #334155}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}
+th{background:#1e293b;color:#94a3b8;padding:8px 6px;text-align:left;border-bottom:2px solid #334155;white-space:nowrap}
+td{padding:6px;border-bottom:1px solid #1e293b;white-space:nowrap}
+tr:hover{background:#1e293b}
+tr.best{background:#173554}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:400px;margin-bottom:10px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:900px){.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/grid-search">← 网格搜索</a>
+  <h1>卖出参数遍历</h1>
+</header>
+<div class="container">
+  <div class="section">
+    <h2>Top 15 策略 (按 avg_xirr 降序)
+      <span style="font-size:12px;margin-left:16px">
+        <a href="/grid-search/sell-tune/000300" style="color:#60a5fa;text-decoration:none">沪深300曲线</a> &nbsp;
+        <a href="/grid-search/sell-tune/000905" style="color:#60a5fa;text-decoration:none">中证500</a> &nbsp;
+        <a href="/grid-search/sell-tune/000016" style="color:#60a5fa;text-decoration:none">上证50</a> &nbsp;
+        <a href="/grid-search/sell-tune/399006" style="color:#60a5fa;text-decoration:none">创业板指</a> &nbsp;
+        <a href="/grid-search/sell-tune/399330" style="color:#60a5fa;text-decoration:none">深证100</a> &nbsp;
+        <a href="/grid-search/sell-tune/000852" style="color:#60a5fa;text-decoration:none">中证1000</a>
+      </span>
+    </h2>
+    <table id="tbl-top"><tr><td class="gray">加载中...</td></tr></table>
+  </div>
+  <div class="row2">
+    <div class="chart-box" id="chart-top"></div>
+    <div class="chart-box" id="chart-per-index"></div>
+  </div>
+  <div class="section">
+    <h2>参数敏感度: heavy_ratio × extreme_ratio 热力图</h2>
+    <div class="chart-box" id="chart-heat"></div>
+  </div>
+</div>
+<script>
+async function load() {
+  const resp = await fetch('/api/grid-search/sell-tune');
+  const rows = await resp.json();
+  if (!rows.length) return;
+  render(rows);
+}
+
+function render(rows) {
+  // Top 15 table
+  let h='<tr><th>#</th><th>avg_xirr</th><th>he</th><th>ex</th><th>dt</th><th>heavy_ratio</th><th>extreme_ratio</th><th>n</th>';
+  const codes=['000300','000905','000852','000016','399006','399330'];
+  const names={'000300':'沪深300','000905':'中证500','000852':'中证1000','000016':'上证50','399006':'创业板指','399330':'深证100'};
+  for (const c of codes) h+=`<th>${names[c]||c} XIRR</th><th>return</th><th>买/卖</th>`;
+  h+='</tr>';
+  for (let i=0; i<Math.min(15,rows.length); i++) {
+    const r=rows[i];
+    h+=`<tr class="${i===0?'best':''}"><td>${i+1}</td><td class="green">${(r.avg_xirr*100).toFixed(2)}%</td>`;
+    h+=`<td>${(r.he*100).toFixed(0)}%</td><td>${(r.ex*100).toFixed(0)}%</td><td>${(r.dt*100).toFixed(0)}%</td>`;
+    h+=`<td>${(r.heavy_ratio*100).toFixed(0)}%</td><td>${(r.extreme_ratio*100).toFixed(0)}%</td><td>${r.n_indices}</td>`;
+    for (const c of codes) {
+      const x=r[c+'_xirr']; const ret=r[c+'_return']; const t=r[c+'_trades']; const b=r[c+'_buys']; const s=r[c+'_sells'];
+      h+=`<td class="${x>=0?'green':'red'}">${x!=null?(x*100).toFixed(2)+'%':'—'}</td>`;
+      h+=`<td>${ret!=null?(ret*100).toFixed(1)+'%':'—'}</td><td>${b||0}/${s||0}</td>`;
+    }
+    h+='</tr>';
+  }
+  document.getElementById('tbl-top').innerHTML=h;
+
+  // Chart: Top 10 bar
+  const c1=echarts.init(document.getElementById('chart-top'));
+  c1.setOption({
+    title:{text:'Top 10 策略 avg_xirr',left:'center',textStyle:{color:'#e2e8f0',fontSize:14}},
+    tooltip:{trigger:'axis',formatter:function(p){
+      const i=p[0].dataIndex; const r=rows[i];
+      return `#${i+1} ${(r.avg_xirr*100).toFixed(2)}%<br/>he=${(r.he*100).toFixed(0)}% ex=${(r.ex*100).toFixed(0)}% dt=${(r.dt*100).toFixed(0)}%<br/>h_ratio=${(r.heavy_ratio*100).toFixed(0)}% e_ratio=${(r.extreme_ratio*100).toFixed(0)}%`;
+    }},
+    grid:{left:80,right:20,top:50,bottom:100},
+    xAxis:{type:'category',data:rows.slice(0,10).map((r,i)=>`#${i+1}`),axisLabel:{color:'#94a3b8'}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v*100).toFixed(1)+'%'}},
+    series:[{type:'bar',data:rows.slice(0,10).map(r=>r.avg_xirr),itemStyle:{color:'#60a5fa'},
+      label:{show:true,position:'top',color:'#94a3b8',fontSize:11,formatter:p=>(p.value*100).toFixed(2)+'%'}}],
+  });
+
+  // Chart: Per-index XIRR for top 5
+  const c2=echarts.init(document.getElementById('chart-per-index'));
+  const top5=rows.slice(0,5);
+  c2.setOption({
+    title:{text:'Top 5 策略各指数 XIRR',left:'center',textStyle:{color:'#e2e8f0',fontSize:14}},
+    tooltip:{trigger:'axis'},
+    legend:{data:top5.map((r,i)=>`#${i+1} h${(r.he*100).toFixed(0)} e${(r.ex*100).toFixed(0)} r${(r.heavy_ratio*100).toFixed(0)}/${(r.extreme_ratio*100).toFixed(0)}`),bottom:0,textStyle:{color:'#94a3b8',fontSize:10}},
+    grid:{left:80,right:20,top:50,bottom:70},
+    xAxis:{type:'category',data:codes.map(c=>names[c]),axisLabel:{color:'#94a3b8',rotate:20,fontSize:11}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v*100).toFixed(0)+'%'}},
+    series:top5.map((r,i)=>({
+      name:`#${i+1} h${(r.he*100).toFixed(0)} e${(r.ex*100).toFixed(0)} r${(r.heavy_ratio*100).toFixed(0)}/${(r.extreme_ratio*100).toFixed(0)}`,
+      type:'bar',data:codes.map(c=>r[c+'_xirr']||0),
+      label:{show:true,position:'top',color:'#94a3b8',fontSize:9,formatter:p=>(p.value*100).toFixed(1)+'%'}
+    })),
+  });
+
+  // Heatmap: heavy_ratio × extreme_ratio → avg_xirr (at best he/ex/dt)
+  const bestHE=rows[0].he, bestEX=rows[0].ex, bestDT=rows[0].dt;
+  const hrVals=[0.05,0.10,0.15,0.20,0.25,0.35];
+  const erVals=[0.10,0.15,0.20,0.25,0.35,0.50];
+  const heatData=[], heatMin=999, heatMax=-999;
+  hrVals.forEach((hr,i)=>{
+    erVals.forEach((er,j)=>{
+      const match=rows.find(r=>r.he===bestHE&&r.ex===bestEX&&r.dt===bestDT&&r.heavy_ratio===hr&&r.extreme_ratio===er);
+      const v=match?match.avg_xirr:null;
+      if(v!=null){heatMin=Math.min(heatMin,v);heatMax=Math.max(heatMax,v);}
+      heatData.push([i,j,v||'-']);
+    });
+  });
+  const c3=echarts.init(document.getElementById('chart-heat'));
+  c3.setOption({
+    title:{text:`参数敏感度 (he=${(bestHE*100).toFixed(0)}% ex=${(bestEX*100).toFixed(0)}% dt=${(bestDT*100).toFixed(0)}%)`,left:'center',textStyle:{color:'#e2e8f0',fontSize:14}},
+    tooltip:{position:'top',formatter:p=>{const d=p.data;return `heavy=${(hrVals[d[0]]*100).toFixed(0)}% extreme=${(erVals[d[1]]*100).toFixed(0)}%<br/>avg_xirr=${typeof d[2]==='number'?(d[2]*100).toFixed(2)+'%':'—'}`}},
+    grid:{left:100,right:40,top:40,bottom:60},
+    xAxis:{type:'category',data:hrVals.map(v=>(v*100).toFixed(0)+'%'),name:'heavy_ratio',nameTextStyle:{color:'#94a3b8'},axisLabel:{color:'#94a3b8'}},
+    yAxis:{type:'category',data:erVals.map(v=>(v*100).toFixed(0)+'%'),name:'extreme_ratio',nameTextStyle:{color:'#94a3b8'},axisLabel:{color:'#94a3b8'}},
+    visualMap:{min:heatMin,max:heatMax,calculable:true,orient:'horizontal',left:'center',bottom:0,
+      inRange:{color:['#1e3a5f','#2563eb','#60a5fa','#fbbf24','#f97316','#ef4444']},
+      textStyle:{color:'#94a3b8'},formatter:v=>(v*100).toFixed(1)+'%'},
+    series:[{type:'heatmap',data:heatData,label:{show:true,color:'#e2e8f0',fontSize:9,formatter:p=>typeof p.data[2]==='number'?(p.data[2]*100).toFixed(1)+'%':''},emphasis:{itemStyle:{shadowBlur:10,shadowColor:'rgba(0,0,0,0.5)'}}}],
+  });
+}
+
+load();
+</script>
+</body>
+</html>

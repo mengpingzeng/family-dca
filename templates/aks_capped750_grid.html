@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30W+¥750/笔 网格搜索 — Family-DCA</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:18px;font-weight:600}
+.container{max-width:1500px;margin:0 auto;padding:16px 24px}
+.params-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:#94a3b8}
+.params-row b{color:#e2e8f0}
+.tabs-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.btn-tab{padding:7px 14px;background:#1e293b;border:1px solid #334155;border-radius:6px;cursor:pointer;font-size:13px;color:#94a3b8}
+.btn-tab.active{background:#1d4ed8;color:#fff;border-color:#2563eb}
+.btn-tab:hover:not(.active){border-color:#475569}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#1e293b;color:#94a3b8;padding:7px 8px;text-align:left;border:1px solid #334155}
+td{padding:5px 8px;border:1px solid #334155;color:#e2e8f0}
+tr:hover td{background:#1e293b}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#fbbf24}
+.tag{display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;margin:1px}
+.tag-buy{background:#166534;color:#4ade80}
+.tag-sell{background:#7f1d1d;color:#f87171}
+a.chart-link{color:#60a5fa;text-decoration:none;margin:0 6px}
+a.chart-link:hover{color:#93c5fd}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <h1>净值本金≤30W 网格搜索（¥750/笔 · 10年窗口 · 跨指数统一评分）</h1>
+</header>
+<div class="container">
+  <div class="tabs-row" id="window-tabs"></div>
+  <div id="content"></div>
+</div>
+<script>
+async function init() {
+  try {
+    const r = await fetch('/api/aks-capped750/grid-search');
+    const data = await r.json();
+    if (data.error) {
+      document.getElementById('content').innerHTML = '<p style="padding:20px;color:#94a3b8">' + data.error + '</p>';
+      return;
+    }
+    const unified = data.unified;
+    if (!unified) {
+      document.getElementById('content').innerHTML = '<p style="padding:20px;color:#94a3b8">无统一策略数据</p>';
+      return;
+    }
+    render(unified);
+  } catch(e) {
+    document.getElementById('content').innerHTML = '<p style="padding:20px;color:#f87171">加载失败: ' + e + '</p>';
+  }
+}
+
+function render(unified) {
+  var windows = Object.keys(unified).filter(function(k) { return k.indexOf('w') === 0; }).sort();
+  if (windows.length === 0) return;
+
+  var tabsHtml = windows.map(function(w) {
+    var yr = w.replace('w','');
+    var top = unified[w] && unified[w].top && unified[w].top[0];
+    var xirr = top && top.unified_xirr != null ? (top.unified_xirr * 100).toFixed(2) + '%' : '?';
+    return '<div class="btn-tab" data-w="' + w + '" onclick="showWindow(\'' + w + '\')">' + yr + '年 min=' + xirr + '</div>';
+  }).join('');
+  document.getElementById('window-tabs').innerHTML = tabsHtml;
+
+  window._unified = unified;
+  window._activeWindow = windows[0];
+  showWindow(windows[0]);
+}
+
+function showWindow(w) {
+  window._activeWindow = w;
+  var tabs = document.querySelectorAll('.btn-tab');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.toggle('active', tabs[i].getAttribute('data-w') === w);
+  }
+  buildTable();
+}
+
+function fmt(v, n) { return (v * 100).toFixed(n || 1); }
+
+function detailUrl(code, yr, r) {
+  return '/aks-capped750/grid-search/' + code
+    + '?w=' + yr
+    + '&bf=' + r.buy_floor + '&bl=' + r.buy_low + '&bm=' + r.buy_mid + '&bh=' + r.buy_high
+    + '&sh=' + r.sell_heavy + '&se=' + r.sell_extreme
+    + '&fed=' + (r.fed_gate != null ? r.fed_gate : 'None')
+    + '&pv=' + (r.pb_veto != null ? r.pb_veto : 'None')
+    + '&ps=' + (r.pb_sell != null ? r.pb_sell : 'None');
+}
+
+function buildTable() {
+  var w = window._activeWindow;
+  var wr = window._unified[w];
+  if (!wr || !wr.top) return;
+
+  var top = wr.top.slice(0, 30);
+  var yr = w.replace('w','');
+
+  var html = '<div class="params-row">';
+  html += '<span>窗口: <b>' + yr + '年</b></span>';
+  html += '<span>约束: <b>净值本金≤30W · ¥750/笔</b></span>';
+  html += '<span>评分: <b>min(沪深300, 上证50, 中证500 的 XIRR)</b></span>';
+  html += '<span>结果数: <b>' + top.length + '</b></span>';
+  html += '</div>';
+
+  html += '<table>';
+  html += '<thead><tr>';
+  html += '<th>#</th><th>统一min</th><th>平均</th><th>买入PE%</th><th>卖出PE%</th><th>FED</th><th>PB否</th><th>交易</th>';
+  html += '<th>沪深300</th><th>上证50</th><th>中证500</th>';
+  html += '<th>曲线图</th>';
+  html += '</tr></thead><tbody>';
+
+  for (var i = 0; i < top.length; i++) {
+    (function(r, rowNum) {
+      var cls = r.unified_xirr > 0.15 ? 'green' : (r.unified_xirr > 0.05 ? 'yellow' : 'red');
+
+      var names = {'000300':'沪深300','000016':'上证50','000905':'中证500'};
+      var links = ['000300','000016','000905'].map(function(c) {
+        return '<a class="chart-link" href="' + detailUrl(c, yr, r) + '">' + (names[c] || c) + '</a>';
+      }).join(' ');
+
+      var fedStr = r.fed_gate != null ? 'F<' + r.fed_gate : 'off';
+      var pbStr = r.pb_veto != null ? 'PB>' + r.pb_veto : 'off';
+
+      html += '<tr>';
+      html += '<td>' + (rowNum + 1) + '</td>';
+      html += '<td class="' + cls + '">' + fmt(r.unified_xirr, 2) + '%</td>';
+      html += '<td class="yellow">' + fmt(r.avg_xirr, 2) + '%</td>';
+      html += '<td><span class="tag tag-buy"><' + fmt(r.buy_floor, 0) + '%</span><span class="tag tag-buy">' + fmt(r.buy_low, 0) + '%</span><span class="tag tag-buy">' + fmt(r.buy_mid, 0) + '%</span><span class="tag tag-buy">' + fmt(r.buy_high, 0) + '%</span></td>';
+      html += '<td><span class="tag tag-sell">>' + fmt(r.sell_heavy, 0) + '%</span><span class="tag tag-sell">极>' + fmt(r.sell_extreme, 0) + '%</span></td>';
+      html += '<td>' + fedStr + '</td>';
+      html += '<td>' + pbStr + '</td>';
+      html += '<td>' + (r.total_trades || 0) + '</td>';
+      html += '<td>' + fmt(r['000300_xirr'], 1) + '%</td>';
+      html += '<td>' + fmt(r['000016_xirr'], 1) + '%</td>';
+      html += '<td>' + fmt(r['000905_xirr'], 1) + '%</td>';
+      html += '<td>' + links + '</td>';
+      html += '</tr>';
+    })(top[i], i);
+  }
+  html += '</tbody></table>';
+
+  document.getElementById('content').innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>

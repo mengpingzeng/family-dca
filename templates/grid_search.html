@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grid Search — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+header { background: #1e293b; padding: 14px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #334155; }
+header a { color: #94a3b8; text-decoration: none; font-size: 14px; }
+header a:hover { color: #e2e8f0; }
+header h1 { font-size: 20px; font-weight: 600; }
+.container { max-width: 1600px; margin: 0 auto; padding: 16px 24px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab { padding: 8px 18px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; cursor: pointer; font-size: 13px; color: #94a3b8; }
+.tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.tab:hover:not(.active) { background: #334155; }
+.section { margin-bottom: 24px; }
+.section h2 { font-size: 15px; color: #94a3b8; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #334155; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
+th { background: #1e293b; color: #94a3b8; padding: 8px 6px; text-align: left; border-bottom: 2px solid #334155; white-space: nowrap; }
+td { padding: 6px; border-bottom: 1px solid #1e293b; white-space: nowrap; }
+tr:hover { background: #1e293b; }
+tr.best { background: #173554; }
+.green { color: #4ade80; }
+.red { color: #f87171; }
+.gray { color: #64748b; }
+.chart-box { background: #1e293b; border-radius: 10px; border: 1px solid #334155; height: 380px; margin-bottom: 12px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.finfo { font-size: 11px; color: #64748b; padding: 4px 0; }
+@media (max-width: 1000px) { .row2, .row3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <h1>宽基统一策略 · 网格搜索</h1>
+  <span style="margin-left:auto;font-size:12px;color:#64748b" id="timestamp"></span>
+</header>
+<div class="container">
+  <div class="tabs">
+    <span class="tab active" data-w="all">全部对比</span>
+    <span class="tab" data-w="6">W=6年</span>
+    <span class="tab" data-w="8">W=8年</span>
+  </div>
+
+  <div class="section">
+    <h2>Top 策略得分对比 (各特征组合 Rank 1)</h2>
+    <table id="tbl-rank1"><tr><td class="gray">加载中...</td></tr></table>
+  </div>
+
+  <div class="section">
+    <h2>Top1 策略跨指数详细
+      <a href="/grid-search/demo/000300" style="margin-left:16px;color:#60a5fa;font-size:12px;text-decoration:none;border:1px solid #2563eb;border-radius:4px;padding:2px 10px">沪深300回测曲线</a>
+      <a href="/grid-search/demo/000905" style="margin-left:6px;color:#60a5fa;font-size:12px;text-decoration:none;border:1px solid #2563eb;border-radius:4px;padding:2px 10px">中证500</a>
+      <a href="/grid-search/demo/000016" style="margin-left:6px;color:#60a5fa;font-size:12px;text-decoration:none;border:1px solid #2563eb;border-radius:4px;padding:2px 10px">上证50</a>
+    </h2>
+    <table id="tbl-detail"><tr><td class="gray">加载中...</td></tr></table>
+  </div>
+
+  <div class="row3">
+    <div class="chart-box" id="chart-rank1"></div>
+    <div class="chart-box" id="chart-sigma"></div>
+    <div class="chart-box" id="chart-cross"></div>
+  </div>
+</div>
+
+<script>
+let ALL_DATA = [];
+let activeW = 'all';
+let activeWeight = 'w1_0_0_0';
+
+function parseWeight(label) {
+  const m = label.match(/w([\d_]+)_([\d_]+)/);
+  if (!m) return [1,0];
+  return [parseFloat(m[1].replace(/_/g,'.')), parseFloat(m[2].replace(/_/g,'.'))];
+}
+
+async function load() {
+  const resp = await fetch('/api/grid-search/data');
+  ALL_DATA = await resp.json();
+  document.getElementById('timestamp').textContent =
+    '生成: ' + (ALL_DATA.generated_at || '—') + ' | 有效策略: ' + (ALL_DATA.total_runs || 0);
+  renderAll();
+}
+
+function renderAll() {
+  const wFilter = activeW === 'all' ? null : parseInt(activeW);
+  renderRank1Table(wFilter);
+  renderDetailTable(wFilter);
+  renderRank1Chart(wFilter);
+  renderSigmaChart(wFilter);
+  renderCrossChart(wFilter);
+}
+
+// ==================== Table: Top per feature combo ====================
+function renderRank1Table(wFilter) {
+  const weights = ['w1_0_0_0', 'w0_8_0_2', 'w0_6_0_4'];
+  let html = '<tr><th>特征组合</th><th>W</th>';
+  for (const l of weights) { const [w1,w2] = parseWeight(l); html += `<th>w1=${w1} Score</th><th>Floor</th><th>High</th><th>Heavy</th><th>Extr</th><th>FED</th><th>Veto</th>`; }
+  html += '</tr>';
+
+  const features = ['PB_FED','PB_only','PE_FED','PE_only','PE_PB_FED','PE_PB'];
+  for (const feat of features) {
+    for (const w of [8, 6]) {
+      if (wFilter !== null && w !== wFilter) continue;
+      const bests = {};
+      for (const l of weights) {
+        const d = ALL_DATA.data[l];
+        if (!d) continue;
+        const rows = d.filter(r => r.feature === feat && r.window === w && r.rank === 1);
+        bests[l] = rows.length > 0 ? rows[0] : null;
+      }
+      html += '<tr>';
+      html += `<td>${feat}</td><td>${w}yr</td>`;
+      for (const l of weights) {
+        const b = bests[l];
+        if (b) {
+          const cl = b.strategy_score >= 0 ? 'green' : 'red';
+          html += `<td class="${cl}">${(b.strategy_score*100).toFixed(2)}%</td>`;
+          html += `<td>${(b.pe_buy_floor*100).toFixed(0)}%</td>`;
+          html += `<td>${(b.pe_buy_high*100).toFixed(0)}%</td>`;
+          html += `<td>${(b.pe_sell_heavy*100).toFixed(0)}%</td>`;
+          html += `<td>${(b.pe_sell_extreme*100).toFixed(0)}%</td>`;
+          html += `<td>${b.fed_buy_threshold.toFixed(1)}</td>`;
+          html += `<td>${(b.pb_veto_threshold*100).toFixed(0)}%</td>`;
+        } else {
+          html += '<td class="gray">—</td><td></td><td></td><td></td><td></td><td></td><td></td>';
+        }
+      }
+      html += '</tr>';
+    }
+  }
+  document.getElementById('tbl-rank1').innerHTML = html;
+}
+
+// ==================== Detail table for top strategy ====================
+function renderDetailTable(wFilter) {
+  const d = ALL_DATA.data['w1_0_0_0'];
+  if (!d || d.length === 0) { document.getElementById('tbl-detail').innerHTML = '<tr><td class="gray">无数据</td></tr>'; return; }
+  // Find global best across all rows
+  let best = null;
+  for (const r of d) {
+    if (best === null || r.strategy_score > best.strategy_score) best = r;
+  }
+  if (!best) { document.getElementById('tbl-detail').innerHTML = '<tr><td class="gray">无数据</td></tr>'; return; }
+  const codes = ['000300','000905','000852','000016','000688','399006','399330'];
+  const names = { '000300':'沪深300','000905':'中证500','000852':'中证1000','000016':'上证50','000688':'科创50','399006':'创业板指','399330':'深证100' };
+  let html = `<tr><th colspan="6" style="color:#facc15;font-size:13px">全局最优: ${best.feature} W=${best.window}yr | 得分=${(best.strategy_score*100).toFixed(2)}% | floor=${(best.pe_buy_floor*100).toFixed(0)}% high=${(best.pe_buy_high*100).toFixed(0)}% heavy=${(best.pe_sell_heavy*100).toFixed(0)}% extr=${(best.pe_sell_extreme*100).toFixed(0)}% fed=${best.fed_buy_threshold} veto=${(best.pb_veto_threshold*100).toFixed(0)}%</th></tr>`;
+  html += `<tr><th>指数</th><th>名称</th><th>avg_ann</th><th>sigma_ann</th><th>final_xirr</th><th></th></tr>`;
+  for (const c of codes) {
+    const avg = top[c+'_avg_ann'], sig = top[c+'_sigma_ann'], xr = top[c+'_final_xirr'];
+    if (avg != null) {
+      html += `<tr><td>${c}</td><td>${names[c]||c}</td>
+        <td class="${avg>=0?'green':'red'}">${(avg*100).toFixed(2)}%</td>
+        <td>${sig.toFixed(4)}</td>
+        <td class="${xr>=0?'green':'red'}">${(xr*100).toFixed(2)}%</td></tr>`;
+    }
+  }
+  document.getElementById('tbl-detail').innerHTML = html;
+}
+
+// ==================== Chart: Rank1 bar ====================
+function renderRank1Chart(wFilter) {
+  const c = echarts.init(document.getElementById('chart-rank1'));
+  const weights = ['w1_0_0_0','w0_8_0_2','w0_6_0_4'];
+  const features = ['PB_FED','PB_only','PE_FED','PE_only','PE_PB_FED','PE_PB'];
+  const cats = [];
+  const series = weights.map(() => []);
+  features.forEach(feat => {
+    [8,6].forEach(w => {
+      if (wFilter !== null && w !== wFilter) return;
+      cats.push(feat+' W'+w);
+      weights.forEach((l, li) => {
+        const d = ALL_DATA.data[l];
+        const rows = d ? d.filter(r => r.feature===feat && r.window===w && r.rank===1) : [];
+        series[li].push(rows.length>0 ? rows[0].strategy_score : null);
+      });
+    });
+  });
+  c.setOption({
+    title: { text: '各组合 Top1 得分', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: p => { let s=p[0].name; p.forEach(x=>{ s+='<br/>'+x.seriesName+': '+(x.value!=null?(x.value*100).toFixed(2)+'%':'—'); }); return s; } },
+    legend: { data: ['w1=1.0','w1=0.8','w1=0.6'], bottom: 0, textStyle: { color:'#94a3b8', fontSize:11 } },
+    grid: { left: 80, right: 20, top: 50, bottom: 50 },
+    xAxis: { type: 'category', data: cats, axisLabel: { color: '#94a3b8', rotate: 30, fontSize: 11 } },
+    yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: v => (v*100).toFixed(1)+'%' } },
+    series: [
+      { name: 'w1=1.0', type: 'bar', data: series[0], itemStyle: { color: '#60a5fa' }, label: { show: true, position: 'top', color: '#94a3b8', fontSize: 9, formatter: p => p.value!=null?(p.value*100).toFixed(1)+'%':'' } },
+      { name: 'w1=0.8', type: 'bar', data: series[1], itemStyle: { color: '#f59e0b' }, label: { show: true, position: 'top', color: '#94a3b8', fontSize: 9, formatter: p => p.value!=null?(p.value*100).toFixed(1)+'%':'' } },
+      { name: 'w1=0.6', type: 'bar', data: series[2], itemStyle: { color: '#ef4444' }, label: { show: true, position: 'top', color: '#94a3b8', fontSize: 9, formatter: p => p.value!=null?(p.value*100).toFixed(1)+'%':'' } },
+    ],
+  });
+}
+
+// ==================== Chart: avg vs sigma per combo ====================
+function renderSigmaChart(wFilter) {
+  const c = echarts.init(document.getElementById('chart-sigma'));
+  const d = ALL_DATA.data['w1_0_0_0'];
+  if (!d) return;
+  const features = ['PB_FED','PB_only','PE_FED','PE_only','PE_PB_FED','PE_PB'];
+  const avgVals = [], sigVals = [], names = [];
+  features.forEach(feat => {
+    [8,6].forEach(w => {
+      if (wFilter !== null && w !== wFilter) return;
+      const rows = d.filter(r => r.feature===feat && r.window===w && r.rank===1);
+      if (rows.length > 0) {
+        const codes = ['000300','000905','000852','000016','000688','399006','399330'];
+        let sumAvg=0, sumSig=0, cnt=0;
+        codes.forEach(cc => {
+          const a = rows[0][cc+'_avg_ann'], s = rows[0][cc+'_sigma_ann'];
+          if (a != null) { sumAvg += a; sumSig += s; cnt++; }
+        });
+        if (cnt>0) {
+          names.push(feat+' W'+w);
+          avgVals.push(sumAvg/cnt);
+          sigVals.push(sumSig/cnt);
+        }
+      }
+    });
+  });
+  c.setOption({
+    title: { text: 'Top1 策略 avg vs sigma 对比', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['avg_ann','sigma'], bottom: 0, textStyle: { color:'#94a3b8', fontSize:11 } },
+    grid: { left: 80, right: 20, top: 50, bottom: 50 },
+    xAxis: { type: 'category', data: names, axisLabel: { color: '#94a3b8', rotate: 30, fontSize: 11 } },
+    yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: v => (v*100).toFixed(1)+'%' } },
+    series: [
+      { name: 'avg_ann', type: 'bar', data: avgVals, itemStyle: { color: '#60a5fa' }, label: { show: true, position: 'top', color: '#94a3b8', fontSize: 9, formatter: p => (p.value*100).toFixed(1)+'%' } },
+      { name: 'sigma', type: 'bar', data: sigVals, itemStyle: { color: '#f97316' }, label: { show: true, position: 'top', color: '#94a3b8', fontSize: 9, formatter: p => p.value.toFixed(3) } },
+    ],
+  });
+}
+
+// ==================== Chart: Cross-index for top strategy ====================
+function renderCrossChart(wFilter) {
+  const c = echarts.init(document.getElementById('chart-cross'));
+  const d = ALL_DATA.data['w1_0_0_0'];
+  if (!d || d.length===0) return;
+  let best = null;
+  for (const r of d) {
+    if (best === null || r.strategy_score > best.strategy_score) best = r;
+  }
+  if (!best) return;
+  const top = best;
+  const codes = ['000300','000905','000852','000016','000688','399006','399330'];
+  const names = ['沪深300','中证500','中证1000','上证50','科创50','创业板指','深证100'];
+  const avgs = [], sigs = [], xirs = [];
+  codes.forEach((cc,i) => {
+    const a = top[cc+'_avg_ann'], s = top[cc+'_sigma_ann'], x = top[cc+'_final_xirr'];
+    if (a != null) { avgs.push(a); sigs.push(s); xirs.push(x); }
+    else { avgs.push(null); sigs.push(null); xirs.push(null); }
+  });
+  c.setOption({
+    title: { text: '跨指数 Top1 详情', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['avg_ann','sigma','final_xirr'], bottom: 0, textStyle: { color:'#94a3b8', fontSize:11 } },
+    grid: { left: 80, right: 20, top: 50, bottom: 50 },
+    xAxis: { type: 'category', data: names, axisLabel: { color: '#94a3b8', rotate: 30, fontSize: 11 } },
+    yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: v => (v*100).toFixed(0)+'%' } },
+    series: [
+      { name: 'avg_ann', type: 'bar', data: avgs, itemStyle: { color: '#60a5fa' }, barGap: '10%' },
+      { name: 'sigma', type: 'bar', data: sigs, itemStyle: { color: '#f97316' } },
+      { name: 'final_xirr', type: 'bar', data: xirs, itemStyle: { color: '#4ade80' } },
+    ],
+  });
+}
+
+// ==================== Tab switching ====================
+document.querySelectorAll('.tab').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    activeW = el.dataset.w;
+    renderAll();
+  });
+});
+
+load();
+</script>
+</body>
+</html>

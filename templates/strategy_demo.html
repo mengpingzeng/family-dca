@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PB_FED 策略回测 - {{CODE}}</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+header { background: #1e293b; padding: 14px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #334155; }
+header a { color: #94a3b8; text-decoration: none; font-size: 14px; }
+header a:hover { color: #e2e8f0; }
+header h1 { font-size: 20px; font-weight: 600; }
+.meta { font-size: 13px; color: #94a3b8; margin-left: auto; }
+.container { max-width: 1600px; margin: 0 auto; padding: 16px 24px; }
+.info-row { display: flex; gap: 24px; padding: 10px 0; font-size: 13px; border-bottom: 1px solid #334155; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.info-row span { color: #64748b; }
+.info-row .val { color: #e2e8f0; font-weight: 600; margin-left: 4px; }
+.rules-box { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 12px; line-height: 1.8; color: #94a3b8; }
+.rules-box b { color: #e2e8f0; }
+.rules-box .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 0 2px; }
+.tag-buy { background: #166534; color: #4ade80; }
+.tag-sell { background: #7f1d1d; color: #f87171; }
+.chart-row { display: grid; gap: 10px; margin-bottom: 10px; }
+.chart-box { background: #1e293b; border-radius: 10px; border: 1px solid #334155; height: 340px; }
+.green { color: #4ade80; } .yellow { color: #facc15; } .red { color: #f87171; }
+@media (max-width: 1000px) { .chart-row { grid-template-columns: 1fr !important; } }
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/grid-search">← 网格搜索</a>
+  <h1>PB_FED 策略 {{CODE}} 回测</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+  <div class="rules-box" id="rules">
+    <b>最优策略: PB_FED · W=8yr</b><br>
+    <b>买入</b> (PB百分位, 每周一次): 
+    <span class="tag tag-buy">&lt;10%→3x</span>
+    <span class="tag tag-buy">10-15%→2x</span>
+    <span class="tag tag-buy">15-35%→1x</span>
+    <span class="tag tag-buy">35-70%→0.5x</span>
+    <span class="tag tag-sell">≥70%→停止</span><br>
+    <b>卖出</b> (PB百分位, 每月一次):
+    <span class="tag tag-sell">≥75%→5-25%</span>
+    <span class="tag tag-sell">≥90%且回撤≥4%→25-50%</span><br>
+    <b>FED门控</b>: fed &lt; mean - 0.5×std 时不买 (极宽松)
+  </div>
+  <div class="info-row" id="info-row"></div>
+
+  <div class="chart-row" style="grid-template-columns:1.5fr 1fr 1fr">
+    <div class="chart-box" id="chart-kline"></div>
+    <div class="chart-box" id="chart-pb-val"></div>
+    <div class="chart-box" id="chart-pb-pct"></div>
+  </div>
+  <div class="chart-row" style="grid-template-columns:1fr 1fr">
+    <div class="chart-box" id="chart-invest"></div>
+    <div class="chart-box" id="chart-xirr"></div>
+  </div>
+
+  <div id="trades-section" style="margin-top:20px">
+    <h2 style="font-size:14px;color:#94a3b8;border-bottom:1px solid #334155;padding-bottom:6px;margin-bottom:12px">
+      交易明细 (共 <span id="trades-count">0</span> 笔)
+      <input type="text" id="trades-filter" placeholder="搜索..." style="margin-left:12px;background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:4px 10px;border-radius:4px;font-size:12px;width:200px">
+    </h2>
+    <div id="trades-table" style="max-height:500px;overflow-y:auto;font-size:11px"></div>
+  </div>
+</div>
+<script>
+const CODE = '{{CODE}}';
+
+async function load() {
+  const [r1, r2] = await Promise.all([
+    fetch('/api/analysis/' + CODE),
+    fetch('/api/grid-search/strategy-demo/' + CODE)
+  ]);
+  const rawData = await r1.json();
+  const bt = await r2.json();
+  if (!rawData.length || !bt.daily) {
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#64748b">数据不足</div>';
+    return;
+  }
+  render(rawData, bt);
+  renderTrades(bt);
+}
+
+function render(data, bt) {
+  const dates = data.map(d => d.date);
+  const opens = data.map(d => d.open);
+
+  // 对齐回测数据
+  const dMap = {};
+  for (const d of bt.daily) { dMap[d.date] = d; }
+  let firstInvDate = null;
+  for (const d of bt.daily) { if (d.cum_invested > 0) { firstInvDate = d.date; break; } }
+
+  // PB原始值 (从 strategy demo API, 前向填充到每日)
+  const pbRaw = bt.daily.map(d => d.pb_raw || null);
+
+  document.getElementById('meta-info').textContent =
+    'K线: ' + dates[0] + ' ~ ' + dates[dates.length-1] + ' | ' + data.length + '条';
+
+  const meta = bt.meta;
+  const lastDaily = bt.daily[bt.daily.length-1] || {};
+  document.getElementById('info-row').innerHTML =
+    '<span>总投入<span class="val">¥' + (meta.total_invested||0).toLocaleString() + '</span></span>' +
+    '<span>最终市值<span class="val">¥' + (meta.final_value||0).toLocaleString() + '</span></span>' +
+    '<span>交易<span class="val">' + (meta.trades||0) + '</span></span>' +
+    '<span>买入<span class="val">' + (meta.buys||0) + '</span></span>' +
+    '<span>回报率<span class="val ' + ((lastDaily.return_pct||0)>=0?'green':'red') + '">' + (lastDaily.return_pct||0).toFixed(2) + '%</span></span>' +
+    '<span>XIRR<span class="val ' + ((lastDaily.xirr||0)>=0?'green':'red') + '">' + ((lastDaily.xirr||0)*100).toFixed(4) + '%</span></span>';
+
+  // --- K线 ---
+  const kChart = echarts.init(document.getElementById('chart-kline'));
+  kChart.setOption({
+    title: { text: 'K线 (开盘价)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis' },
+    grid: { left: 70, right: 20, top: 50, bottom: 40 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color:'#94a3b8', formatter: v=>v.slice(0,7), interval: Math.floor(dates.length/12) } },
+    yAxis: { type: 'value', axisLabel: { color:'#94a3b8' }, splitLine: { lineStyle: { color:'#334155' } } },
+    dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+    series: [{ type:'line', data: opens, lineStyle:{ color:'#60a5fa', width:1.5 }, areaStyle:{ color:'rgba(96,165,250,0.08)' }, symbol:'none' }],
+  });
+
+  // --- PB原始值 ---
+  const pbVals = pbRaw.filter(v => v != null);
+  const pbMin = Math.floor(Math.min(...pbVals) * 0.9);
+  const pbMax = Math.ceil(Math.max(...pbVals) * 1.05);
+  const pbChart = echarts.init(document.getElementById('chart-pb-val'));
+  pbChart.setOption({
+    title: { text: 'PB 市净率 (蛋卷)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis', formatter: p => p[0] ? '<b>'+p[0].axisValue+'</b><br/>PB: '+p[0].value.toFixed(2) : '' },
+    grid: { left: 60, right: 20, top: 50, bottom: 40 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color:'#94a3b8', formatter: v=>v.slice(0,7), interval: Math.floor(dates.length/12) } },
+    yAxis: { type: 'value', min: pbMin, max: pbMax, axisLabel: { color:'#94a3b8' }, splitLine: { lineStyle: { color:'#334155' } } },
+    dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+    series: [{ type:'line', data: pbRaw, lineStyle:{ color:'#a78bfa', width:1.5 }, symbol:'none', smooth:true }],
+  });
+
+  // --- PB百分位 (日频计算, 前向填充, 连续曲线) ---
+  const pbPctAll = bt.daily.map(d => d.pb_pct != null ? d.pb_pct : null);
+  const pctChart = echarts.init(document.getElementById('chart-pb-pct'));
+  pctChart.setOption({
+    title: { text: 'PB百分位 (8yr, 日频PB计算)', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis',
+      formatter: function(ps) {
+        const idx = ps[0].dataIndex; const v = ps[0].value;
+        if (v == null) return '<b>'+dates[idx]+'</b><br/>PB%: —';
+        var clr = v < 0.1 ? '#4ade80' : v < 0.7 ? '#facc15' : v < 0.9 ? '#f97316' : '#f87171';
+        return '<b>'+dates[idx]+'</b><br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+clr+';margin-right:4px"></span>PB%: '+(v*100).toFixed(0)+'%';
+      }
+    },
+    grid: { left: 60, right: 20, top: 50, bottom: 40 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color:'#94a3b8', formatter: v=>v.slice(0,7), interval: Math.floor(dates.length/12) } },
+    yAxis: { type: 'value', min: 0, max: 1, axisLabel: { color:'#94a3b8', formatter: v=>(v*100).toFixed(0)+'%' }, splitLine: { lineStyle: { color:'#334155' } } },
+    dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+    visualMap: { show:false, pieces: [
+      { lt:0.1, color:'#4ade80' }, { lt:0.7, color:'#facc15' },
+      { lt:0.9, color:'#f97316' }, { gte:0.9, color:'#f87171' }
+    ]},
+    series: [{ type:'line', data: pbPctAll, lineStyle:{ width:1.5 }, areaStyle:{ opacity:0.12 }, symbol:'none', connectNulls:true,
+      markLine: { silent:true, symbol:'none',
+        data: [
+          { yAxis:0.10, label:{ formatter:'买入×3 10%', color:'#4ade80', fontSize:10 }, lineStyle:{ color:'#4ade80', type:'dashed' } },
+          { yAxis:0.15, label:{ formatter:'买入×2 15%', color:'#22c55e', fontSize:10 }, lineStyle:{ color:'#22c55e', type:'dashed' } },
+          { yAxis:0.35, label:{ formatter:'买入×1 35%', color:'#a3e635', fontSize:10 }, lineStyle:{ color:'#a3e635', type:'dashed' } },
+          { yAxis:0.70, label:{ formatter:'停止买入 70%', color:'#facc15', fontSize:10 }, lineStyle:{ color:'#facc15', type:'dashed' } },
+          { yAxis:0.75, label:{ formatter:'卖出 75%', color:'#f97316', fontSize:10 }, lineStyle:{ color:'#f97316', type:'dashed' } },
+          { yAxis:0.90, label:{ formatter:'清仓 90%', color:'#f87171', fontSize:10 }, lineStyle:{ color:'#f87171', type:'dashed' } },
+        ],
+      }
+    }],
+  });
+
+  // --- 本金/市值/总资产 ---
+  let lPrin=0, lEq=0, lTotal=0, lCum=0, lRet=0, lXirr=null;
+  const btPrin=[], btEq=[], btTotal=[], btCum=[], btXirr=[];
+  const buyMk=[], sellMk=[], buyLb=[], sellLb=[];
+  for (let i=0; i<dates.length; i++) {
+    const v = dMap[dates[i]];
+    if (v) { lPrin=v.net_principal; lEq=v.equity; lTotal=v.total_value; lCum=v.cum_invested; lRet=v.return_pct;
+             if (v.xirr!=null && v.xirr!==0) lXirr=v.xirr; }
+    btPrin.push(lPrin); btEq.push(lEq); btTotal.push(lTotal); btCum.push(lCum);
+    const daysSince = firstInvDate ? (new Date(dates[i])-new Date(firstInvDate))/86400000 : 0;
+    if (daysSince < 365) btXirr.push(v ? lRet : null);
+    else btXirr.push(lXirr != null ? lXirr*100 : null);
+
+    if (v && v.buy_amount>0) { buyMk.push(btPrin[i]); buyLb.push('¥'+(v.buy_amount/10000).toFixed(2)+'万'); }
+    else { buyMk.push(null); buyLb.push(''); }
+    if (v && v.sell_amount>0) { sellMk.push(btPrin[i]); sellLb.push('¥'+(v.sell_amount/10000).toFixed(2)+'万'); }
+    else { sellMk.push(null); sellLb.push(''); }
+  }
+
+  (function() {
+    const c = echarts.init(document.getElementById('chart-invest'));
+    c.setOption({
+      title: { text: '总投入 & 净值本金 & 市值 & 总资产 (元)', left:'center', textStyle:{ color:'#e2e8f0', fontSize:12 } },
+      tooltip: { trigger:'axis', formatter: function(ps) {
+        const idx=ps[0].dataIndex; let s='<b>'+dates[idx]+'</b>';
+        for (const p of ps) { if (p.seriesName==='买入'||p.seriesName==='卖出') continue;
+          s+='<br/><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+p.color+';margin-right:4px"></span>'+p.seriesName+': ¥'+(p.value||0).toLocaleString(); }
+        if (buyLb[idx]) s+='<br/><span style="color:#f87171">● 买入 '+buyLb[idx]+'</span>';
+        if (sellLb[idx]) s+='<br/><span style="color:#4ade80">● 卖出 '+sellLb[idx]+'</span>';
+        return s;
+      }},
+      grid: { left:70, right:15, top:45, bottom:42 },
+      xAxis: { type:'category', data:dates, axisLabel:{ color:'#94a3b8', formatter:v=>v.slice(0,7), interval:Math.floor(dates.length/12) } },
+      yAxis: { type:'value', axisLabel:{ color:'#94a3b8', formatter:v=>(v/10000).toFixed(0)+'万' }, splitLine:{ lineStyle:{ color:'#334155' } } },
+      dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+      series: [
+        { name:'总投入', type:'line', data:btCum, lineStyle:{ color:'#fb923c', width:2, type:'dashed' }, symbol:'none' },
+        { name:'净值本金', type:'line', data:btPrin, lineStyle:{ color:'#facc15', width:1.5 }, symbol:'none' },
+        { name:'持仓市值', type:'line', data:btEq, lineStyle:{ color:'#c084fc', width:1.5 }, symbol:'none' },
+        { name:'总资产', type:'line', data:btTotal, lineStyle:{ color:'#60a5fa', width:1.5 }, areaStyle:{ color:'rgba(96,165,250,0.12)' }, symbol:'none' },
+        { name:'买入', type:'scatter', data:buyMk, symbolSize:8, itemStyle:{ color:'#f87171' }, z:10, emphasis:{ label:{ show:true, position:'top', color:'#f87171', fontSize:12, formatter:p=>buyLb[p.dataIndex]||'' } } },
+        { name:'卖出', type:'scatter', data:sellMk, symbolSize:8, itemStyle:{ color:'#4ade80' }, z:10, emphasis:{ label:{ show:true, position:'top', color:'#4ade80', fontSize:12, formatter:p=>sellLb[p.dataIndex]||'' } } },
+      ],
+    });
+  })();
+
+  // --- XIRR收益率 ---
+  (function() {
+    const c = echarts.init(document.getElementById('chart-xirr'));
+    c.setOption({
+      title: { text: '收益率 (%)', left:'center', textStyle:{ color:'#e2e8f0', fontSize:13 } },
+      tooltip: { trigger:'axis', formatter: function(p) {
+        const idx=p[0].dataIndex, d=dates[idx], xv=p[0].data;
+        const daysSince = firstInvDate ? (new Date(d)-new Date(firstInvDate))/86400000 : 0;
+        if (xv==null) return d+'<br/>收益率: —';
+        if (daysSince<365) {
+          const v=dMap[d]; return '<b>'+d+'</b><br/>简单收益率: '+xv.toFixed(2)+'%<br/><span style="color:#94a3b8;font-size:10px">数据不足1年</span>';
+        }
+        return '<b>'+d+'</b><br/>年化 XIRR: '+xv.toFixed(2)+'%';
+      }},
+      grid: { left:60, right:15, top:45, bottom:42 },
+      xAxis: { type:'category', data:dates, axisLabel:{ color:'#94a3b8', formatter:v=>v.slice(0,7), interval:Math.floor(dates.length/12) } },
+      yAxis: { type:'value', axisLabel:{ color:'#94a3b8', formatter:'{value}%' }, splitLine:{ lineStyle:{ color:'#334155' } } },
+      dataZoom: [{ type:'slider', start:41, end:100, height:16, bottom:0 }],
+      series: [{ type:'line', data:btXirr, lineStyle:{ color:'#f97316', width:1.5 }, areaStyle:{ color:'rgba(249,115,22,0.08)' }, symbol:'none', connectNulls:true,
+        markLine: { silent:true, symbol:'none', data:[{ yAxis:0, label:{ formatter:'0%', color:'#94a3b8' }, lineStyle:{ color:'#94a3b8', type:'dashed' } }] }
+      }],
+    });
+  })();
+}
+
+// 图组联动
+const origInit = echarts.init;
+echarts.init = function(el) {
+  const instance = origInit.call(this, el);
+  instance.group = 'strategy-demo';
+  el._echart = instance;
+  return instance;
+};
+setTimeout(() => echarts.connect('strategy-demo'), 800);
+window.addEventListener('resize', () => {
+  ['chart-kline','chart-pb-val','chart-pb-pct','chart-invest','chart-xirr'].forEach(id=>{
+    const el=document.getElementById(id); if(el&&el._echart) el._echart.resize();
+  });
+});
+
+function renderTrades(bt) {
+  const trades = bt.trades || [];
+  document.getElementById('trades-count').textContent = trades.length;
+  if (!trades.length) { document.getElementById('trades-table').innerHTML = '<span style="color:#64748b">无交易数据</span>'; return; }
+
+  function buildTable(filter) {
+    const f = (filter || '').toLowerCase();
+    let html = '<table style="width:100%;border-collapse:collapse"><tr style="position:sticky;top:0;z-index:1">';
+    html += '<th>日期</th><th>操作</th><th>金额</th><th>份额</th><th>价格</th><th>PB%</th><th>累计投入</th><th style="min-width:300px">计算/触发方式</th></tr>';
+    for (const t of trades) {
+      if (f && t.date.indexOf(f)<0 && t.action.indexOf(f)<0 && t.reason.toLowerCase().indexOf(f)<0) continue;
+      const cls = t.action==='buy'?'color:#4ade80':'color:#f87171';
+      const act = t.action==='buy'?'买入':t.action==='sell'?'卖出':'清仓';
+      html += '<tr>';
+      html += `<td>${t.date}</td><td style="${cls};font-weight:600">${act}</td>`;
+      html += `<td style="${t.action==='sell'?'color:#f87171':''}">¥${Math.abs(t.amount).toLocaleString()}</td>`;
+      html += `<td>${t.shares.toFixed(0)}</td><td>${t.price.toFixed(2)}</td>`;
+      html += `<td>${t.pb_pct!=null?(t.pb_pct*100).toFixed(1)+'%':'—'}</td>`;
+      html += `<td>¥${t.cum_invested.toLocaleString()}</td>`;
+      html += `<td style="color:#94a3b8;white-space:normal">${t.reason}</td></tr>`;
+    }
+    html += '</table>';
+    document.getElementById('trades-table').innerHTML = html;
+  }
+
+  buildTable('');
+  document.getElementById('trades-filter').addEventListener('input', function(e) {
+    buildTable(e.target.value);
+  });
+}
+
+load();
+</script>
+</body>
+</html>

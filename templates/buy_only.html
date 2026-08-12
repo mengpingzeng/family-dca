@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buy-Only vs 有卖出 — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.container{max-width:1400px;margin:0 auto;padding:16px 24px}
+.info{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:13px;line-height:1.8;color:#94a3b8}
+.info b{color:#e2e8f0}
+.tag-buy{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:0 2px;background:#166534;color:#4ade80}
+.tag-sell{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:0 2px;background:#7f1d1d;color:#f87171}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#1e293b;color:#94a3b8;padding:10px 8px;text-align:left;border-bottom:2px solid #334155}
+td{padding:8px;border-bottom:1px solid #1e293b}
+tr:hover{background:#1e293b}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}
+.chart-row{display:grid;gap:10px;margin-bottom:10px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:380px}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/grid-search">← 网格搜索</a>
+  <h1>Buy-Only vs 有卖出 对比实验</h1>
+</header>
+<div class="container">
+  <div class="info">
+    <b>策略说明</b><br>
+    <b>Buy-Only:</b> 纯定投, 只在 PB 百分位低时买入, <span style="color:#f87171">永不卖出</span><br>
+    &nbsp;&nbsp;买入: <span class="tag-buy">&lt;10%→3x</span><span class="tag-buy">10-15%→2x</span><span class="tag-buy">15-35%→1x</span><span class="tag-buy">35-70%→0.5x</span><br>
+    <b>有卖出:</b> 同上买入 +
+    <span class="tag-sell">PB%≥75%→分批卖</span><span class="tag-sell">≥90%&回撤→清仓</span><br>
+    <b>参数:</b> window=8yr | floor=10% | high=70% | FED=-0.5
+  </div>
+
+  <table id="tbl">
+    <tr><th>指数</th><th>数据年数</th>
+      <th>Buy-Only XIRR</th><th>Buy-Only 回报</th><th>Buy-Only 投入</th><th>Buy-Only 市值</th>
+      <th>有卖出 XIRR</th><th>有卖出 回报</th><th>有卖出 投入</th><th>有卖出 总资产</th></tr>
+  </table>
+
+  <div class="info" id="summary"></div>
+
+  <div class="chart-row" style="grid-template-columns:1fr 1fr">
+    <div class="chart-box" id="chart-xirr"></div>
+    <div class="chart-box" id="chart-return"></div>
+  </div>
+</div>
+
+<script>
+async function load() {
+  const resp = await fetch('/api/grid-search/buy-only');
+  const rows = await resp.json();
+  render(rows);
+}
+
+function render(rows) {
+  const names = {'000300':'沪深300','000905':'中证500','000852':'中证1000','000016':'上证50','000688':'科创50','399006':'创业板指','399330':'深证100'};
+  let html = '';
+  let sumNS=0, sumWS=0, sumNR=0, sumWR=0, cnt=0;
+  for (const r of rows) {
+    const nx = r.no_sell_xirr||0, wx = r.with_sell_xirr||0;
+    const nr = r.no_sell_return||0, wr = r.with_sell_return||0;
+    const ni = r.no_sell_invested||0, nv = r.no_sell_value||0;
+    const wi = r.with_sell_invested||0, wv = r.with_sell_value||0;
+    sumNS+=nx; sumWS+=wx; sumNR+=nr; sumWR+=wr; cnt++;
+    html += '<tr>';
+    html += `<td><b>${r.code}</b> ${names[r.code]||''}</td><td>${r.data_years||'—'}yr</td>`;
+    html += `<td class="${nx>=0?'green':'red'}">${(nx*100).toFixed(2)}%</td>`;
+    html += `<td class="${nr>=0?'green':'red'}">${(nr*100).toFixed(1)}%</td>`;
+    html += `<td>¥${ni.toLocaleString()}</td>`;
+    html += `<td>¥${nv.toLocaleString()}</td>`;
+    html += `<td class="${wx>=0?'green':'red'}">${(wx*100).toFixed(2)}%</td>`;
+    html += `<td class="${wr>=0?'green':'red'}">${(wr*100).toFixed(1)}%</td>`;
+    html += `<td>¥${wi.toLocaleString()}</td>`;
+    html += `<td>¥${wv.toLocaleString()}</td>`;
+    html += '</tr>';
+  }
+  document.getElementById('tbl').innerHTML += html;
+
+  const avgNX = cnt>0 ? sumNS/cnt : 0;
+  const avgWX = cnt>0 ? sumWS/cnt : 0;
+  const avgNR = cnt>0 ? sumNR/cnt : 0;
+  const avgWR = cnt>0 ? sumWR/cnt : 0;
+  document.getElementById('summary').innerHTML =
+    `<b>汇总 (${cnt} 个指数均值)</b><br>` +
+    `<span style="color:#60a5fa">Buy-Only</span> 平均 XIRR = <b style="color:${avgNX>=0?'#4ade80':'#f87171'}">${(avgNX*100).toFixed(2)}%</b> | ` +
+    `平均回报 = <b style="color:${avgNR>=0?'#4ade80':'#f87171'}">${(avgNR*100).toFixed(1)}%</b> | ` +
+    `买入次数 ≈ ${Math.round(rows.reduce((s,r)=>s+(r.no_sell_trades||0),0)/cnt)}<br>` +
+    `<span style="color:#f97316">有卖出</span> 平均 XIRR = <b style="color:${avgWX>=0?'#4ade80':'#f87171'}">${(avgWX*100).toFixed(2)}%</b> | ` +
+    `平均回报 = <b style="color:${avgWR>=0?'#4ade80':'#f87171'}">${(avgWR*100).toFixed(1)}%</b> | ` +
+    `交易次数 ≈ ${Math.round(rows.reduce((s,r)=>s+(r.with_sell_trades||0),0)/cnt)}`;
+
+  // Chart: XIRR comparison
+  const c1 = echarts.init(document.getElementById('chart-xirr'));
+  c1.setOption({
+    title:{text:'XIRR 对比 (%)',left:'center',textStyle:{color:'#e2e8f0',fontSize:14}},
+    tooltip:{trigger:'axis',formatter:p=>p.map(x=>x.seriesName+': '+(x.value*100).toFixed(2)+'%').join('<br/>')},
+    legend:{data:['Buy-Only','有卖出'],bottom:0,textStyle:{color:'#94a3b8',fontSize:11}},
+    grid:{left:80,right:20,top:50,bottom:50},
+    xAxis:{type:'category',data:rows.map(r=>names[r.code]||r.code),axisLabel:{color:'#94a3b8',rotate:20,fontSize:11}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v*100).toFixed(0)+'%'}},
+    series:[
+      {name:'Buy-Only',type:'bar',data:rows.map(r=>r.no_sell_xirr||0),itemStyle:{color:'#60a5fa'},
+       label:{show:true,position:'top',color:'#94a3b8',fontSize:10,formatter:p=>(p.value*100).toFixed(2)+'%'}},
+      {name:'有卖出',type:'bar',data:rows.map(r=>r.with_sell_xirr||0),itemStyle:{color:'#f97316'},
+       label:{show:true,position:'top',color:'#94a3b8',fontSize:10,formatter:p=>(p.value*100).toFixed(2)+'%'}},
+    ],
+  });
+
+  // Chart: Return comparison
+  const c2 = echarts.init(document.getElementById('chart-return'));
+  c2.setOption({
+    title:{text:'简单回报对比 (%)',left:'center',textStyle:{color:'#e2e8f0',fontSize:14}},
+    tooltip:{trigger:'axis',formatter:p=>p.map(x=>x.seriesName+': '+(x.value*100).toFixed(1)+'%').join('<br/>')},
+    legend:{data:['Buy-Only','有卖出'],bottom:0,textStyle:{color:'#94a3b8',fontSize:11}},
+    grid:{left:80,right:20,top:50,bottom:50},
+    xAxis:{type:'category',data:rows.map(r=>names[r.code]||r.code),axisLabel:{color:'#94a3b8',rotate:20,fontSize:11}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'}},
+    series:[
+      {name:'Buy-Only',type:'bar',data:rows.map(r=>(r.no_sell_return||0)*100),itemStyle:{color:'#60a5fa'},
+       label:{show:true,position:'top',color:'#94a3b8',fontSize:10,formatter:p=>p.value.toFixed(1)+'%'}},
+      {name:'有卖出',type:'bar',data:rows.map(r=>(r.with_sell_return||0)*100),itemStyle:{color:'#f97316'},
+       label:{show:true,position:'top',color:'#94a3b8',fontSize:10,formatter:p=>p.value.toFixed(1)+'%'}},
+    ],
+  });
+}
+
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>akshare 回测详情 {{CODE}} — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.container{max-width:1600px;margin:0 auto;padding:16px 24px}
+.info-row{display:flex;gap:20px;flex-wrap:wrap;padding:10px 0;font-size:13px;border-bottom:1px solid #334155;margin-bottom:12px}
+.info-row span{color:#64748b}.info-row .val{color:#e2e8f0;font-weight:600;margin-left:4px}
+.rules-box{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:12px;line-height:1.8;color:#94a3b8}
+.rules-box b{color:#e2e8f0}
+.tag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;margin:0 2px}
+.tag-buy{background:#166534;color:#4ade80}.tag-sell{background:#7f1d1d;color:#f87171}
+.chart-row{display:grid;gap:10px;margin-bottom:10px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:320px}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#fbbf24}
+.trades-section{margin-top:16px}
+.trades-table{width:100%;border-collapse:collapse;font-size:11px}
+.trades-table th{background:#1e293b;color:#94a3b8;padding:6px 8px;text-align:left;border:1px solid #334155;position:sticky;top:0}
+.trades-table td{padding:4px 8px;border:1px solid #334155;color:#e2e8f0}
+.trades-table tr:hover{background:#1e293b}
+select,input{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;font-size:12px}
+.btn{background:#1d4ed8;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px}
+.btn:hover{background:#2563eb}
+</style>
+</head>
+<body>
+<header>
+  <a href="/aks/grid-search">← 网格结果</a>
+  <h1 id="title">akshare 回测 {{CODE}}</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+  <div class="rules-box" id="rules-box"></div>
+  <div class="info-row" id="info-row"></div>
+
+  <div class="chart-row" style="grid-template-columns:1.5fr 1fr 1fr">
+    <div class="chart-box" id="chart-kline"></div>
+    <div class="chart-box" id="chart-pepct"></div>
+    <div class="chart-box" id="chart-pbpct"></div>
+  </div>
+  <div class="chart-row" style="grid-template-columns:1fr 1fr">
+    <div class="chart-box" id="chart-asset"></div>
+    <div class="chart-box" id="chart-xirr"></div>
+  </div>
+
+  <div class="trades-section">
+    <h2 style="font-size:14px;color:#94a3b8;border-bottom:1px solid #334155;padding-bottom:6px;margin-bottom:10px">
+      交易明细 (<span id="trades-count">0</span>笔)
+      <input id="trades-filter" placeholder="搜索..." style="margin-left:12px;width:180px">
+    </h2>
+    <div id="trades-div" style="max-height:400px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<script>
+const CODE = '{{CODE}}';
+const names = {'000300':'沪深300','000016':'上证50','000905':'中证500'};
+const name = names[CODE] || CODE;
+
+// Default: best unified 5yr params
+const DEF = {w:5, bf:0.10, bl:0.20, bm:0.35, bh:0.65, sh:0.75, se:0.85, fed:'0.0', pv:'0.6', ps:'None'};
+
+async function load() {
+  const params = new URLSearchParams(window.location.search);
+  const w = params.get('w') || DEF.w;
+  const bf = params.get('bf') || DEF.bf;
+  const bl_ = params.get('bl') || DEF.bl;
+  const bm = params.get('bm') || DEF.bm;
+  const bh = params.get('bh') || DEF.bh;
+  const sh = params.get('sh') || DEF.sh;
+  const se = params.get('se') || DEF.se;
+  const fed = params.get('fed') || DEF.fed;
+  const pv = params.get('pv') || DEF.pv;
+  const ps = params.get('ps') || DEF.ps;
+
+  const url = `/api/aks/grid-search/${CODE}?w=${w}&bf=${bf}&bl=${bl_}&bm=${bm}&bh=${bh}&sh=${sh}&se=${se}&fed=${fed}&pv=${pv}&ps=${ps}`;
+  const r = await fetch(url);
+  const data = await r.json();
+  if (!data.daily || data.daily.length < 10) {
+    document.getElementById('info-row').innerHTML = '<span style="color:#f87171">数据不足</span>';
+    return;
+  }
+  render(data, {w, bf, bl_, bm, bh, sh, se, fed, pv, ps});
+}
+
+function render(data, p) {
+  const daily = data.daily, meta = data.meta;
+  document.getElementById('title').textContent = `akshare 回测 ${name}`;
+  document.getElementById('meta-info').textContent = `${data.daily[0].date} ~ ${data.daily[data.daily.length-1].date} | ${daily.length}天`;
+
+  // Rules box
+  const fed_str = p.fed !== 'None' ? `FED%<${p.fed}不买` : 'FED=off';
+  const pv_str = p.pv !== 'None' ? `PB%≥${p.pv}不买` : 'PBv=off';
+  const bf_ = (p.bf*100).toFixed(0), bl_ = (p.bl_*100).toFixed(0), bm_ = (p.bm*100).toFixed(0), bh_ = (p.bh*100).toFixed(0);
+  const sh_ = (p.sh*100).toFixed(0), se_ = (p.se*100).toFixed(0);
+
+  document.getElementById('rules-box').innerHTML = `
+    <b>${p.w}年窗口 · 统一策略</b><br>
+    买入: <span class="tag tag-buy"><${bf_}%→3x</span><span class="tag tag-buy">${bf_}%-${bl_}%→2x</span><span class="tag tag-buy">${bl_}%-${bm_}%→1x</span><span class="tag tag-buy">${bm_}%-${bh_}%→0.5x</span>
+    | 卖出: <span class="tag tag-sell">≥${sh_}%</span><span class="tag tag-sell">极≥${se_}%</span>
+    | ${fed_str} | ${pv_str}`;
+
+  // Info row
+  const last = daily[daily.length-1];
+  document.getElementById('info-row').innerHTML = `
+    <span>投入<span class="val">¥${(meta.total_invested||0).toLocaleString()}</span></span>
+    <span>总资产<span class="val">¥${(meta.final_value||0).toLocaleString()}</span></span>
+    <span>回报<span class="val ${last.return_pct>=0?'green':'red'}">${(last.return_pct||0).toFixed(2)}%</span></span>
+    <span>XIRR<span class="val ${(meta.xirr||0)>=0?'green':'red'}">${((meta.xirr||0)*100).toFixed(2)}%</span></span>
+    <span>交易<span class="val">${meta.trades||0}</span></span>
+    <span>买<span class="val">${meta.buys||0}</span></span>
+    <span>卖<span class="val">${meta.sells||0}</span></span>`;
+
+  const dates = daily.map(d => d.date);
+  const prices = daily.map(d => d.price);
+  const pePcts = daily.map(d => d.pe_pct != null ? +(d.pe_pct*100).toFixed(1) : null);
+  const pbPcts = daily.map(d => d.pb_pct != null ? +(d.pb_pct*100).toFixed(1) : null);
+  const equities = daily.map(d => d.equity);
+  const cumInvested = daily.map(d => d.cum_invested);
+  const totalValues = daily.map(d => d.total_value);
+  const xirrs = daily.map(d => d.xirr != null ? +(d.xirr*100).toFixed(2) : null);
+  const netPrincipal = daily.map(d => d.net_principal);
+  const peRaws = daily.map(d => d.pe_raw);
+
+  // Buy/sell markers
+  const buyMarkers = [], sellMarkers = [];
+  for (const t of data.trades) {
+    const idx = dates.indexOf(t.date);
+    if (idx < 0) continue;
+    if (t.action === 'buy') {
+      buyMarkers.push({coord: [idx, prices[idx] || 0], value: t.amount, symbolSize: Math.min(Math.sqrt(Math.abs(t.amount))/15, 20)});
+    } else {
+      sellMarkers.push({coord: [idx, prices[idx] || 0], value: t.amount, symbolSize: Math.min(Math.sqrt(Math.abs(t.amount))/15, 20)});
+    }
+  }
+
+  const allCharts = [];
+
+  // Chart: K-line + trade signals
+  var c1 = echarts.init(document.getElementById('chart-kline'));
+  allCharts.push(c1);
+  c1.setOption({
+    title: { text: '指数价格 + 交易信号', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
+    tooltip: { trigger: 'axis' },
+    grid: { left: 70, right: 20, top: 40, bottom: 50 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/8) } },
+    yAxis: { type: 'value', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 30, end: 100, height: 16, bottom: 4 }],
+    series: [
+      { type: 'line', data: prices, lineStyle: { color: '#60a5fa', width: 1 }, symbol: 'none', name: '价格' },
+      { type: 'scatter', data: buyMarkers.map(m => m.coord), symbolSize: 8, itemStyle: { color: '#4ade80' }, name: '买入' },
+      { type: 'scatter', data: sellMarkers.map(m => m.coord), symbolSize: 8, itemStyle: { color: '#f87171' }, name: '卖出' },
+    ],
+  });
+
+  // Chart: PE%
+  var c2 = echarts.init(document.getElementById('chart-pepct'));
+  allCharts.push(c2);
+  c2.setOption({
+    title: { text: `PE 百分位 (${p.w}yr)`, left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
+    tooltip: { trigger: 'axis' },
+    grid: { left: 60, right: 20, top: 40, bottom: 50 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/8) } },
+    yAxis: { type: 'value', max: 100, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 30, end: 100, height: 16, bottom: 4 }],
+    visualMap: { show: false, pieces: [{ lte: Number(p.bf)*100, color: '#166534' }, { lte: Number(p.bm)*100, color: '#fbbf24' }, { lte: Number(p.bh)*100, color: '#d97706' }, { gt: Number(p.bh)*100, color: '#dc2626' }], dimension: 1 },
+    series: [{ type: 'line', data: pePcts, lineStyle: { color: '#fbbf24', width: 1 }, areaStyle: { color: 'rgba(251,191,36,0.08)' }, symbol: 'none', name: 'PE%' }],
+  });
+
+  // Chart: PB%
+  var c3 = echarts.init(document.getElementById('chart-pbpct'));
+  allCharts.push(c3);
+  c3.setOption({
+    title: { text: `PB 百分位 (${p.w}yr)`, left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
+    tooltip: { trigger: 'axis' },
+    grid: { left: 60, right: 20, top: 40, bottom: 50 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/8) } },
+    yAxis: { type: 'value', max: 100, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 30, end: 100, height: 16, bottom: 4 }],
+    series: [
+      { type: 'line', data: pbPcts, lineStyle: { color: '#818cf8', width: 1 }, areaStyle: { color: 'rgba(129,140,248,0.08)' }, symbol: 'none', name: 'PB%' },
+      { type: 'line', data: dates.map(() => 60), lineStyle: { color: '#dc2626', type: 'dashed', width: 0.5 }, symbol: 'none', name: 'PB否决线60%' },
+    ],
+  });
+
+  // Chart: Asset curve
+  var c4 = echarts.init(document.getElementById('chart-asset'));
+  allCharts.push(c4);
+  c4.setOption({
+    title: { text: '资产曲线', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
+    tooltip: { trigger: 'axis' },
+    grid: { left: 80, right: 20, top: 40, bottom: 50 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/8) } },
+    yAxis: { type: 'value', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 30, end: 100, height: 16, bottom: 4 }],
+    series: [
+      { type: 'line', data: cumInvested, itemStyle: { color: '#64748b' }, lineStyle: { color: '#64748b', width: 1.5, type: 'dashed' }, symbol: 'none', name: '累计投入' },
+      { type: 'line', data: netPrincipal, itemStyle: { color: '#f59e0b' }, lineStyle: { color: '#f59e0b', width: 1.5, type: 'dashed' }, symbol: 'none', name: '净值本金(投入-卖出)' },
+      { type: 'line', data: equities, itemStyle: { color: '#3b82f6' }, lineStyle: { color: '#3b82f6', width: 2 }, areaStyle: { color: 'rgba(59,130,246,0.1)' }, symbol: 'none', name: '持仓市值' },
+      { type: 'line', data: totalValues, itemStyle: { color: '#22c55e' }, lineStyle: { color: '#22c55e', width: 2 }, symbol: 'none', name: '总资产(含现金)' },
+    ],
+  });
+
+  // Chart: XIRR
+  var c5 = echarts.init(document.getElementById('chart-xirr'));
+  allCharts.push(c5);
+  c5.setOption({
+    title: { text: 'XIRR 走势', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 13 } },
+    tooltip: { trigger: 'axis' },
+    grid: { left: 70, right: 20, top: 40, bottom: 50 },
+    xAxis: { type: 'category', data: dates, axisLabel: { color: '#94a3b8', formatter: v => v.slice(0,7), interval: Math.floor(dates.length/8) } },
+    yAxis: { type: 'value', axisLabel: { color: '#94a3b8', formatter: v => v+'%' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 30, end: 100, height: 16, bottom: 4 }],
+    series: [
+      { type: 'line', data: xirrs, lineStyle: { color: '#fbbf24', width: 1.5 }, areaStyle: { color: 'rgba(251,191,36,0.08)' }, symbol: 'none', name: 'XIRR %' },
+      { type: 'line', data: dates.map(() => 0), lineStyle: { color: '#64748b', type: 'dashed', width: 0.5 }, symbol: 'none', name: '0%' },
+    ],
+  });
+
+  // Connect all charts: zoom/pan synchronization
+  echarts.connect('aks_group');
+  for (var ci = 0; ci < allCharts.length; ci++) {
+    allCharts[ci].group = 'aks_group';
+  }
+
+  // Trades table
+  renderTrades(data.trades);
+}
+
+function renderTrades(trades) {
+  document.getElementById('trades-count').textContent = trades.length;
+  let html = '<table class="trades-table"><thead><tr><th>日期</th><th>操作</th><th>金额</th><th>价格</th><th>PE%</th><th>PB%</th><th>累计投入</th><th>理由</th></tr></thead><tbody>';
+  for (const t of trades) {
+    const cls = t.action === 'buy' ? 'green' : 'red';
+    html += `<tr>
+      <td>${t.date}</td><td class="${cls}">${t.action}</td>
+      <td>¥${Math.abs(t.amount).toLocaleString()}</td><td>${t.price}</td>
+      <td>${t.pe_pct != null ? (t.pe_pct*100).toFixed(1)+'%' : '-'}</td>
+      <td>${t.pb_pct != null ? (t.pb_pct*100).toFixed(1)+'%' : '-'}</td>
+      <td>¥${(t.cum_invested||0).toLocaleString()}</td>
+      <td style="color:#94a3b8;font-size:10px">${t.reason||''}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('trades-div').innerHTML = html;
+
+  document.getElementById('trades-filter').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    const rows = document.querySelectorAll('.trades-table tbody tr');
+    rows.forEach(r => { r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+  });
+}
+
+load();
+</script>
+</body>
+</html>
