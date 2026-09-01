@@ -55,12 +55,9 @@ def main():
     print(f"\n补充价格下载 — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     ok = 0
     for sina, code in TARGETS.items():
-        if not os.path.exists(os.path.join(OUT, f"{code}.parquet")):
-            if download_one(sina, code, {"399006":"创业板指","399330":"深证100"}[code]):
-                ok += 1
-            time.sleep(1)
-        else:
-            print(f"[SKIP] {code} 已存在")
+        if download_one(sina, code, {"399006":"创业板指","399330":"深证100"}[code]):
+            ok += 1
+        time.sleep(1)
     print(f"\n结果: {ok} 个 → {OUT}/")
     print(f"⚠️ HSI/HSTECH/NDX100/SPX500 暂无海外价格源，待补充")
 

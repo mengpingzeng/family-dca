@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 *.log
 .DS_Store
+
+# 推送系统敏感文件（webhook key / 持仓账本）
+wind_new_search/push/config.json
+wind_new_search/push/ledger.json

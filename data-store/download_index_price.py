@@ -21,8 +21,9 @@ CSI_CODES = [
 ]
 
 def fetch_price(code):
+    today = datetime.now().strftime("%Y%m%d")
     r = requests.get(API_URL, params={
-        "indexCode": code, "startDate": "20180101", "endDate": "20260806"},
+        "indexCode": code, "startDate": "20180101", "endDate": today},
         headers=HEADERS, timeout=TIMEOUT)
     r.raise_for_status()
     items = r.json().get("data", [])
