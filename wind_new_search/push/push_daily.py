@@ -29,6 +29,7 @@ from wind_new_search.engine import mult_for, prep_df
 PUSH_DIR = Path(__file__).resolve().parent
 DATA_DIR = PUSH_DIR / "data"
 LEDGER_PATH = PUSH_DIR / "ledger.json"
+ETF_DIR = PROJECT_DIR / "data-store" / "parquet" / "etf"
 
 WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send"
 
@@ -155,18 +156,19 @@ def current_signal(df, params, strat, ledger_entry=None):
     return out
 
 
-def calc_amounts(code, info, sig, ledger):
+def calc_amounts(code, info, sig, ledger, etf_price=None):
     """结合账本计算具体买入/卖出金额与份数.
 
-    买入: 倍数×1000 (有账本记录时还可按累计本金缩档, 暂用固定基数)
-    卖出: 仅当账本有持仓才有意义; 无持仓则卖出信号作废
+    买入: 倍数×1000 (现金投入, 不依赖价格)
+    卖出: 仅当账本有持仓才有意义; 金额 = 份额 × ETF价 × 比例
     """
     if sig["action"] == "buy":
         return sig["buy_mult"] * 1000, 0.0
     # sell
     held = ledger.get(code, {})
     shares = held.get("shares", 0.0)
-    sell_value = shares * sig["price"] * sig["sell_ratio"]
+    px = etf_price if etf_price else sig["price"]
+    sell_value = shares * px * sig["sell_ratio"]
     return 0.0, sell_value
 
 
@@ -174,29 +176,174 @@ def _fmt_pct(v):
     return f"{v*100:.0f}%" if v is not None and not np.isnan(v) else "—"
 
 
+def holding_stats(code, info, df, ledger_entry):
+    """持仓统计: 持仓金额, 持仓收益%, 持仓收益年化夏普.
+
+    持仓金额 = 份额 × ETF最新收盘价   (账本记的是ETF份额, 成本也是ETF价格)
+    持仓收益% = (ETF最新价 / 平均成本 - 1) * 100   (无持仓或无成本时 None)
+    持仓收益夏普 = 基于ETF价格序列(近1年)月频收益计算的年化夏普
+    """
+    etf_code = info.get("etf")
+    etf_price = None
+    etf_series = None
+    if etf_code:
+        epath = ETF_DIR / f"{etf_code}.parquet"
+        if epath.exists():
+            etf = pd.read_parquet(epath)
+            etf["date"] = pd.to_datetime(etf["date"])
+            etf = etf.sort_values("date").reset_index(drop=True)
+            etf_series = etf.set_index("date")["close"]
+            etf_price = float(etf["close"].iloc[-1])
+
+    shares = float(ledger_entry.get("shares", 0.0))
+    avg_cost = float(ledger_entry.get("avg_cost", 0.0))
+    value = shares * etf_price if etf_price else 0.0
+    ret_pct = None
+    if shares > 0 and avg_cost > 0 and etf_price:
+        ret_pct = (etf_price / avg_cost - 1.0) * 100.0
+    # 持仓收益夏普: 仅当有持仓且有足够ETF价格历史(近1年)
+    sharpe = None
+    if shares > 0 and etf_series is not None and len(etf_series) > 60:
+        s = etf_series
+        if len(s) > 252:
+            s = s[s.index >= s.index[-1] - pd.Timedelta(days=365)]
+        m = s.resample("ME").last().dropna()
+        r = m.pct_change().dropna()
+        if len(r) > 5 and r.std() > 0:
+            sharpe = float(r.mean() / r.std() * np.sqrt(12))
+    return {"value": value, "ret_pct": ret_pct, "sharpe": sharpe,
+            "etf_price": etf_price, "etf_code": etf_code}
+
+
+def distance_to_signals(sig, params, strat):
+    """计算当前估值距各买卖阈值还差多少百分位.
+
+    返回 dict: dist_buy (距买入区, 负值=已在区内), dist_sell (距卖出区),
+              in_buy/in_sell 布尔, buy_key/sell_key 信号列名.
+    """
+    buy_signal = params.get("buy_signal", "PB")
+    sell_signal = params.get("sell_signal", "PE")
+    bv = {"PE": sig["pe_pct"], "PB": sig["pb_pct"], "FED": sig["fed_pct"]}.get(buy_signal)
+    sv = {"PE": sig["pe_pct"], "PB": sig["pb_pct"], "FED": sig["fed_pct"]}.get(sell_signal)
+    buy_thresh = params.get("buy_mid", 0.25)  # 进入买入区(2x档)的边界
+    sell_thresh = params["sell_heavy"]         # 进入卖出区(heavy)的边界
+    out = {
+        "buy_key": buy_signal, "sell_key": sell_signal,
+        "buy_thresh": buy_thresh, "sell_thresh": sell_thresh,
+        "dist_buy": None, "dist_sell": None,
+        "in_buy": False, "in_sell": False,
+    }
+    if bv is not None:
+        out["dist_buy"] = (bv - buy_thresh) * 100.0
+        out["in_buy"] = bv <= buy_thresh
+    if sv is not None:
+        out["dist_sell"] = (sell_thresh - sv) * 100.0
+        out["in_sell"] = sv >= sell_thresh
+    return out
+
+
+def strategy_intro(strat, params):
+    """策略介绍文本."""
+    buy_signal = params.get("buy_signal", "PB")
+    sell_signal = params.get("sell_signal", "PE")
+    mults = strat["buy_mults"]
+    buy_desc = (f"{buy_signal}%<{params['buy_floor']*100:.0f}% →{mults[0]}x | "
+                f"<{params['buy_low']*100:.0f}% →{mults[1]}x | "
+                f"<{params['buy_mid']*100:.0f}% →{mults[2]}x")
+    gates = params.get("buy_gate")
+    gate_txt = ""
+    if gates:
+        caps = params.get("buy_gate_cap")
+        if isinstance(gates, list):
+            gs = "且".join(f"{g}≤{c*100:.0f}%" for g, c in zip(gates, caps))
+        else:
+            gs = f"{gates}≤{caps*100:.0f}%"
+        gate_txt = f" 闸门:{gs}"
+    sell_desc = (f"{sell_signal}%≥{params['sell_heavy']*100:.0f}% →减20% | "
+                 f"≥{params['sell_extreme']*100:.0f}% →减50%")
+    principal = (f"本金{strat['principal_threshold']/10000:.0f}万软收缩/"
+                 f"{strat['principal_cap']/10000:.0f}万封顶")
+    return [
+        f"📋 策略: {strat['name']}",
+        f"  买入: {buy_desc}{gate_txt}",
+        f"  卖出: {sell_desc}",
+        f"  约束: {principal}",
+    ]
+
+
 def build_message(cfg, results):
+    """完整决策看板: 策略介绍 + 今日信号 + 各指数估值/距买卖差 + 持仓概览."""
+    strat = cfg["strategy"]
+    params = strat["params"]
     lines = []
-    lines.append("【理财助手 · 今日信号】")
+    lines.append("【理财助手 · 每日看板】")
     if cfg.get("test_mode"):
         lines.append("⚠️ 测试模式")
+    lines.append("")
+    lines.extend(strategy_intro(strat, params))
+
+    # ---- 今日信号 ----
+    lines.append("")
     buys = [r for r in results if r["action"] == "buy"]
     sells = [r for r in results if r["action"] == "sell"]
     if not buys and not sells:
-        lines.append("今日无买卖动作 ✅")
-        lines.append("（估值均未触发买卖区间）")
-        return "\n".join(lines)
+        lines.append("📈 今日信号: 无买卖动作 ✅")
     for r in buys:
-        amt = r["amount"]
-        lines.append(f"\n📈 {r['name']} 建议买入")
-        lines.append(f"   金额: ¥{amt:,.0f} ({r['buy_reason']})")
-        lines.append(f"   最新价: {r['price']:.2f} | PE% {_fmt_pct(r['pe_pct'])} "
-                     f"PB% {_fmt_pct(r['pb_pct'])} FED% {_fmt_pct(r['fed_pct'])}")
+        lines.append(f"📈 {r['name']} 建议买入 ¥{r['amount']:,.0f} "
+                     f"({r['buy_reason']})")
     for r in sells:
-        amt = r["amount"]
-        lines.append(f"\n📉 {r['name']} 建议卖出")
-        lines.append(f"   金额: ¥{amt:,.0f} ({r['sell_reason']})")
-        lines.append(f"   最新价: {r['price']:.2f} | PE% {_fmt_pct(r['pe_pct'])} "
-                     f"PB% {_fmt_pct(r['pb_pct'])}")
+        lines.append(f"📉 {r['name']} 建议卖出 ¥{r['amount']:,.0f} "
+                     f"({r['sell_reason']})")
+
+    # ---- 各指数估值 + 距买卖区距离 ----
+    lines.append("")
+    lines.append("📊 各宽基估值(百分位/距买卖区):")
+    for r in sorted(results, key=lambda x: x["code"]):
+        d = r.get("dist", {})
+        bk, sk = d.get("buy_key", "?"), d.get("sell_key", "?")
+        bv = {"PE": r["pe_pct"], "PB": r["pb_pct"], "FED": r["fed_pct"]}.get(bk)
+        sv = {"PE": r["pe_pct"], "PB": r["pb_pct"], "FED": r["fed_pct"]}.get(sk)
+        # 距离文字
+        if d.get("in_buy"):
+            buy_txt = f"{bk}{_fmt_pct(bv)}·已入买区"
+        elif d.get("dist_buy") is not None:
+            buy_txt = f"{bk}{_fmt_pct(bv)}·距买还差{d['dist_buy']:.0f}%"
+        else:
+            buy_txt = f"{bk}—"
+        if d.get("in_sell"):
+            sell_txt = f"{sk}{_fmt_pct(sv)}·已入卖区"
+        elif d.get("dist_sell") is not None:
+            sell_txt = f"{sk}{_fmt_pct(sv)}·距卖还差{d['dist_sell']:.0f}%"
+        else:
+            sell_txt = f"{sk}—"
+        h = r.get("holding")
+        hold_txt = ""
+        if h and h["value"] > 0:
+            ret = f"{h['ret_pct']:+.1f}%" if h["ret_pct"] is not None else "—"
+            sharpe = f"夏普{h['sharpe']:.2f}" if h["sharpe"] is not None else ""
+            hold_txt = f" | 💰¥{h['value']:,.0f}({ret}{sharpe})"
+        lines.append(f"  {r['name']}: {buy_txt} | {sell_txt}{hold_txt}")
+
+    # ---- 持仓概览 ----
+    lines.append("")
+    held = [r for r in results if r.get("holding") and r["holding"]["value"] > 0]
+    if held:
+        total_value = sum(r["holding"]["value"] for r in held)
+        total_cost = 0.0
+        ledger = load_ledger()
+        for r in held:
+            total_cost += float(ledger.get(r["code"], {}).get("avg_cost", 0.0)) * \
+                float(ledger.get(r["code"], {}).get("shares", 0.0))
+        total_ret = (total_value / total_cost - 1) * 100 if total_cost > 0 else None
+        ret_txt = f" 总收益{total_ret:+.1f}%" if total_ret is not None else ""
+        lines.append(f"💼 持仓概览: {len(held)}只 | 市值¥{total_value:,.0f}{ret_txt}")
+        for r in held:
+            h = r["holding"]
+            ret = f"{h['ret_pct']:+.1f}%" if h["ret_pct"] is not None else "—"
+            sharpe = f" | 夏普{h['sharpe']:.2f}" if h["sharpe"] is not None else ""
+            lines.append(f"  {r['name']}: ¥{h['value']:,.0f} ({ret}{sharpe})")
+    else:
+        lines.append("💼 持仓概览: 暂无持仓(账本未录入)")
     return "\n".join(lines)
 
 
@@ -254,7 +401,9 @@ def main():
         if sig["action"] == "sell" and entry.get("last_sell_month") == this_month:
             sig["action"] = "none"
             sig["sell_reason"] = ""
-        amount, sell_value = calc_amounts(code, info, sig, ledger)
+        sig["holding"] = holding_stats(code, info, df, entry)
+        amount, sell_value = calc_amounts(code, info, sig, ledger,
+                                          etf_price=sig["holding"]["etf_price"])
         # 无持仓的卖出信号无意义 -> 作废
         if sig["action"] == "sell" and (amount + sell_value) <= 0:
             sig["action"] = "none"
@@ -262,6 +411,7 @@ def main():
         sig["code"] = code
         sig["name"] = info["name"]
         sig["amount"] = amount if sig["action"] == "buy" else sell_value
+        sig["dist"] = distance_to_signals(sig, params, strat)
         results.append(sig)
         if sig["action"] != "none":
             kind = "买入" if sig["action"] == "buy" else "卖出"

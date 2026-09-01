@@ -36,6 +36,8 @@ def main():
     run("下载指数价格", [str(DATA_DIR / "download_index_price.py")])
     run("下载补充价格", [str(DATA_DIR / "download_index_price_extra.py")])
     run("下载港股美股价格", [str(DATA_DIR / "download_wind_price.py")])
+    # ETF 价格 (持仓金额/收益/夏普 计算用)
+    run("下载ETF价格", [str(DATA_DIR / "download_etf.py")])
 
     # 2. 构建推送数据
     run("构建推送数据", [str(PROJECT_DIR / "wind_new_search" / "push" / "build_push_data.py")])
