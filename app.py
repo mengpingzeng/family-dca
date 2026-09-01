@@ -3580,6 +3580,94 @@ def api_live_curve(code: str):
     }
 
 
+@app.get("/api/live/history/{code}")
+def api_live_history(code: str):
+    """从账本流水重建每日资金曲线与收益率 (口径与引擎 build_curve 一致).
+
+    数据: ledger.json trades (买/卖流水) + ETF 价格序列.
+    返回: dates, cum_invested, equity, cash, total_value, return_pct, xirr,
+          buy_amount, sell_amount (买卖点)
+    """
+    import sys as _sys
+    import numpy as _np
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.push.push_daily import load_config as push_load_config
+    from wind_new_search.push.trade_server import load_ledger as trade_load_ledger
+    from wind_new_search.engine import calc_xirr
+    cfg = push_load_config()
+    if code not in cfg["indices"]:
+        raise HTTPException(404, f"指数 {code} 不存在")
+    entry = trade_load_ledger().get(code, {})
+    trades = entry.get("trades", [])
+    if not trades:
+        return {"dates": [], "cum_invested": [], "equity": [], "cash": [],
+                "total_value": [], "return_pct": [], "xirr": [],
+                "buy_amount": [], "sell_amount": []}
+    etf_code = cfg["indices"][code].get("etf")
+    ep = BASE / "data-store" / "parquet" / "etf" / f"{etf_code}.parquet"
+    if not ep.exists():
+        raise HTTPException(404, f"无 ETF 价格数据 {etf_code}")
+    etf = pd.read_parquet(ep)
+    etf["date"] = pd.to_datetime(etf["date"])
+    etf = etf.sort_values("date").reset_index(drop=True)
+
+    # 交易流水按日期排序, 映射到日期
+    tflows = []
+    for t in trades:
+        d = pd.Timestamp(t["date"].split(" ")[0])
+        amt = float(t["amount"])
+        sh = float(t.get("shares", 0))
+        tflows.append((d, t["action"], amt, sh))
+    tflows.sort(key=lambda x: x[0])
+    first_d = min(x[0] for x in tflows)
+
+    # 从首个交易日起, 用 ETF 价格逐日推进 (交易日即 ETF 价格日期)
+    m = etf[etf["date"] >= first_d].reset_index(drop=True)
+    dates, cum, eq, cashv, tv, retp, xirr, ba, sa = [], [], [], [], [], [], [], [], []
+    shares = 0.0
+    cum_invested = 0.0
+    cash = 0.0
+    flow_map = {}
+    for d, a, amt, sh in tflows:
+        flow_map.setdefault(d, []).append((a, amt, sh))
+    last_xirr = 0.0
+    cf = []
+    for i in range(len(m)):
+        d = m["date"].iloc[i]
+        px = float(m["close"].iloc[i])
+        buy_amt = sell_amt = 0.0
+        if d in flow_map:
+            for a, amt, sh in flow_map[d]:
+                if a == "buy":
+                    cf.append((d, -amt))
+                    cum_invested += amt
+                    buy_amt += amt
+                    shares += sh
+                else:
+                    cf.append((d, -amt))
+                    cash += amt
+                    sell_amt += amt
+                    shares -= sh
+            if len(cf) >= 3 and shares * px > 0:
+                last_xirr = calc_xirr(cf, d, shares * px)
+        eq_v = shares * px
+        total_value = eq_v + cash
+        ret = (total_value - cum_invested) / cum_invested * 100 if cum_invested > 0 else 0.0
+        dates.append(str(d.date()))
+        cum.append(round(cum_invested, 0))
+        eq.append(round(eq_v, 0))
+        cashv.append(round(cash, 0))
+        tv.append(round(total_value, 0))
+        retp.append(round(ret, 2))
+        xirr.append(last_xirr)
+        ba.append(round(buy_amt, 0))
+        sa.append(round(sell_amt, 0))
+    return {"dates": dates, "cum_invested": cum, "equity": eq, "cash": cashv,
+            "total_value": tv, "return_pct": retp, "xirr": xirr,
+            "buy_amount": ba, "sell_amount": sa,
+            "name": cfg["indices"][code]["name"]}
+
+
 if __name__ == "__main__":
     # 挂载成交记账路由 (方案A: 成交驱动记账, 与可视化同端口8000)
     import sys as _mount_sys

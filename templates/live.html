@@ -77,13 +77,15 @@ tr.sel td{background:#1e40af22}
   </div>
   <div class="chart-grid">
     <div class="chart-box" id="chart-pct"></div>
+    <div class="chart-box" id="chart-equity"></div>
+    <div class="chart-box" id="chart-xirr"></div>
     <div class="chart-box" id="chart-trade"></div>
   </div>
 
 </div>
 
 <script>
-let live=null, chartPct=null, chartTrade=null;
+let live=null, chartPct=null, chartTrade=null, chartEq=null, chartXirr=null;
 let rangeIdx={ '1y':250, '3y':750, 'all':99999 }, curRange='1y', curCode=null;
 
 const fmtPct=v=>v==null?'—':(v*100).toFixed(0)+'%';
@@ -199,17 +201,24 @@ async function loadCurve(code){
   });
 
   if(!chartTrade) chartTrade=echarts.init(document.getElementById('chart-trade'));
-  // 历史买卖点: 从账本流水匹配日期
+  // 历史买卖点: 从账本流水匹配日期 (近似: 找 ≤交易日的最近交易日, 支持周末/节假日)
   const buyD=[],buyV=[],sellD=[],sellV=[];
   const trades=row?row.trades:[];
-  const dateSet=new Map(); c.dates.forEach((d,i)=>{if(!dateSet.has(d))dateSet.set(d,i)});
+  // 预构建按日期升序的索引数组
+  const dIdx=c.dates.map((d,i)=>i);
   trades.forEach(t=>{
     const day=t.date.slice(0,10);
-    const idx=dateSet.get(day);
-    if(idx!=null && idx>=cut){
-      const v=px[idx];
-      if(t.action==='buy'){buyD.push(idx-cut);buyV.push(v);}
-      else{sellD.push(idx-cut);sellV.push(v);}
+    // 二分查找: 曲线上 ≤ day 的最近日期
+    let lo=0, hi=dIdx.length-1, best=-1;
+    while(lo<=hi){
+      const mid=(lo+hi)>>1;
+      if(c.dates[mid]<=day){best=mid;lo=mid+1;}
+      else hi=mid-1;
+    }
+    if(best>=cut){
+      const v=px[best-cut];
+      if(t.action==='buy'){buyD.push(best-cut);buyV.push(v);}
+      else{sellD.push(best-cut);sellV.push(v);}
     }
   });
   chartTrade.setOption({
@@ -224,6 +233,54 @@ async function loadCurve(code){
       {name:'价格',type:'line',data:px,lineStyle:{color:'#fbbf24',width:1.5},itemStyle:{color:'#fbbf24'},symbol:'none',connectNulls:true},
       {name:'买入',type:'scatter',data:buyV.length?buyD.map((x,i)=>[x,buyV[i]]):[],symbolSize:9,itemStyle:{color:'#4ade80'},z:10},
       {name:'卖出',type:'scatter',data:sellV.length?sellD.map((x,i)=>[x,sellV[i]]):[],symbolSize:9,itemStyle:{color:'#f87171'},z:10},
+    ]
+  });
+  loadHistory(code);
+}
+
+async function loadHistory(code){
+  const res=await fetch('/api/live/history/'+code);
+  const h=await res.json();
+  const dates=h.dates;
+  const cut=dates.length>rangeIdx[curRange]? dates.length-rangeIdx[curRange]:0;
+  const dts=dates.slice(cut), cum=h.cum_invested.slice(cut), eq=h.equity.slice(cut),
+        cashv=h.cash.slice(cut), tv=h.total_value.slice(cut), rp=h.return_pct.slice(cut),
+        xr=h.xirr.slice(cut), bm=h.buy_amount.slice(cut), sm=h.sell_amount.slice(cut);
+  const buyMk=[],sellMk=[];
+  bm.forEach((v,i)=>{buyMk.push(v>0?eq[i]:null)});
+  sm.forEach((v,i)=>{sellMk.push(v>0?eq[i]:null)});
+
+  if(!chartEq) chartEq=echarts.init(document.getElementById('chart-equity'));
+  chartEq.setOption({
+    title:{text:h.name+' 资金曲线: 总投入/市值/总资产(元)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['总投入','市值','总资产(含现金)','买入','卖出'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:60,right:20,top:55,bottom:40},
+    xAxis:{type:'category',data:dts,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dts.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v/10000).toFixed(1)+'万'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:30,end:100,height:14,bottom:0}],
+    series:[
+      {name:'总投入',type:'line',data:cum,lineStyle:{color:'#fb923c',width:2,type:'dashed'},itemStyle:{color:'#fb923c'},symbol:'none'},
+      {name:'市值',type:'line',data:eq,lineStyle:{color:'#c084fc',width:2},itemStyle:{color:'#c084fc'},symbol:'none'},
+      {name:'总资产(含现金)',type:'line',data:tv,lineStyle:{color:'#60a5fa',width:1.5},itemStyle:{color:'#60a5fa'},areaStyle:{color:'rgba(96,165,250,0.1)'},symbol:'none'},
+      {name:'买入',type:'scatter',data:buyMk,symbolSize:7,itemStyle:{color:'#4ade80'},z:10},
+      {name:'卖出',type:'scatter',data:sellMk,symbolSize:7,itemStyle:{color:'#f87171'},z:10},
+    ]
+  });
+
+  if(!chartXirr) chartXirr=echarts.init(document.getElementById('chart-xirr'));
+  chartXirr.setOption({
+    title:{text:h.name+' 收益率: 简单回报% / 年化XIRR%',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['简单回报%','年化XIRR%'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:60,right:20,top:55,bottom:40},
+    xAxis:{type:'category',data:dts,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dts.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:30,end:100,height:14,bottom:0}],
+    series:[
+      {name:'简单回报%',type:'line',data:rp,lineStyle:{color:'#facc15',width:1.5},itemStyle:{color:'#facc15'},symbol:'none',connectNulls:true},
+      {name:'年化XIRR%',type:'line',data:xr.map(v=>v!=null&&v!==0?(v*100).toFixed(2):null),lineStyle:{color:'#f97316',width:1.5},itemStyle:{color:'#f97316'},symbol:'none',connectNulls:true,
+        markLine:{silent:true,symbol:'none',data:[{yAxis:0,lineStyle:{color:'#94a3b8',type:'dashed'}}]}},
     ]
   });
 }
