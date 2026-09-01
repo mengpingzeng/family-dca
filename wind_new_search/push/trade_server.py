@@ -37,6 +37,10 @@ CONFIG_PATH = PUSH_DIR / "config.json"
 
 app = FastAPI(title="宽基理财 · 成交记账")
 
+from fastapi import APIRouter
+
+trade_router = APIRouter()
+
 
 def load_ledger():
     if LEDGER_PATH.exists():
@@ -107,7 +111,7 @@ def apply_trade(ledger, code, name, action, shares, price):
 # 页面
 # ============================================================================
 
-@app.get("/trade", response_class=HTMLResponse)
+@trade_router.get("/trade", response_class=HTMLResponse)
 def trade_page(code: str = "", action: str = ""):
     cfg = load_config()
     ledger = load_ledger()
@@ -173,7 +177,7 @@ upd();
     return HTMLResponse(html)
 
 
-@app.get("/trade/confirm", response_class=HTMLResponse)
+@trade_router.get("/trade/confirm", response_class=HTMLResponse)
 def confirm_page(msg: str = ""):
     html = f"""<!DOCTYPE html>
 <html lang="zh"><head><meta charset="utf-8">
@@ -194,7 +198,7 @@ a{{display:inline-block;margin-top:16px;color:#07c160}}
 # API
 # ============================================================================
 
-@app.post("/api/trade")
+@trade_router.post("/api/trade")
 async def submit_trade(code: str = Form(...), action: str = Form(...),
                        shares: float = Form(...), price: float = Form(...)):
     cfg = load_config()
@@ -214,15 +218,18 @@ async def submit_trade(code: str = Form(...), action: str = Form(...),
     return RedirectResponse(f"/trade/confirm?msg={msg}", status_code=303)
 
 
-@app.get("/api/ledger")
+@trade_router.get("/api/ledger")
 def api_ledger():
     return JSONResponse(load_ledger())
 
 
-@app.get("/api/config")
+@trade_router.get("/api/config")
 def api_config():
     cfg = load_config()
     return JSONResponse({"indices": cfg["indices"]})
+
+
+app.include_router(trade_router)
 
 
 if __name__ == "__main__":

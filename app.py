@@ -3487,5 +3487,10 @@ def api_wind_new_etf_capped_curve_since(start_date: str, code: str):
 
 
 if __name__ == "__main__":
+    # 挂载成交记账路由 (方案A: 成交驱动记账, 与可视化同端口8000)
+    import sys as _mount_sys
+    _mount_sys.path.insert(0, str(BASE))
+    from wind_new_search.push.trade_server import trade_router as _trade_router
+    app.include_router(_trade_router)
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
