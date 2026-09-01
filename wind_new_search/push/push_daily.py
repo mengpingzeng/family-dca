@@ -344,12 +344,19 @@ def build_message(cfg, results):
             lines.append(f"  {r['name']}: ¥{h['value']:,.0f} ({ret}{sharpe})")
     else:
         lines.append("💼 持仓概览: 暂无持仓(账本未录入)")
+
+    # 记账入口链接 (方案A: 成交驱动记账)
+    base = cfg.get("trade_base_url", "http://127.0.0.1:8001")
+    lines.append("")
+    lines.append(f"💬 买入/卖出后请点击记账: [📝 记录成交]({base}/trade)")
     return "\n".join(lines)
 
 
 def send_webhook(cfg, text):
+    """发送 markdown 消息(支持可点击链接)."""
     url = cfg["webhook_url"]
-    r = requests.post(url, json={"msgtype": "text", "text": {"content": text}}, timeout=15)
+    r = requests.post(url, json={"msgtype": "markdown",
+                                 "markdown": {"content": text}}, timeout=15)
     resp = r.json()
     if resp.get("errcode") != 0:
         print(f"推送失败: {resp}")
