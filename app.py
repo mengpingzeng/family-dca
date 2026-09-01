@@ -3486,6 +3486,100 @@ def api_wind_new_etf_capped_curve_since(start_date: str, code: str):
     return curve
 
 
+@app.get("/live", response_class=HTMLResponse)
+def live_dashboard_page():
+    with open(BASE / "templates" / "live.html") as f:
+        return f.read()
+
+
+@app.get("/api/live")
+def api_live_dashboard():
+    """实盘实时看板数据: 策略参数 + 各指数实时估值/信号/持仓 + 历史买卖点.
+
+    数据源: wind_new_search/push/data/{code}.parquet (估值)
+             wind_new_search/push/ledger.json (持仓与成交流水)
+    """
+    import json as _json
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.push.push_daily import (
+        current_signal, distance_to_signals, holding_stats,
+        load_config as push_load_config, load_ledger,
+    )
+    import numpy as _np
+    from pathlib import Path as _Path
+
+    push_dir = BASE / "wind_new_search" / "push"
+    cfg = push_load_config()
+    ledger = load_ledger()
+    strat = cfg["strategy"]
+    params = strat["params"]
+
+    rows = []
+    for code, info in cfg["indices"].items():
+        p = push_dir / "data" / f"{code}.parquet"
+        if not p.exists():
+            continue
+        df = pd.read_parquet(p)
+        df["date"] = pd.to_datetime(df["date"])
+        if len(df) < 30:
+            continue
+        sig = current_signal(df, params, strat, ledger.get(code, {}))
+        dist = distance_to_signals(sig, params, strat)
+        holding = holding_stats(code, info, df, ledger.get(code, {}))
+        entry = ledger.get(code, {})
+        rows.append({
+            "code": code, "name": info["name"], "etf": info.get("etf"),
+            "date": str(df["date"].iloc[-1].date()),
+            "price": sig["price"], "pe": sig["pe_pct"], "pb": sig["pb_pct"],
+            "fed": sig["fed_pct"], "action": sig["action"],
+            "buy_reason": sig["buy_reason"], "sell_reason": sig["sell_reason"],
+            "dist": dist,
+            "shares": float(entry.get("shares", 0)),
+            "avg_cost": float(entry.get("avg_cost", 0)),
+            "total_invested": float(entry.get("total_invested", 0)),
+            "holding_value": holding["value"], "holding_ret": holding["ret_pct"],
+            "sharpe": holding["sharpe"], "etf_price": holding["etf_price"],
+            "trades": entry.get("trades", []),
+        })
+
+    return {
+        "strategy": {"name": strat["name"], "params": params,
+                     "mults": strat["buy_mults"],
+                     "principal_threshold": strat["principal_threshold"],
+                     "principal_cap": strat["principal_cap"]},
+        "rows": rows,
+        "updated_at": _np.datetime64("now", "s").astype(str),
+    }
+
+
+@app.get("/api/live/curve/{code}")
+def api_live_curve(code: str):
+    """单指数历史估值曲线 (价格/PE/PB/FED百分位 + 阈值线)."""
+    import sys as _sys
+    import numpy as _np
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.push.push_daily import load_config as push_load_config
+    cfg = push_load_config()
+    if code not in cfg["indices"]:
+        raise HTTPException(404, f"指数 {code} 不存在")
+    p = BASE / "wind_new_search" / "push" / "data" / f"{code}.parquet"
+    if not p.exists():
+        raise HTTPException(404, f"无数据 {code}")
+    df = pd.read_parquet(p)
+    df["date"] = pd.to_datetime(df["date"])
+    d = df.dropna(subset=["pe_pct", "pb_pct"])
+    return {
+        "name": cfg["indices"][code]["name"],
+        "dates": [str(x.date()) for x in d["date"]],
+        "price": [None if _np.isnan(x) else float(x) for x in d["price"]],
+        "pe_pct": [None if _np.isnan(x) else float(x) for x in d["pe_pct"]],
+        "pb_pct": [None if _np.isnan(x) else float(x) for x in d["pb_pct"]],
+        "fed_pct": [None if _np.isnan(x) else float(x) for x in d["fed_pct"]],
+        "params": cfg["strategy"]["params"],
+    }
+
+
 if __name__ == "__main__":
     # 挂载成交记账路由 (方案A: 成交驱动记账, 与可视化同端口8000)
     import sys as _mount_sys

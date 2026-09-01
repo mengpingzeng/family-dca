@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实盘实时看板 — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.meta{font-size:13px;color:#94a3b8;margin-left:auto}
+.container{max-width:1400px;margin:0 auto;padding:16px 24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px;margin-bottom:14px}
+.card h2{font-size:14px;color:#94a3b8;margin-bottom:10px;border-bottom:1px solid #334155;padding-bottom:6px}
+.rules-box{font-size:13px;line-height:1.9;color:#cbd5e1}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:0 2px}
+.tag-buy{background:#166534;color:#4ade80}
+.tag-sell{background:#7f1d1d;color:#f87171}
+.tag-mode{background:#1e40af;color:#93c5fd}
+.tag-cap{background:#854d0e;color:#fbbf24}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #334155;white-space:nowrap}
+th{color:#94a3b8;font-weight:600;position:sticky;top:0;background:#1e293b}
+td.l,th.l{text-align:left}
+tr:hover td{background:#263244}
+tr.sel td{background:#1e40af22}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}.dim{color:#64748b}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:360px}
+.tabs{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.tabs button{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+.tabs button.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+.held{color:#4ade80}.sig-buy{color:#4ade80;font-weight:600}.sig-sell{color:#f87171;font-weight:600}
+@media(max-width:1000px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/trade">📝 记录成交 →</a>
+  <h1>实盘实时看板</h1>
+  <span class="meta" id="meta-info">加载中...</span>
+</header>
+<div class="container">
+
+  <div class="card">
+    <h2>策略与口径</h2>
+    <div class="rules-box" id="rules"></div>
+  </div>
+
+  <div class="card">
+    <h2>持仓概览</h2>
+    <div class="rules-box" id="portfolio"></div>
+  </div>
+
+  <div class="card">
+    <h2>各指数实时估值与信号</h2>
+    <table id="live-table">
+      <thead><tr>
+        <th class="l">指数</th><th>日期</th><th>最新价</th>
+        <th>PB%</th><th>距买区</th><th>PE%</th><th>距卖区</th><th>FED%</th>
+        <th>信号</th><th>持仓</th><th>成本</th><th>市值</th><th>收益</th><th>夏普</th><th>交易</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="tabs">
+    <button class="active" data-range="1y">近1年</button>
+    <button data-range="3y">近3年</button>
+    <button data-range="all">全部</button>
+    <select id="code-select" onchange="selectCode()"></select>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box" id="chart-pct"></div>
+    <div class="chart-box" id="chart-trade"></div>
+  </div>
+
+</div>
+
+<script>
+let live=null, chartPct=null, chartTrade=null;
+let rangeIdx={ '1y':250, '3y':750, 'all':99999 }, curRange='1y', curCode=null;
+
+const fmtPct=v=>v==null?'—':(v*100).toFixed(0)+'%';
+const fmtMoney=v=>v==null?'—':'¥'+Number(v).toLocaleString(undefined,{maximumFractionDigits:0});
+const fmtRet=v=>v==null?'—':(v>=0?'+':'')+v.toFixed(1)+'%';
+
+function strategyText(strat){
+  const p=strat.params, m=strat.mults;
+  const tiers='<span class="tag tag-buy">&lt;'+fmtPct(p.buy_floor)+'→'+m[0]+'x</span>'+
+    '<span class="tag tag-buy">'+fmtPct(p.buy_floor)+'~'+fmtPct(p.buy_low)+'→'+m[1]+'x</span>'+
+    '<span class="tag tag-buy">'+fmtPct(p.buy_low)+'~'+fmtPct(p.buy_mid)+'→'+m[2]+'x</span>'+
+    '<span class="tag tag-sell">≥'+fmtPct(p.buy_mid)+'→不买</span>';
+  const gate=p.buy_gate? '<span class="tag tag-mode">'+p.buy_gate+'≤'+fmtPct(p.buy_gate_cap)+'</span>':'无闸门';
+  return '<b>'+strat.name+'</b><br/>'+
+    '买入信号 <span class="tag tag-mode">'+p.buy_signal+'</span> '+tiers+
+    ' | 闸门 '+gate+
+    ' | 卖出 <span class="tag tag-sell">'+p.sell_signal+'≥'+fmtPct(p.sell_heavy)+'→减20%</span>'+
+    '<span class="tag tag-sell">≥'+fmtPct(p.sell_extreme)+'→减50%</span>'+
+    ' | 本金 <span class="tag tag-cap">'+fmtMoney(strat.principal_threshold)+'软收缩/'+fmtMoney(strat.principal_cap)+'封顶</span>';
+}
+
+function portfolioText(rows){
+  const held=rows.filter(r=>r.shares>0);
+  if(held.length===0) return '暂无持仓（账本为空）。买入/卖出后点击右上角"📝 记录成交"记账。';
+  let totalV=0, totalC=0;
+  held.forEach(r=>{totalV+=r.holding_value; totalC+=r.shares*r.avg_cost});
+  const ret=(totalC>0)?(totalV/totalC-1)*100:0;
+  let s='<b>持有 '+held.length+' 只</b> | 市值 '+fmtMoney(totalV)+
+        ' | 成本 '+fmtMoney(totalC)+' | 总收益 <span class="'+(ret>=0?'green':'red')+'">'+ret.toFixed(1)+'%</span>';
+  s+='<br/>'+held.map(r=>{
+    const rr=fmtRet(r.holding_ret), sh=r.sharpe!=null?' 夏普'+r.sharpe.toFixed(2):'';
+    const act=r.action==='sell'?' <span class="sig-sell">→建议卖出</span>':(r.action==='buy'?' <span class="sig-buy">→建议买入</span>':'');
+    return '· <b>'+r.name+'</b> '+fmtMoney(r.holding_value)+' ('+rr+sh+')'+act;
+  }).join('<br/>');
+  return s;
+}
+
+function distText(d){
+  let buy='—', sell='—';
+  if(d.in_buy) buy='<span class="sig-buy">已入买区</span>';
+  else if(d.dist_buy!=null) buy=fmtPct((d.dist_buy)/100*-1)+'…'+d.dist_buy.toFixed(0)+'%';
+  if(d.in_sell) sell='<span class="sig-sell">已入卖区</span>';
+  else if(d.dist_sell!=null) sell=d.dist_sell.toFixed(0)+'%';
+  return {buy,sell};
+}
+
+function renderTable(){
+  const tb=document.querySelector('#live-table tbody');
+  tb.innerHTML='';
+  live.rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    if(r.code===curCode) tr.className='sel';
+    const d=distText(r.dist);
+    const sig=r.action==='buy'?'<span class="sig-buy">买</span>':(r.action==='sell'?'<span class="sig-sell">卖</span>':'<span class="dim">无</span>');
+    const ntr=fmtRet(r.holding_ret), sh=r.sharpe!=null?r.sharpe.toFixed(2):'—';
+    const tc=r.trades.length;
+    tr.innerHTML='<td class="l">'+r.name+'</td><td>'+r.date+'</td><td>'+r.price.toFixed(2)+'</td>'+
+      '<td>'+fmtPct(r.pb)+'</td><td>'+d.buy+'</td>'+
+      '<td>'+fmtPct(r.pe)+'</td><td>'+d.sell+'</td><td>'+fmtPct(r.fed)+'</td>'+
+      '<td>'+sig+'</td><td class="'+(r.shares>0?'held':'dim')+'">'+(r.shares>0?r.shares.toFixed(0)+'份':'空')+'</td>'+
+      '<td>'+fmtMoney(r.avg_cost)+'</td><td>'+fmtMoney(r.holding_value)+'</td>'+
+      '<td class="'+(r.holding_ret>=0?'green':'red')+'">'+ntr+'</td><td>'+sh+'</td>'+
+      '<td>'+tc+'</td>';
+    tr.onclick=()=>selectCode(r.code);
+    tb.appendChild(tr);
+  });
+}
+
+function selectCode(code){
+  if(!code){ code=document.getElementById('code-select').value; }
+  if(!code && live && live.rows.length) code=live.rows[0].code;
+  curCode=code;
+  document.getElementById('code-select').value=code;
+  renderTable();
+  loadCurve(code);
+}
+
+function fmtPctY(v){ return (v*100).toFixed(0)+'%'; }
+
+async function loadCurve(code){
+  const res=await fetch('/api/live/curve/'+code);
+  const c=await res.json();
+  const p=c.params;
+  const cut=c.dates.length>rangeIdx[curRange]? c.dates.length-rangeIdx[curRange]:0;
+  const dates=c.dates.slice(cut), px=c.price.slice(cut), pep=c.pe_pct.slice(cut),
+        pbp=c.pb_pct.slice(cut), fed=c.fed_pct.slice(cut);
+  const row=live.rows.find(r=>r.code===code);
+
+  if(!chartPct) chartPct=echarts.init(document.getElementById('chart-pct'));
+  chartPct.setOption({
+    title:{text:c.name+' 估值百分位 (PE/PB/FED)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis',axisPointer:{type:'cross'},formatter:ps=>{let s='<b>'+ps[0].axisValue+'</b>';ps.forEach(p=>{if(p.value==null)return;s+='<br/>'+p.marker+p.seriesName+': '+(p.seriesName==='价格'?p.value:fmtPctY(p.value))});return s}},
+    legend:{data:['PE%','PB%','FED%','价格'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:50,right:55,top:55,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:[
+      {type:'value',min:0,max:1,axisLabel:{color:'#94a3b8',formatter:fmtPctY},splitLine:{lineStyle:{color:'#334155'}}},
+      {type:'value',scale:true,axisLabel:{color:'#94a3b8'},splitLine:{show:false}}
+    ],
+    dataZoom:[{type:'slider',start:30,end:100,height:14,bottom:0}],
+    series:[
+      {name:'PE%',type:'line',data:pep,lineStyle:{color:'#60a5fa',width:1.4},symbol:'none',connectNulls:true},
+      {name:'PB%',type:'line',data:pbp,lineStyle:{color:'#a78bfa',width:1.4},symbol:'none',connectNulls:true},
+      {name:'FED%',type:'line',data:fed,lineStyle:{color:'#34d399',width:1.4},symbol:'none',connectNulls:true,
+        markLine:{silent:true,symbol:'none',label:{color:'#94a3b8',fontSize:9},lineStyle:{color:'#64748b',type:'dashed'},data:[
+          {yAxis:p.buy_floor,label:{formatter:'8x '+fmtPctY(p.buy_floor)}},
+          {yAxis:p.buy_low,label:{formatter:'4x '+fmtPctY(p.buy_low)}},
+          {yAxis:p.buy_mid,label:{formatter:'2x '+fmtPctY(p.buy_mid)}},
+          {yAxis:p.sell_heavy,label:{formatter:'sell '+fmtPctY(p.sell_heavy)}},
+          {yAxis:p.sell_extreme,label:{formatter:'sell '+fmtPctY(p.sell_extreme)}}]}},
+      {name:'价格',type:'line',yAxisIndex:1,data:px,lineStyle:{color:'#fbbf24',width:1.2},symbol:'none',connectNulls:true},
+    ]
+  });
+
+  if(!chartTrade) chartTrade=echarts.init(document.getElementById('chart-trade'));
+  // 历史买卖点: 从账本流水匹配日期
+  const buyD=[],buyV=[],sellD=[],sellV=[];
+  const trades=row?row.trades:[];
+  const dateSet=new Map(); c.dates.forEach((d,i)=>{if(!dateSet.has(d))dateSet.set(d,i)});
+  trades.forEach(t=>{
+    const day=t.date.slice(0,10);
+    const idx=dateSet.get(day);
+    if(idx!=null && idx>=cut){
+      const v=px[idx];
+      if(t.action==='buy'){buyD.push(idx-cut);buyV.push(v);}
+      else{sellD.push(idx-cut);sellV.push(v);}
+    }
+  });
+  chartTrade.setOption({
+    title:{text:c.name+' 价格走势 + 历史买卖点 (账本流水)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis',axisPointer:{type:'cross'}},
+    legend:{data:['价格','买入','卖出'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:50,right:20,top:55,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',scale:true,axisLabel:{color:'#94a3b8'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:30,end:100,height:14,bottom:0}],
+    series:[
+      {name:'价格',type:'line',data:px,lineStyle:{color:'#fbbf24',width:1.5},itemStyle:{color:'#fbbf24'},symbol:'none',connectNulls:true},
+      {name:'买入',type:'scatter',data:buyV.length?buyD.map((x,i)=>[x,buyV[i]]):[],symbolSize:9,itemStyle:{color:'#4ade80'},z:10},
+      {name:'卖出',type:'scatter',data:sellV.length?sellD.map((x,i)=>[x,sellV[i]]):[],symbolSize:9,itemStyle:{color:'#f87171'},z:10},
+    ]
+  });
+}
+
+async function init(){
+  const res=await fetch('/api/live');
+  live=await res.json();
+  document.getElementById('meta-info').textContent='更新于 '+live.updated_at;
+  document.getElementById('rules').innerHTML=strategyText(live.strategy);
+  document.getElementById('portfolio').innerHTML=portfolioText(live.rows);
+  const sel=document.getElementById('code-select');
+  live.rows.forEach(r=>{
+    const o=document.createElement('option');o.value=r.code;o.textContent=r.name;
+    sel.appendChild(o);
+  });
+  document.querySelectorAll('.tabs button').forEach(b=>{
+    b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');curRange=b.dataset.range;if(curCode)loadCurve(curCode);};
+  });
+  renderTable();
+  selectCode();
+}
+init();
+</script>
+</body>
+</html>

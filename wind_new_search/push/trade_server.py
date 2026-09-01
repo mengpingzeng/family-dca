@@ -85,7 +85,10 @@ def apply_trade(ledger, code, name, action, shares, price):
     """应用一笔成交到账本, 返回 (更新后的entry, 消息)."""
     entry = ledger.get(code, {"name": name, "shares": 0.0, "avg_cost": 0.0,
                               "total_invested": 0.0, "last_buy_week": None,
-                              "last_sell_month": None})
+                              "last_sell_month": None, "trades": []})
+    if "trades" not in entry:
+        entry["trades"] = []
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
     if action == "buy":
         old_shares = float(entry.get("shares", 0.0))
         old_cost = float(entry.get("avg_cost", 0.0))
@@ -95,6 +98,8 @@ def apply_trade(ledger, code, name, action, shares, price):
         entry["shares"] = new_shares
         entry["total_invested"] = float(entry.get("total_invested", 0.0)) + price * shares
         entry["last_buy_week"] = _this_week()
+        entry["trades"].append({"date": now, "action": "buy", "shares": shares,
+                                "price": price, "amount": price * shares})
         msg = f"✅ 已记录买入 {name} {shares:.0f}份 @ ¥{price:.3f} (成本¥{price*shares:,.0f})"
     else:  # sell
         old_shares = float(entry.get("shares", 0.0))
@@ -102,6 +107,8 @@ def apply_trade(ledger, code, name, action, shares, price):
             raise ValueError(f"卖出份额({shares:.0f})超过持仓({old_shares:.0f})")
         entry["shares"] = old_shares - shares
         entry["last_sell_month"] = _this_month()
+        entry["trades"].append({"date": now, "action": "sell", "shares": shares,
+                                "price": price, "amount": price * shares})
         msg = f"✅ 已记录卖出 {name} {shares:.0f}份 @ ¥{price:.3f} (回笼¥{price*shares:,.0f})"
     ledger[code] = entry
     return entry, msg
