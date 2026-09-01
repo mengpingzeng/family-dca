@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赫斯特信心指数策略 — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.meta{font-size:13px;color:#94a3b8;margin-left:auto}
+.container{max-width:1400px;margin:0 auto;padding:16px 24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px;margin-bottom:14px}
+.card h2{font-size:14px;color:#94a3b8;margin-bottom:10px;border-bottom:1px solid #334155;padding-bottom:6px}
+.rules-box{font-size:13px;line-height:1.9;color:#cbd5e1}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:0 2px}
+.tag-buy{background:#166534;color:#4ade80}
+.tag-sell{background:#7f1d1d;color:#f87171}
+.tag-mode{background:#1e40af;color:#93c5fd}
+.tag-cap{background:#854d0e;color:#fbbf24}
+.tag-hurst{background:#0e7490;color:#67e8f9}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #334155;white-space:nowrap}
+th{color:#94a3b8;font-weight:600;position:sticky;top:0;background:#1e293b}
+td.l,th.l{text-align:left}
+tr:hover td{background:#263244}
+tr.best td{background:#14532d55}
+tr.bad td{background:#7f1d1d22}
+tr.base td{background:#1e1b4b55}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}.dim{color:#64748b}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:340px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tabs{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.tabs select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:13px;cursor:pointer}
+@media(max-width:1000px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/wind-new/balanced">均衡策略 →</a>
+  <h1>赫斯特信心指数策略 (买入侧打折0.5 · 卖出侧不变)</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+
+  <div class="card">
+    <h2>最终配置与口径</h2>
+    <div class="rules-box" id="rules"></div>
+  </div>
+
+  <div class="card">
+    <h2>最终配置 vs 基线（测试集 12 指数汇总）</h2>
+    <table id="cmp-table"><thead><tr>
+      <th class="l">配置</th><th>年化中位</th><th>回撤均值</th><th>夏普(均值/中位)</th><th>占用率均值</th><th>效率均值</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>买入侧力度扫描（打折 × 加码）</h2>
+    <div style="max-height:360px;overflow-y:auto"><table id="force-table"><thead><tr>
+      <th>打折</th><th>加码</th><th>年化中位</th><th>回撤均值</th><th>夏普(均值/中位)</th><th>占用率</th><th>效率均值</th><th class="l">备注</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>卖出侧扫描（抑制卖飞 sell_up，买入侧已固定）</h2>
+    <div style="max-height:300px;overflow-y:auto"><table id="sell-table"><thead><tr>
+      <th>sell_up</th><th>年化中位</th><th>回撤均值</th><th>夏普(均值/中位)</th><th>占用率</th><th>效率均值</th><th class="l">含义</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>逐指数明细（基线 vs 最终配置）</h2>
+    <div style="max-height:480px;overflow-y:auto"><table id="detail-table"><thead><tr>
+      <th class="l">指数</th><th>窗口</th><th>年化(基/新)</th><th>回撤(基/新)</th><th>夏普(基/新)</th><th>买(基/新)</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>回测曲线（最终配置）</h2>
+    <div class="tabs">
+      <select id="picker"></select>
+      <span style="font-size:12px;color:#64748b" id="curve-meta"></span>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box" id="chart-pct"></div>
+      <div class="chart-box" id="chart-equity"></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box" id="chart-return"></div>
+      <div class="chart-box" id="chart-daily"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let data=null, curve=null, cur='000300';
+let chartPct=null, chartEq=null, chartRet=null, chartDaily=null;
+var _origInit=echarts.init;
+echarts.init=function(el){var i=_origInit.call(this,el);i.group='hurst-link';el._echart=i;return i};
+function fmtPct(x){return (x*100).toFixed(2)+'%';}
+function cl(v){return v>0?'green':v<0?'red':'';}
+function shp(a){return a!=null?a.toFixed(3):'n/a';}
+
+async function load(){
+  const r=await fetch('/api/wind-new/hurst'); data=await r.json();
+  if(data.error){document.getElementById('meta-info').textContent=data.error;return;}
+  const f=data.force, s=data.sell;
+  document.getElementById('meta-info').textContent='窗口 L=250(长)/104(短) · H阈值0.5 · 单段R/S';
+  renderRules(f);
+  renderCmp(f, s);
+  renderForce(f);
+  renderSell(s);
+  renderDetail(f);
+  renderPicker(f); loadCurve();
+}
+
+function renderRules(f){
+  const fix=f.metrics;
+  document.getElementById('rules').innerHTML=
+    '<b>基础策略</b> 均衡策略 8x/4x/2x/0 · buy_mid=0.25 · base=1000<br/>'+
+    '<b>买入侧</b> <span class="tag tag-hurst">H&gt;0.5 且跌 → ×0.5 打折</span>'+
+    '<span class="tag tag-hurst">H&gt;0.5 且涨 → ×1.0 不加码</span>'+
+    '<span class="tag tag-hurst">H≤0.5 → 不调制</span><br/>'+
+    '<b>卖出侧</b> <span class="tag tag-sell">不变 (PE≥85% 卖20% / ≥95% 清仓 + 等回撤)</span><br/>'+
+    '<b>赫斯特</b> 单段 R/S · 完整价格历史滚动 · L='+f.window_rule+' · H阈值固定 0.5<br/>'+
+    '<span style="color:#94a3b8">口径：阈值20万收缩 + 封顶30万 + 固定30万 + 费用万5低消5</span>';
+}
+
+function row2(sel, name, t, extra, cls){
+  const el=document.querySelector(sel);
+  el.innerHTML+='<tr class="'+cls+'"><td class="l">'+name+'</td>'+
+    '<td>'+fmtPct(t.annual_median)+'</td>'+
+    '<td>'+fmtPct(t.mdd_mean)+'</td>'+
+    '<td>'+shp(t.sharpe_mean)+' / '+shp(t.sharpe_median)+'</td>'+
+    '<td>'+fmtPct(t.occ_mean)+'</td>'+
+    '<td>'+(t.eff_mean!=null?fmtPct(t.eff_mean):'n/a')+'</td>'+
+    (extra?'<td class="l">'+extra+'</td>':'')+'</tr>';
+}
+
+function renderCmp(f, s){
+  const base=f.baseline.test;
+  const finalC=nextCombo(f,0.5,1.0);
+  const tb=document.querySelector('#cmp-table tbody'); tb.innerHTML='';
+  tb.innerHTML+='<tr class="base"><td class="l">基线（无调制）</td><td>'+fmtPct(base.annual_median)+'</td><td>'+fmtPct(base.mdd_mean)+'</td><td>'+shp(base.sharpe_mean)+' / '+shp(base.sharpe_median)+'</td><td>'+fmtPct(base.occ_mean)+'</td><td>'+fmtPct(base.eff_mean)+'</td></tr>';
+  tb.innerHTML+='<tr class="best"><td class="l">最终配置（打折0.5/加码1.0）</td><td>'+fmtPct(finalC.test.annual_median)+'</td><td>'+fmtPct(finalC.test.mdd_mean)+'</td><td>'+shp(finalC.test.sharpe_mean)+' / '+shp(finalC.test.sharpe_median)+'</td><td>'+fmtPct(finalC.test.occ_mean)+'</td><td>'+fmtPct(finalC.test.eff_mean)+'</td></tr>';
+}
+
+function nextCombo(f,d,b){return f.combos.find(c=>c.discount===d&&c.boost===b);}
+
+function renderForce(f){
+  const tb=document.querySelector('#force-table tbody'); tb.innerHTML='';
+  const base=f.baseline.test;
+  tb.innerHTML+='<tr class="base"><td>—</td><td>—</td><td>'+fmtPct(base.annual_median)+'</td><td>'+fmtPct(base.mdd_mean)+'</td><td>'+shp(base.sharpe_mean)+' / '+shp(base.sharpe_median)+'</td><td>'+fmtPct(base.occ_mean)+'</td><td>'+fmtPct(base.eff_mean)+'</td><td class="l dim">基线</td></tr>';
+  f.combos.forEach(c=>{
+    let cls='', note='';
+    if(c.discount===0.5&&c.boost===1.0){cls='best';note='最优（已采用）';}
+    else if(c.discount===1.0&&c.boost>1.0){cls='bad';note='加码有害';}
+    else if(c.discount<1.0&&c.boost===1.0){note='纯打折';}
+    row2('#force-table tbody', c.discount.toFixed(2)+' / '+c.boost.toFixed(2), c.test, null, cls);
+    const tr=document.querySelector('#force-table tbody tr:last-child');
+    tr.innerHTML+='<td class="l">'+note+'</td>';
+  });
+}
+
+function renderSell(s){
+  const tb=document.querySelector('#sell-table tbody'); tb.innerHTML='';
+  s.combos.forEach(c=>{
+    let cls='', note='';
+    if(c.sell_up===1.0){cls='best';note='不抑制（已采用）';}
+    else if(c.sell_up===0.0){cls='bad';note='全抑制有害';}
+    else{note='半抑制';}
+    row2('#sell-table tbody', c.sell_up.toFixed(2), c.test, null, cls);
+    const tr=document.querySelector('#sell-table tbody tr:last-child');
+    tr.innerHTML+='<td class="l">'+note+'</td>';
+  });
+}
+
+function renderDetail(f){
+  const tb=document.querySelector('#detail-table tbody'); tb.innerHTML='';
+  const base=f.baseline.results;
+  const fin=nextCombo(f,0.5,1.0).results;
+  const bm=new Map(base.map(r=>[r.code,r]));
+  fin.forEach(r=>{
+    const b=bm.get(r.code);
+    if(!b) return;
+    tb.innerHTML+='<tr><td class="l"><b>'+r.name+'</b></td><td>'+r.window+'yr</td>'+
+      '<td>'+fmtPct(b.principal_annual)+' / '+fmtPct(r.principal_annual)+'</td>'+
+      '<td>'+fmtPct(b.max_drawdown)+' / '+fmtPct(r.max_drawdown)+'</td>'+
+      '<td>'+shp(b.sharpe)+' / '+shp(r.sharpe)+'</td>'+
+      '<td>'+b.buys+' / '+r.buys+'</td></tr>';
+  });
+}
+
+function renderPicker(f){
+  const sel=document.getElementById('picker');
+  sel.innerHTML='';
+  const fin=nextCombo(f,0.5,1.0).results;
+  fin.forEach(r=>{
+    const o=document.createElement('option');
+    o.value=r.code; o.textContent=r.name+' ('+r.code+')';
+    sel.appendChild(o);
+  });
+  sel.value=cur;
+}
+
+async function loadCurve(){
+  const r=await fetch('/api/wind-new/hurst/curve/'+cur);
+  if(!r.ok){document.getElementById('curve-meta').textContent='曲线加载失败';return;}
+  curve=await r.json();
+  renderCurve();
+  document.getElementById('curve-meta').textContent=
+    curve.meta.name+' · 固定年化 '+fmtPct(curve.meta.principal_annual)+' · XIRR '+fmtPct(curve.meta.xirr);
+}
+
+function renderCurve(){
+  const d=curve.daily, m=curve.meta, dates=d.map(x=>x.date);
+  if(!chartPct) chartPct=echarts.init(document.getElementById('chart-pct'));
+  if(!chartEq) chartEq=echarts.init(document.getElementById('chart-equity'));
+  if(!chartRet) chartRet=echarts.init(document.getElementById('chart-return'));
+  if(!chartDaily) chartDaily=echarts.init(document.getElementById('chart-daily'));
+  const bp=data.force.params;
+  let cum=[],eq=[],tot=[],princ=[],buyMk=[],sellMk=[];
+  d.forEach(v=>{cum.push(v.cum_invested);eq.push(v.equity);tot.push(v.total_value);
+    princ.push(v.principal!=null?v.principal:null);
+    buyMk.push(v.buy_amount>0?v.equity:null);sellMk.push(v.sell_amount>0?v.equity:null)});
+
+  chartPct.setOption({
+    title:{text:m.name+' 估值百分位 + K线 (PE/PB/FED)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis',axisPointer:{type:'cross'},formatter:ps=>{let s='<b>'+ps[0].axisValue+'</b>';ps.forEach(p=>{if(p.value==null)return;s+='<br/>'+p.marker+p.seriesName+': '+(p.seriesName==='收盘价'?(p.value):(p.value*100).toFixed(0)+'%')});return s}},
+    legend:{data:['PE%','PB%','FED%','收盘价'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:55,right:60,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:[
+      {type:'value',min:0,max:1,axisLabel:{color:'#94a3b8',formatter:v=>(v*100).toFixed(0)+'%'},splitLine:{lineStyle:{color:'#334155'}}},
+      {type:'value',scale:true,axisLabel:{color:'#94a3b8'},splitLine:{show:false}}
+    ],
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}],
+    series:[
+      {name:'PE%',type:'line',data:d.map(x=>x.pe_pct),lineStyle:{color:'#60a5fa',width:1.4},itemStyle:{color:'#60a5fa'},symbol:'none',connectNulls:true},
+      {name:'PB%',type:'line',data:d.map(x=>x.pb_pct),lineStyle:{color:'#a78bfa',width:1.4},itemStyle:{color:'#a78bfa'},symbol:'none',connectNulls:true},
+      {name:'FED%',type:'line',data:d.map(x=>x.fed_pct),lineStyle:{color:'#34d399',width:1.4},itemStyle:{color:'#34d399'},symbol:'none',connectNulls:true,
+        markLine:{silent:true,symbol:'none',label:{color:'#94a3b8',fontSize:9},lineStyle:{color:'#64748b',type:'dashed'},data:[
+          {yAxis:bp.buy_floor,label:{formatter:'8x '+fmtPct(bp.buy_floor)}},
+          {yAxis:bp.buy_low,label:{formatter:'4x '+fmtPct(bp.buy_low)}},
+          {yAxis:bp.buy_mid,label:{formatter:'2x '+fmtPct(bp.buy_mid)}},
+          {yAxis:bp.sell_heavy,label:{formatter:'sell '+fmtPct(bp.sell_heavy)}},
+          {yAxis:bp.sell_extreme,label:{formatter:'sell '+fmtPct(bp.sell_extreme)}}]}},
+      {name:'收盘价',type:'line',yAxisIndex:1,data:d.map(x=>x.price),lineStyle:{color:'#fbbf24',width:1.2},itemStyle:{color:'#fbbf24'},symbol:'none',connectNulls:true},
+    ]
+  });
+
+  chartEq.setOption({
+    title:{text:m.name+' 总投入/市值/总资产 + 本金曲线(元)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['总投入','市值','总资产(含现金)','本金曲线(30万基准)','买入','卖出'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:70,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v/10000).toFixed(0)+'万'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}],
+    series:[
+      {name:'总投入',type:'line',data:cum,lineStyle:{color:'#fb923c',width:2,type:'dashed'},itemStyle:{color:'#fb923c'},symbol:'none'},
+      {name:'市值',type:'line',data:eq,lineStyle:{color:'#c084fc',width:2},itemStyle:{color:'#c084fc'},symbol:'none'},
+      {name:'总资产(含现金)',type:'line',data:tot,lineStyle:{color:'#60a5fa',width:1.5},itemStyle:{color:'#60a5fa'},areaStyle:{color:'rgba(96,165,250,0.1)'},symbol:'none'},
+      {name:'本金曲线(30万基准)',type:'line',data:princ,lineStyle:{color:'#facc15',width:2.2},itemStyle:{color:'#facc15'},symbol:'none',connectNulls:true},
+      {name:'买入',type:'scatter',data:buyMk,symbolSize:7,itemStyle:{color:'#4ade80'},z:10},
+      {name:'卖出',type:'scatter',data:sellMk,symbolSize:7,itemStyle:{color:'#f87171'},z:10},
+    ]
+  });
+
+  chartRet.setOption({
+    title:{text:m.name+' 收益率 (简单回报% / 年化XIRR% / 固定30万年化%)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['简单回报%','年化XIRR%','固定30万年化%'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:60,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}],
+    series:[
+      {name:'简单回报%',type:'line',data:d.map(x=>x.return_pct),lineStyle:{color:'#facc15',width:1.5},itemStyle:{color:'#facc15'},symbol:'none'},
+      {name:'年化XIRR%',type:'line',data:d.map(x=>x.xirr!=null?(x.xirr*100):null),lineStyle:{color:'#f97316',width:1.5},itemStyle:{color:'#f97316'},symbol:'none',connectNulls:true},
+      {name:'固定30万年化%',type:'line',data:d.map(x=>x.annualized!=null?(x.annualized*100):null),lineStyle:{color:'#34d399',width:2},itemStyle:{color:'#34d399'},symbol:'none',connectNulls:true},
+    ]
+  });
+
+  chartDaily.setOption({
+    title:{text:m.name+' 日收益曲线 (本金环比涨跌幅%)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['日收益%'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:60,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}],
+    series:[
+      {name:'日收益%',type:'line',data:d.map(x=>x.daily_return),lineStyle:{color:'#22d3ee',width:1.2},itemStyle:{color:'#22d3ee'},symbol:'none',connectNulls:true,
+        areaStyle:{color:'rgba(34,211,238,0.08)'},
+        markLine:{silent:true,symbol:'none',data:[{yAxis:0,lineStyle:{color:'#94a3b8',type:'dashed'}}]}},
+    ]
+  });
+
+  echarts.connect('hurst-link');
+}
+
+document.getElementById('picker').addEventListener('change',e=>{cur=e.target.value;loadCurve();});
+load();
+</script>
+</body>
+</html>

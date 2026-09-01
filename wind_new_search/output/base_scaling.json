@@ -1,0 +1,301 @@
+{
+  "title": "base 调大对比 (策略不变)",
+  "note": "固定30万口径: 从回测区间第一天(pe_pct首次有效)固化30万, 闲置部分无息",
+  "cost_model": {
+    "commission_rate": 0.0005,
+    "min_commission": 5.0,
+    "lot_size": 0
+  },
+  "principal_threshold": 200000,
+  "principal_cap": 300000,
+  "principal_pool": 300000,
+  "strategies": {
+    "策略B": {
+      "buy_signal": "PB",
+      "buy_gate": "FED",
+      "buy_gate_cap": 0.55,
+      "sell_signal": "PE",
+      "sell_gate": null,
+      "sell_gate_floor": null,
+      "buy_floor": 0.1,
+      "buy_low": 0.15,
+      "buy_mid": 0.3,
+      "buy_high": 0.7,
+      "sell_heavy": 0.85,
+      "sell_extreme": 0.95
+    },
+    "固定年化最优": {
+      "buy_signal": "PB",
+      "buy_gate": "PB",
+      "buy_gate_cap": 0.6,
+      "sell_signal": "FED",
+      "sell_gate": "PB",
+      "sell_gate_floor": 0.7,
+      "buy_floor": 0.1,
+      "buy_low": 0.2,
+      "buy_mid": 0.3,
+      "buy_high": 0.5,
+      "sell_heavy": 0.8,
+      "sell_extreme": 0.95
+    }
+  },
+  "bases": [
+    1000,
+    1500,
+    2000
+  ],
+  "combos": [
+    {
+      "strategy": "策略B",
+      "base": 1000,
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "start_date": "2015-04-17",
+          "end_date": "2026-08-14",
+          "xirr": 0.1151,
+          "final_return": 0.3732,
+          "total_invested": 298645.0,
+          "total_cash_in": 403055.0,
+          "position_value": 7033.0,
+          "final_value": 410088.0,
+          "principal_final": 411443.0,
+          "principal_annual": 0.0283,
+          "principal_return": 0.3715,
+          "trades": 253,
+          "buys": 229,
+          "sells": 24
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "start_date": "2017-01-13",
+          "end_date": "2026-08-14",
+          "xirr": 0.0674,
+          "final_return": 0.6092,
+          "total_invested": 297755.0,
+          "total_cash_in": 400242.0,
+          "position_value": 78913.0,
+          "final_value": 479155.0,
+          "principal_final": 481400.0,
+          "principal_annual": 0.0506,
+          "principal_return": 0.6047,
+          "trades": 159,
+          "buys": 151,
+          "sells": 8
+        }
+      ]
+    },
+    {
+      "strategy": "策略B",
+      "base": 1500,
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "start_date": "2015-04-17",
+          "end_date": "2026-08-14",
+          "xirr": 0.1159,
+          "final_return": 0.4451,
+          "total_invested": 298510.0,
+          "total_cash_in": 428482.0,
+          "position_value": 2886.0,
+          "final_value": 431368.0,
+          "principal_final": 432858.0,
+          "principal_annual": 0.0329,
+          "principal_return": 0.4429,
+          "trades": 176,
+          "buys": 152,
+          "sells": 24
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "start_date": "2017-01-13",
+          "end_date": "2026-08-14",
+          "xirr": 0.0631,
+          "final_return": 0.5967,
+          "total_invested": 297590.0,
+          "total_cash_in": 396911.0,
+          "position_value": 78256.0,
+          "final_value": 475167.0,
+          "principal_final": 477577.0,
+          "principal_annual": 0.0497,
+          "principal_return": 0.5919,
+          "trades": 126,
+          "buys": 118,
+          "sells": 8
+        }
+      ]
+    },
+    {
+      "strategy": "策略B",
+      "base": 2000,
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "start_date": "2015-04-17",
+          "end_date": "2026-08-14",
+          "xirr": 0.1038,
+          "final_return": 0.4632,
+          "total_invested": 296655.0,
+          "total_cash_in": 432271.0,
+          "position_value": 1792.0,
+          "final_value": 434062.0,
+          "principal_final": 437407.0,
+          "principal_annual": 0.0339,
+          "principal_return": 0.458,
+          "trades": 155,
+          "buys": 131,
+          "sells": 24
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "start_date": "2017-01-13",
+          "end_date": "2026-08-14",
+          "xirr": 0.0609,
+          "final_return": 0.5902,
+          "total_invested": 294500.0,
+          "total_cash_in": 391198.0,
+          "position_value": 77130.0,
+          "final_value": 468328.0,
+          "principal_final": 473828.0,
+          "principal_annual": 0.0489,
+          "principal_return": 0.5794,
+          "trades": 108,
+          "buys": 100,
+          "sells": 8
+        }
+      ]
+    },
+    {
+      "strategy": "固定年化最优",
+      "base": 1000,
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "start_date": "2015-04-17",
+          "end_date": "2026-08-14",
+          "xirr": 0.1005,
+          "final_return": 0.4739,
+          "total_invested": 299125.0,
+          "total_cash_in": 326970.0,
+          "position_value": 113913.0,
+          "final_value": 440883.0,
+          "principal_final": 441758.0,
+          "principal_annual": 0.0348,
+          "principal_return": 0.4725,
+          "trades": 232,
+          "buys": 225,
+          "sells": 7
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "start_date": "2017-01-13",
+          "end_date": "2026-08-14",
+          "xirr": 0.0608,
+          "final_return": 0.5739,
+          "total_invested": 299260.0,
+          "total_cash_in": 0.0,
+          "position_value": 471003.0,
+          "final_value": 471003.0,
+          "principal_final": 471743.0,
+          "principal_annual": 0.0484,
+          "principal_return": 0.5725,
+          "trades": 152,
+          "buys": 152,
+          "sells": 0
+        }
+      ]
+    },
+    {
+      "strategy": "固定年化最优",
+      "base": 1500,
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "start_date": "2015-04-17",
+          "end_date": "2026-08-14",
+          "xirr": 0.0961,
+          "final_return": 0.5399,
+          "total_invested": 297830.0,
+          "total_cash_in": 371104.0,
+          "position_value": 87526.0,
+          "final_value": 458630.0,
+          "principal_final": 460800.0,
+          "principal_annual": 0.0386,
+          "principal_return": 0.536,
+          "trades": 173,
+          "buys": 166,
+          "sells": 7
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "start_date": "2017-01-13",
+          "end_date": "2026-08-14",
+          "xirr": 0.0569,
+          "final_return": 0.5605,
+          "total_invested": 298340.0,
+          "total_cash_in": 0.0,
+          "position_value": 465553.0,
+          "final_value": 465553.0,
+          "principal_final": 467213.0,
+          "principal_annual": 0.0473,
+          "principal_return": 0.5574,
+          "trades": 118,
+          "buys": 118,
+          "sells": 0
+        }
+      ]
+    },
+    {
+      "strategy": "固定年化最优",
+      "base": 2000,
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "start_date": "2015-04-17",
+          "end_date": "2026-08-14",
+          "xirr": 0.0912,
+          "final_return": 0.5541,
+          "total_invested": 296555.0,
+          "total_cash_in": 372918.0,
+          "position_value": 87954.0,
+          "final_value": 460872.0,
+          "principal_final": 464317.0,
+          "principal_annual": 0.0393,
+          "principal_return": 0.5477,
+          "trades": 118,
+          "buys": 111,
+          "sells": 7
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "start_date": "2017-01-13",
+          "end_date": "2026-08-14",
+          "xirr": 0.0535,
+          "final_return": 0.5363,
+          "total_invested": 297505.0,
+          "total_cash_in": 0.0,
+          "position_value": 457043.0,
+          "final_value": 457043.0,
+          "principal_final": 459538.0,
+          "principal_annual": 0.0455,
+          "principal_return": 0.5318,
+          "trades": 101,
+          "buys": 101,
+          "sells": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>均衡策略 v3 — PB×PE双闸门 · 信号质量版 — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.meta{font-size:13px;color:#94a3b8;margin-left:auto}
+.container{max-width:1400px;margin:0 auto;padding:16px 24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px;margin-bottom:14px}
+.card h2{font-size:14px;color:#94a3b8;margin-bottom:10px;border-bottom:1px solid #334155;padding-bottom:6px}
+.rules-box{font-size:13px;line-height:1.9;color:#cbd5e1}
+.rules-box b{color:#e2e8f0}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:0 2px}
+.tag-v3{background:#7c3aed;color:#c4b5fd}
+.tag-gate{background:#1e40af;color:#93c5fd}
+.tag-sell{background:#7f1d1d;color:#f87171}
+.tag-cap{background:#854d0e;color:#fbbf24}
+.tag-broad{background:#312e81;color:#c7d2fe}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #334155;white-space:nowrap}
+th{color:#94a3b8;font-weight:600;position:sticky;top:0;background:#1e293b}
+td.l,th.l{text-align:left}
+tr:hover td{background:#263244}
+tr.broad td{background:#1e1b4b44}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}.dim{color:#64748b}
+.summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.sum-box{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 12px;text-align:center}
+.sum-box .k{font-size:11px;color:#94a3b8}
+.sum-box .v{font-size:16px;font-weight:700;margin-top:4px}
+.sum-box .d{font-size:11px;margin-top:2px;color:#64748b}
+.concl{font-size:13px;line-height:1.9;color:#cbd5e1}
+.concl li{margin-left:18px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:340px}
+.tabs{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.tabs button{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+.tabs button.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+.tabs select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:13px;cursor:pointer}
+@media(max-width:1000px){.chart-grid{grid-template-columns:1fr}.summary-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/wind-new/balanced">← 均衡策略(基线)</a>
+  <a href="/wind-new/balanced-v2">← 均衡策略v2</a>
+  <h1>均衡策略 v3 · PB×PE 双闸门</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+
+  <div class="card">
+    <h2>估值信号质量逻辑 (PE / PB 组合的研判)</h2>
+    <div style="max-height:220px;overflow-y:auto"><table id="logic-table"><thead><tr>
+      <th class="l">估值组合</th><th class="l">可能含义</th><th class="l">应对</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div class="concl" style="margin-top:8px" id="logic-note"></div>
+  </div>
+
+  <div class="card">
+    <h2>v3 方法与口径</h2>
+    <div class="rules-box" id="rules"></div>
+  </div>
+
+  <div class="card">
+    <h2>变体分析 (宽基7个平均 · 固定30万 · 超额夏普 Rf=1.3%)</h2>
+    <div style="max-height:240px;overflow-y:auto"><table id="var-table"><thead><tr>
+      <th class="l">配置</th><th>年化均值</th><th>超额夏普</th><th>回撤均值</th><th class="l">结论</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>宽基 7 指数平均 (固定30万口径)</h2>
+    <div class="summary-grid" id="summary-grid"></div>
+  </div>
+
+  <div class="card">
+    <h2>逐指数对比 · 指数口径</h2>
+    <div style="max-height:480px;overflow-y:auto"><table id="idx-table"><thead><tr>
+      <th class="l">指数</th>
+      <th>基年化</th><th>v2年化</th><th>v3年化</th>
+      <th>基夏普</th><th>v2夏普</th><th>v3夏普</th>
+      <th>基回撤</th><th>v2回撤</th><th>v3回撤</th>
+      <th>基终值</th><th>v3终值</th><th>买/卖</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>ETF 对比 (真实 ETF · 后复权 + 整手100 + 万5低消5)</h2>
+    <div style="max-height:400px;overflow-y:auto"><table id="etf-table"><thead><tr>
+      <th class="l">ETF</th><th class="l">跟踪指数</th>
+      <th>基年化</th><th>v3年化</th><th>基夏普</th><th>v3夏普</th><th>Δ夏普</th>
+      <th>基回撤</th><th>v3回撤</th><th>Δ回撤</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>回测曲线对比 (紫=v3 · 黄=v2 · 灰=基线)</h2>
+    <div class="tabs">
+      <button id="mode-index" class="active">指数</button>
+      <button id="mode-etf">ETF</button>
+      <select id="picker"></select>
+      <span style="font-size:12px;color:#64748b" id="curve-meta"></span>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box" id="chart-principal"></div>
+      <div class="chart-box" id="chart-dd"></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box" id="chart-annual"></div>
+      <div class="chart-box" id="chart-daily"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>结论与局限</h2>
+    <div class="concl" id="conclusion"></div>
+  </div>
+</div>
+
+<script>
+let data=null, curve=null, mode='index', cur='000300';
+let indexList=[], etfList=[];
+let c1=null,c2=null,c3=null,c4=null;
+var _origInit=echarts.init;
+echarts.init=function(el){var i=_origInit.call(this,el);i.group='v3-link';el._echart=i;return i};
+
+function fmtPct(x){return (x==null?'—':(x*100).toFixed(2)+'%');}
+function fmtNum(x,d){return (x==null?'—':Number(x).toFixed(d==null?2:d));}
+function cl(v){return v>0?'green':v<0?'red':'';}
+function arrow(v){return v>0?'▲':v<0?'▼':'';}
+function fmtDelta(x){return x==null?'—':'<span class="'+cl(x)+'">'+arrow(x)+(x*100).toFixed(1)+'</span>';}
+function fmtDeltaShp(x){return x==null?'—':'<span class="'+cl(x)+'">'+arrow(x)+fmtNum(x)+'</span>';}
+
+async function load(){
+  const r=await fetch('/api/wind-new/pbpe-v3'); data=await r.json();
+  if(data.error){document.getElementById('meta-info').textContent=data.error;return;}
+  document.getElementById('meta-info').textContent=
+    '阈值'+data.principal.threshold/10000+'万收缩 · 封顶'+data.principal.cap/10000+'万 · 池'+data.principal.pool/10000+'万 · 超额夏普 Rf='+((data.risk_free_rate||0)*100).toFixed(1)+'%';
+  renderLogic();
+  renderRules();
+  renderVariants();
+  renderSummary();
+  renderTable('#idx-table tbody', data.results, false);
+  renderTable('#etf-table tbody', data.results, true);
+  renderConclusion();
+  buildLists(); renderPicker(); loadCurve();
+}
+
+function renderLogic(){
+  const tb=document.querySelector('#logic-table tbody'); tb.innerHTML='';
+  data.valuation_logic.forEach(row=>{
+    tb.innerHTML+='<tr><td class="l"><b>'+row[0]+'</b></td><td class="l">'+row[1]+'</td><td class="l">'+row[2]+'</td></tr>';
+  });
+  document.getElementById('logic-note').innerHTML=
+    '据此把<b>买入更谨慎</b>（PB、PE 都低才出手，避开"破净但盈利下滑"）与<b>卖出更严格</b>（PB、PE 都高才兑现，避开"PE高但真便宜"）分别做成闸门测试。';
+}
+
+function renderRules(){
+  const p=data.v3_params;
+  document.getElementById('rules').innerHTML=
+    '<b>基线框架</b>：主信号 <span class="tag tag-v3">PB</span> · 卖出 <span class="tag tag-sell">PE</span> · 档 8x/4x/2x/0x · 本金阈值20万/封顶30万/池30万<br/>'+
+    '<b>v3 = v2 之上再加双闸门</b>：'+
+    '<span class="tag tag-sell">① 更早止盈 sell_heavy 0.80</span>'+
+    '<span class="tag tag-v3">② 20周均线软制动 β0.5 + 顺势加码 γ1.5</span>'+
+    '<span class="tag tag-gate">③ 买入需 PE% ≤ 45% (双低才买)</span>'+
+    '<span class="tag tag-gate">④ 卖出需 PB% ≥ 70% (双高才卖)</span>'+
+    '<br/><span class="dim">'+data.sharpe_note+'；回撤=本金曲线最大回撤。</span>';
+}
+
+function renderVariants(){
+  const v=data.variants; if(!v) return;
+  const tb=document.querySelector('#var-table tbody'); tb.innerHTML='';
+  const rows=[
+    ['base','基线(均衡策略)','对照组'],
+    ['buy_cautious','仅买入更谨慎 (需PE%≤45%)','单独效果: 夏普几乎不变、收益下降 → 不划算'],
+    ['sell_strict','仅卖出更严格 (需PB%≥70%)','单独效果: 夏普↑8.8%、收益↑19.5% → 有效'],
+    ['both','双闸门同时','夏普↑9.8%、收益↑12.5% → 双闸门更稳'],
+    ['v3','双闸门 + v2趋势 (推荐)','夏普↑16.4%、回撤全场最低 → 综合最优'],
+  ];
+  rows.forEach(([k,label,concl])=>{
+    const r=v[k];
+    const up=r.sharpe_mean>v.base.sharpe_mean;
+    tb.innerHTML+='<tr'+(k==='v3'?' class="broad"':'')+'><td class="l"><b>'+label+'</b></td>'+
+      '<td>'+fmtPct(r.annual_mean)+'</td><td>'+fmtNum(r.sharpe_mean)+'</td><td>'+fmtPct(r.mdd_mean)+'</td>'+
+      '<td class="l dim">'+concl+'</td></tr>';
+  });
+}
+
+function renderSummary(){
+  const s=data.summary, g=document.getElementById('summary-grid');
+  const mk=(k,b,v2,v3,isPct,lowerBetter)=>{
+    const bv=isPct?fmtPct(b):fmtNum(b), v2v=isPct?fmtPct(v2):fmtNum(v2), v3v=isPct?fmtPct(v3):fmtNum(v3);
+    const d=isPct?(v3-b)*100:(v3-b);
+    const good=lowerBetter?(d<0):(d>0);
+    const box=document.createElement('div');box.className='sum-box';
+    box.innerHTML='<div class="k">'+k+'</div><div class="v">'+v3v+'</div><div class="d">基线 '+bv+' → v2 '+v2v+' → <b class="'+(good?'green':'red')+'">v3 '+v3v+'</b></div>';
+    g.appendChild(box);
+  };
+  mk('年化均值',s.base.annual_mean,s.v2.annual_mean,s.v3.annual_mean,true,false);
+  mk('超额夏普',s.base.sharpe_mean,s.v2.sharpe_mean,s.v3.sharpe_mean,false,false);
+  mk('最大回撤',s.base.mdd_mean,s.v2.mdd_mean,s.v3.mdd_mean,true,true);
+  mk('资金占用率',s.base.occupancy_mean,s.v2.occupancy_mean,s.v3.occupancy_mean,true,true);
+  mk('资金效率',s.base.efficiency_mean,s.v2.efficiency_mean,s.v3.efficiency_mean,false,false);
+}
+
+function renderTable(sel, rows, isEtf){
+  const tb=document.querySelector(sel); tb.innerHTML='';
+  rows.forEach(r=>{
+    const broad=data.broad.includes(r.code);
+    const cls=broad?' class="broad"':'';
+    if(isEtf){
+      if(!r.etf_base) return;
+      const b=r.etf_base, v3=r.etf_v3;
+      const dshp=v3.sharpe-b.sharpe, ddd=v3.max_drawdown-b.max_drawdown;
+      tb.innerHTML+='<tr'+cls+'><td class="l"><b>'+b.etf_code+'</b> '+b.etf_name+'</td><td class="l dim">'+r.name+'</td>'+
+        '<td>'+fmtPct(b.principal_annual)+'</td><td>'+fmtPct(v3.principal_annual)+'</td>'+
+        '<td>'+fmtNum(b.sharpe)+'</td><td>'+fmtNum(v3.sharpe)+'</td><td>'+fmtDeltaShp(dshp)+'</td>'+
+        '<td>'+fmtPct(b.max_drawdown)+'</td><td>'+fmtPct(v3.max_drawdown)+'</td><td>'+fmtDelta(ddd)+'pp</td></tr>';
+    }else{
+      const b=r.base, v2=r.v2, v3=r.v3;
+      tb.innerHTML+='<tr'+cls+'><td class="l"><b>'+r.name+'</b>'+(broad?' <span class="tag tag-broad">宽基</span>':'')+'</td>'+
+        '<td>'+fmtPct(b.principal_annual)+'</td><td>'+fmtPct(v2.principal_annual)+'</td><td>'+fmtPct(v3.principal_annual)+'</td>'+
+        '<td>'+fmtNum(b.sharpe)+'</td><td>'+fmtNum(v2.sharpe)+'</td><td>'+fmtNum(v3.sharpe)+'</td>'+
+        '<td>'+fmtPct(b.max_drawdown)+'</td><td>'+fmtPct(v2.max_drawdown)+'</td><td>'+fmtPct(v3.max_drawdown)+'</td>'+
+        '<td>¥'+b.principal_final.toLocaleString()+'</td><td>¥'+v3.principal_final.toLocaleString()+'</td>'+
+        '<td>'+v3.buys+'/'+v3.sells+'</td></tr>';
+    }
+  });
+}
+
+function renderConclusion(){
+  const s=data.summary;
+  const wins=[], loses=[];
+  data.results.forEach(r=>{
+    if(!data.broad.includes(r.code)) return;
+    const d=r.v3.sharpe-r.base.sharpe;
+    if(d>0) wins.push(r.name+' +'+d.toFixed(2)); else loses.push(r.name+' '+d.toFixed(2));
+  });
+  const gain=(s.v3.sharpe_mean/s.base.sharpe_mean-1)*100;
+  document.getElementById('conclusion').innerHTML=
+    '<b>宽基 7 指数平均</b>：超额夏普 '+fmtNum(s.base.sharpe_mean)+' → <span class="green">'+fmtNum(s.v3.sharpe_mean)+'</span> (+'+gain.toFixed(1)+'%)，'+
+    '年化 '+fmtPct(s.base.annual_mean)+' → '+fmtPct(s.v3.annual_mean)+'，回撤 '+fmtPct(s.base.mdd_mean)+' → <span class="green">'+fmtPct(s.v3.mdd_mean)+'</span>，'+
+    '资金效率 '+fmtNum(s.base.efficiency_mean)+' → <span class="green">'+fmtNum(s.v3.efficiency_mean)+'</span>。<br/>'+
+    '<b>优化决策</b><ul>'+
+    '<li><b>买入更谨慎（PE也低）单独做不划算</b>：夏普几乎不变、年化反而降 4~9%，因为 PE 低门槛过滤掉了大量"估值便宜但盈利正常"的机会；</li>'+
+    '<li><b>卖出更严格（PB也高）单独做有效</b>：年化 +19.5%、夏普 +8.8%，能避开"PE偏高但真便宜"的误卖；</li>'+
+    '<li><b>两者同时满足（双闸门）更稳健</b>：夏普 +9.8%、年化 +12.5%，科创50 夏普 0.18→0.61；</li>'+
+    '<li><b>双闸门再叠加 v2 趋势调制 = v3</b>：夏普 +16.4%、回撤 28.2%→23.5% 全场最低，年化基本持平（-4.5%）→ 采纳为最终方案。</li>'+
+    '</ul>'+
+    '<b>夏普提升指数</b>：'+wins.join('、')+'<br/>'+
+    '<b>仍下降</b>：'+loses.join('、')+'（中证500/上证50/沪深300 等蓝筹在前期下跌中的低吸贡献被双闸门削弱）<br/><br/>'+
+    '<b>局限</b>：<ul>'+
+    '<li>双闸门会过滤部分"单信号便宜"的买点，对恒生/港股综合等依赖深跌捡筹的指数收益下降明显；</li>'+
+    '<li>美股成长指数（纳指/标普）PB 长期偏高从不触发买入，估值类策略均无法改善；</li>'+
+    '<li>v3 为本测试窗口上的参数组合，含一定过拟合风险，实盘需持续监控并定期校准。</li>'+
+    '</ul>';
+}
+
+// ── 曲线 ──
+function buildLists(){
+  indexList=data.results.map(r=>({code:r.code,name:r.name}));
+  etfList=data.results.filter(r=>r.etf_base).map(r=>({code:r.code,name:r.name,etf_code:r.etf_base.etf_code,etf_name:r.etf_base.etf_name}));
+}
+function renderPicker(){
+  const sel=document.getElementById('picker');
+  const list=mode==='index'?indexList:etfList;
+  sel.innerHTML='';
+  list.forEach(it=>{
+    const o=document.createElement('option');
+    o.value=it.code;
+    o.textContent=mode==='index'?(it.name+' ('+it.code+')'):(it.etf_name+' ('+it.etf_code+')');
+    sel.appendChild(o);
+  });
+  sel.value=cur;
+}
+function underwater(princ){let peak=-Infinity,out=[];princ.forEach(p=>{if(p==null){out.push(null);return;}if(p>peak)peak=p;out.push(peak>0?(p/peak-1)*100:null);});return out;}
+function rollAnn(princ){const out=[],N=52;princ.forEach((p,i)=>{if(p==null||i<N){out.push(null);return;}const p0=princ[i-N];if(!p0||p0<=0){out.push(null);return;}out.push((p/p0-1)*100);});return out;}
+async function loadCurve(){
+  const url=mode==='index'?('/api/wind-new/pbpe-v3/curve/'+cur):('/api/wind-new/pbpe-v3/etf-curve/'+cur);
+  const r=await fetch(url);
+  if(!r.ok){document.getElementById('curve-meta').textContent='曲线加载失败';return;}
+  curve=await r.json();
+  const m=curve.v3.meta;
+  document.getElementById('curve-meta').textContent=
+    (mode==='index'?m.name:m.etf_name)+' · v3年化 '+fmtPct(m.principal_annual)+' / v2 '+fmtPct(curve.v2.meta.principal_annual)+' / 基 '+fmtPct(curve.base.meta.principal_annual);
+  renderCurve();
+}
+function renderCurve(){
+  const dates=curve.v3.daily.map(x=>x.date);
+  const pB=curve.base.daily.map(x=>x.principal), pV2=curve.v2.daily.map(x=>x.principal), pV3=curve.v3.daily.map(x=>x.principal);
+  const buyMk=[], sellMk=[];
+  curve.v3.daily.forEach((v,i)=>{if(v.buy_amount>0)buyMk.push([dates[i],pV3[i]]);if(v.sell_amount>0)sellMk.push([dates[i],pV3[i]]);});
+  const opt={tooltip:{trigger:'axis',axisPointer:{type:'cross'}},
+    legend:{textStyle:{color:'#94a3b8'},top:5},
+    grid:{left:70,right:20,top:40,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v/10000).toFixed(0)+'万'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}]};
+  if(!c1)c1=echarts.init(document.getElementById('chart-principal'));
+  c1.setOption({...opt,title:{text:(mode==='index'?curve.v3.meta.name:curve.v3.meta.etf_name)+' 本金曲线 v3/v2/基',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    legend:{...opt.legend,data:['v3','v2','基线','v3买','v3卖']},
+    series:[
+      {name:'v3',type:'line',data:pV3,lineStyle:{color:'#a78bfa',width:2.2},itemStyle:{color:'#a78bfa'},symbol:'none',connectNulls:true,areaStyle:{color:'rgba(167,139,250,0.06)'}},
+      {name:'v2',type:'line',data:pV2,lineStyle:{color:'#facc15',width:1.5},itemStyle:{color:'#facc15'},symbol:'none',connectNulls:true},
+      {name:'基线',type:'line',data:pB,lineStyle:{color:'#94a3b8',width:1.2,type:'dashed'},itemStyle:{color:'#94a3b8'},symbol:'none',connectNulls:true},
+      {name:'v3买',type:'scatter',data:buyMk,symbolSize:7,itemStyle:{color:'#4ade80'},z:10},
+      {name:'v3卖',type:'scatter',data:sellMk,symbolSize:7,itemStyle:{color:'#f87171'},z:10}]});
+  if(!c2)c2=echarts.init(document.getElementById('chart-dd'));
+  c2.setOption({...opt,title:{text:'水下回撤 %',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    legend:{...opt.legend,data:['v3','v2','基线']},
+    yAxis:{...opt.yAxis,axisLabel:{color:'#94a3b8',formatter:'{value}%'}},
+    series:[
+      {name:'v3',type:'line',data:underwater(pV3),lineStyle:{color:'#a78bfa',width:1.6},itemStyle:{color:'#a78bfa'},symbol:'none',connectNulls:true,areaStyle:{color:'rgba(167,139,250,0.12)'}},
+      {name:'v2',type:'line',data:underwater(pV2),lineStyle:{color:'#facc15',width:1.2},itemStyle:{color:'#facc15'},symbol:'none',connectNulls:true},
+      {name:'基线',type:'line',data:underwater(pB),lineStyle:{color:'#f87171',width:1.2},itemStyle:{color:'#f87171'},symbol:'none',connectNulls:true}]});
+  if(!c3)c3=echarts.init(document.getElementById('chart-annual'));
+  c3.setOption({...opt,title:{text:'滚动52周年化 %',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    legend:{...opt.legend,data:['v3','v2','基线']},
+    yAxis:{...opt.yAxis,axisLabel:{color:'#94a3b8',formatter:'{value}%'}},
+    series:[
+      {name:'v3',type:'line',data:rollAnn(pV3),lineStyle:{color:'#a78bfa',width:1.6},itemStyle:{color:'#a78bfa'},symbol:'none',connectNulls:true},
+      {name:'v2',type:'line',data:rollAnn(pV2),lineStyle:{color:'#facc15',width:1.2},itemStyle:{color:'#facc15'},symbol:'none',connectNulls:true},
+      {name:'基线',type:'line',data:rollAnn(pB),lineStyle:{color:'#94a3b8',width:1.2},itemStyle:{color:'#94a3b8'},symbol:'none',connectNulls:true}]});
+  if(!c4)c4=echarts.init(document.getElementById('chart-daily'));
+  c4.setOption({...opt,title:{text:'v3 日收益 %',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    legend:{...opt.legend,data:['v3日收益%']},
+    yAxis:{...opt.yAxis,axisLabel:{color:'#94a3b8',formatter:'{value}%'}},
+    series:[{name:'v3日收益%',type:'bar',data:curve.v3.daily.map(x=>x.daily_return!=null?x.daily_return:null),
+      itemStyle:{color:function(p){return p.value>=0?'rgba(167,139,250,0.6)':'rgba(239,68,68,0.6)';}}}]});
+  echarts.connect('v3-link');
+}
+document.getElementById('mode-index').addEventListener('click',()=>{mode='index';cur='000300';switchMode();});
+document.getElementById('mode-etf').addEventListener('click',()=>{mode='etf';cur='000300';switchMode();});
+document.getElementById('picker').addEventListener('change',e=>{cur=e.target.value;loadCurve();});
+function switchMode(){
+  document.getElementById('mode-index').classList.toggle('active',mode==='index');
+  document.getElementById('mode-etf').classList.toggle('active',mode==='etf');
+  renderPicker(); loadCurve();
+}
+load();
+</script>
+</body>
+</html>

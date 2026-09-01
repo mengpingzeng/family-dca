@@ -1,0 +1,35 @@
+{
+  "note": "宽基7个平均 · 固定30万 · 超额夏普(Rf=1.3%)",
+  "base": {
+    "annual_mean": 0.0646,
+    "sharpe_mean": 0.4578,
+    "mdd_mean": 0.2819
+  },
+  "buy_cautious": {
+    "annual_mean": 0.06,
+    "sharpe_mean": 0.4308,
+    "mdd_mean": 0.2727
+  },
+  "sell_strict": {
+    "annual_mean": 0.0772,
+    "sharpe_mean": 0.5088,
+    "mdd_mean": 0.295
+  },
+  "both": {
+    "annual_mean": 0.0727,
+    "sharpe_mean": 0.4815,
+    "mdd_mean": 0.2874
+  },
+  "v3": {
+    "annual_mean": 0.0617,
+    "sharpe_mean": 0.4887,
+    "mdd_mean": 0.235
+  },
+  "labels": {
+    "base": "基线(均衡策略)",
+    "buy_cautious": "仅买入更谨慎 (需PE%≤45%)",
+    "sell_strict": "仅卖出更严格 (需PB%≥70%)",
+    "both": "双闸门同时 (买PE≤45% + 卖PB≥70%)",
+    "v3": "双闸门 + v2趋势 (推荐 v3)"
+  }
+}

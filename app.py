@@ -68,6 +68,15 @@ def index_page():
         return f.read()
 
 
+@app.get("/mean_20day.html", response_class=HTMLResponse)
+def mean_20day_page():
+    path = BASE / "mean_20day.html"
+    if not path.exists():
+        raise HTTPException(404, "mean_20day.html 不存在, 请先运行 build_mean20_html.py")
+    with open(path) as f:
+        return f.read()
+
+
 @app.get("/detail/{code}", response_class=HTMLResponse)
 def detail_page(code: str):
     path = MERGED_DIR / f"{code}.parquet"
@@ -2205,6 +2214,1276 @@ def api_analysis_backtest(code: str):
             })
 
     return {"meta": meta, "flows": rows, "daily": daily}
+
+
+# ── 策略验证（严格买入统一最优 → 应用到 3 新指数）──
+
+@app.get("/aks-validate", response_class=HTMLResponse)
+def aks_validate_grid_page():
+    with open(BASE / "templates" / "aks_validate_grid.html") as f:
+        return f.read()
+
+
+@app.get("/api/aks-validate")
+def api_aks_validate():
+    import json as _json
+    path = BASE / "grid_search_aks" / "output" / "latest_validate.json"
+    if not path.exists():
+        return {"error": "未生成验证结果，请先运行 grid_search_aks/validate_strategy.py"}
+    with open(path) as f:
+        return _json.load(f)
+
+
+@app.get("/aks-validate/{code}", response_class=HTMLResponse)
+def aks_validate_detail_page(code: str):
+    merged_path = BASE / "data-store" / "parquet" / "aks_merged" / f"{code}.parquet"
+    if not merged_path.exists():
+        raise HTTPException(404, "指数不存在")
+    with open(BASE / "templates" / "aks_validate_detail.html") as f:
+        html = f.read()
+    return html.replace("{{CODE}}", code)
+
+
+@app.get("/api/aks-validate/{code}")
+def api_aks_validate_detail(code: str, w: int = 10):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE / "grid_search_aks"))
+    from grid_search import run_backtest, calc_xirr as _xirr
+
+    merged_path = BASE / "data-store" / "parquet" / "aks_merged" / f"{code}.parquet"
+    if not merged_path.exists():
+        raise HTTPException(404, "指数不存在")
+
+    df = pd.read_parquet(merged_path)
+    df["date"] = pd.to_datetime(df["date"])
+
+    # 固定验证策略: B8/12/22/40 S75/85 FED=off PBv=off
+    bf, bl, bm, bh = 0.08, 0.12, 0.22, 0.40
+    sh, se = 0.75, 0.85
+    params = {
+        "buy_floor": bf, "buy_low": bl, "buy_mid": bm, "buy_high": bh,
+        "sell_heavy": sh, "sell_extreme": se,
+        "fed_gate": None, "pb_veto": None, "pb_sell": None,
+    }
+
+    result = run_backtest(df, params, int(w), base_amount=500,
+                          idle_cash_rate=0.02, min_trades=10)
+    flows = result.get("cash_flows", [])
+    if not flows:
+        return {"error": "无有效交易数据", "daily": [], "trades": [], "meta": {}}
+
+    pe_pct_col = f"pe_pct_w{w}"
+    pb_pct_col = f"pb_pct_w{w}"
+    fed_pct_col = f"fed_pct_w{w}"
+
+    daily = []
+    cf = []
+    last_shares = 0.0; last_cum = 0.0; total_cash = 0.0; flow_idx = 0
+    price_vals = df["price"].values
+    date_vals = df["date"].values
+    last_xirr = 0.0; last_xirr_month = -1
+
+    for i in range(len(df)):
+        cur_date = str(date_vals[i])[:10]
+        cur_price = price_vals[i] if not pd.isna(price_vals[i]) else None
+        buy_amt = 0.0; sell_amt = 0.0
+        parts = cur_date.split("-") if cur_date else []
+        cur_month = int(parts[0])*12 + int(parts[1]) if len(parts) >= 2 else -1
+
+        while flow_idx < len(flows):
+            fd, fa, famt = flows[flow_idx][0], flows[flow_idx][1], flows[flow_idx][2]
+            if fd <= cur_date:
+                if fa == "buy":
+                    cf.append((fd, -float(famt))); last_cum += float(famt); buy_amt += float(famt)
+                elif fa in ("sell", "clear"):
+                    cf.append((fd, -float(famt))); sell_amt += abs(float(famt)); total_cash += abs(float(famt))
+                last_shares = float(flows[flow_idx][3]); flow_idx += 1
+            else:
+                break
+
+        if cur_price is None:
+            daily.append({"date": cur_date, "cum_invested": 0, "equity": 0, "net_principal": 0,
+                          "total_value": 0, "return_pct": 0, "xirr": 0.0,
+                          "buy_amount": 0, "sell_amount": 0})
+            continue
+
+        eq = last_shares * cur_price if last_shares > 0 else 0
+        total_value = eq + total_cash
+        net_principal = max(last_cum - total_cash, 0)
+        ret = (total_value - last_cum) / last_cum * 100 if last_cum > 0 else 0
+
+        dx = last_xirr
+        if cur_month != last_xirr_month and len(cf) >= 3 and eq > 0:
+            dx = _xirr(cf, cur_date, eq)
+            last_xirr = dx
+            last_xirr_month = cur_month
+
+        pe_pct = float(df.iloc[i][pe_pct_col]) if pe_pct_col in df.columns and not pd.isna(df.iloc[i].get(pe_pct_col)) else None
+        pb_pct = float(df.iloc[i][pb_pct_col]) if pb_pct_col in df.columns and not pd.isna(df.iloc[i].get(pb_pct_col)) else None
+        fed_pct_v = float(df.iloc[i][fed_pct_col]) if fed_pct_col in df.columns and not pd.isna(df.iloc[i].get(fed_pct_col)) else None
+        pe_raw = float(df.iloc[i]["pe"]) if "pe" in df.columns and not pd.isna(df.iloc[i].get("pe")) else None
+        pb_raw = float(df.iloc[i]["pb"]) if "pb" in df.columns and not pd.isna(df.iloc[i].get("pb")) else None
+
+        daily.append({
+            "date": cur_date,
+            "price": round(cur_price, 2),
+            "cum_invested": round(last_cum, 0),
+            "equity": round(eq, 0),
+            "net_principal": round(net_principal, 0),
+            "total_value": round(total_value, 0),
+            "return_pct": round(ret, 2),
+            "xirr": round(dx, 4),
+            "buy_amount": round(buy_amt, 0) if buy_amt > 0 else 0,
+            "sell_amount": round(sell_amt, 0) if sell_amt > 0 else 0,
+            "pe_raw": round(pe_raw, 2) if pe_raw else None,
+            "pb_raw": round(pb_raw, 4) if pb_raw else None,
+            "pe_pct": round(pe_pct, 4) if pe_pct else None,
+            "pb_pct": round(pb_pct, 4) if pb_pct else None,
+            "fed_pct": round(fed_pct_v, 4) if fed_pct_v else None,
+        })
+
+    trades_detail = []
+    for t in flows:
+        d, act, amt, sh_, pr, pct, pbv, inv = t[0], t[1], float(t[2]), float(t[3]), float(t[4]), t[5], t[6], t[7]
+        pct_str = f"PE%={(pct*100):.1f}%"
+        if act == "buy":
+            if pct < bf: reason = f"{pct_str}<{bf*100:.0f}%→3x"
+            elif pct < bl: reason = f"{pct_str}<{bl*100:.0f}%→2x"
+            elif pct < bm: reason = f"{pct_str}<{bm*100:.0f}%→1x"
+            elif pct < bh: reason = f"{pct_str}<{bh*100:.0f}%→0.5x"
+            else: reason = ""
+        elif act == "sell":
+            reason = f"{pct_str}≥{sh*100:.0f}%→卖20%"
+        elif act == "clear":
+            reason = f"{pct_str}≥{se*100:.0f}%→极端卖出"
+        else:
+            reason = ""
+        trades_detail.append({
+            "date": str(d)[:10], "action": act,
+            "amount": round(amt, 0), "shares": round(sh_, 4),
+            "price": round(pr, 2), "pe_pct": round(float(pct), 4),
+            "pb_pct": round(float(pbv), 4) if pbv is not None else None,
+            "cum_invested": round(float(inv), 0), "reason": reason,
+        })
+
+    meta = {
+        "code": code, "window_years": w,
+        "params": params,
+        "total_invested": result["total_invested"],
+        "total_cash_in": result["total_cash_in"],
+        "net_principal": result["net_principal"],
+        "final_value": result["final_value"],
+        "position_value": result.get("position_value", 0),
+        "idle_cash": result.get("idle_cash", 0),
+        "interest_earned": result.get("interest_earned", 0),
+        "max_equity": max((d.get("equity", 0) for d in daily), default=0),
+        "xirr": result["xirr"],
+        "final_return": result["final_return"],
+        "trades": result["trades"],
+        "buys": result["buys"],
+        "sells": result["sells"],
+    }
+
+    return {"meta": meta, "daily": daily, "trades": trades_detail}
+
+
+# ── Wind 数据策略验证 ──
+
+@app.get("/aks-validate-wind", response_class=HTMLResponse)
+def aks_validate_wind_grid_page():
+    with open(BASE / "templates" / "aks_validate_wind_grid.html") as f:
+        return f.read()
+
+
+@app.get("/api/aks-validate-wind")
+def api_aks_validate_wind():
+    import json as _json
+    path = BASE / "grid_search_aks" / "output" / "latest_validate_wind.json"
+    if not path.exists():
+        return {"error": "未生成 Wind 验证结果，请先运行 grid_search_aks/validate_wind.py"}
+    with open(path) as f:
+        return _json.load(f)
+
+
+@app.get("/aks-validate-wind/{code}", response_class=HTMLResponse)
+def aks_validate_wind_detail_page(code: str):
+    merged_path = BASE / "data-store" / "parquet" / "aks_merged_wind" / f"{code}.parquet"
+    if not merged_path.exists():
+        raise HTTPException(404, "指数不存在")
+    with open(BASE / "templates" / "aks_validate_wind_detail.html") as f:
+        html = f.read()
+    return html.replace("{{CODE}}", code)
+
+
+@app.get("/api/aks-validate-wind/{code}")
+def api_aks_validate_wind_detail(code: str, w: int = 10):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE / "grid_search_aks"))
+    from grid_search import run_backtest, calc_xirr as _xirr
+
+    merged_path = BASE / "data-store" / "parquet" / "aks_merged_wind" / f"{code}.parquet"
+    if not merged_path.exists():
+        raise HTTPException(404, "指数不存在")
+
+    df = pd.read_parquet(merged_path)
+    df["date"] = pd.to_datetime(df["date"])
+
+    # 固定验证策略: B8/12/22/40 S75/85 FED=off PBv=off
+    bf, bl, bm, bh = 0.08, 0.12, 0.22, 0.40
+    sh, se = 0.75, 0.85
+    params = {
+        "buy_floor": bf, "buy_low": bl, "buy_mid": bm, "buy_high": bh,
+        "sell_heavy": sh, "sell_extreme": se,
+        "fed_gate": None, "pb_veto": None, "pb_sell": None,
+    }
+
+    result = run_backtest(df, params, int(w), base_amount=500,
+                          idle_cash_rate=0.02, min_trades=10)
+    flows = result.get("cash_flows", [])
+    if not flows:
+        return {"error": "无有效交易数据", "daily": [], "trades": [], "meta": {}}
+
+    pe_pct_col = f"pe_pct_w{w}"
+    pb_pct_col = f"pb_pct_w{w}"
+    fed_pct_col = f"fed_pct_w{w}"
+
+    daily = []
+    cf = []
+    last_shares = 0.0; last_cum = 0.0; total_cash = 0.0; flow_idx = 0
+    price_vals = df["price"].values
+    date_vals = df["date"].values
+    last_xirr = 0.0; last_xirr_month = -1
+
+    for i in range(len(df)):
+        cur_date = str(date_vals[i])[:10]
+        cur_price = price_vals[i] if not pd.isna(price_vals[i]) else None
+        buy_amt = 0.0; sell_amt = 0.0
+        parts = cur_date.split("-") if cur_date else []
+        cur_month = int(parts[0])*12 + int(parts[1]) if len(parts) >= 2 else -1
+
+        while flow_idx < len(flows):
+            fd, fa, famt = flows[flow_idx][0], flows[flow_idx][1], flows[flow_idx][2]
+            if fd <= cur_date:
+                if fa == "buy":
+                    cf.append((fd, -float(famt))); last_cum += float(famt); buy_amt += float(famt)
+                elif fa in ("sell", "clear"):
+                    cf.append((fd, -float(famt))); sell_amt += abs(float(famt)); total_cash += abs(float(famt))
+                last_shares = float(flows[flow_idx][3]); flow_idx += 1
+            else:
+                break
+
+        if cur_price is None:
+            daily.append({"date": cur_date, "cum_invested": 0, "equity": 0, "net_principal": 0,
+                          "total_value": 0, "return_pct": 0, "xirr": 0.0,
+                          "buy_amount": 0, "sell_amount": 0})
+            continue
+
+        eq = last_shares * cur_price if last_shares > 0 else 0
+        total_value = eq + total_cash
+        net_principal = max(last_cum - total_cash, 0)
+        ret = (total_value - last_cum) / last_cum * 100 if last_cum > 0 else 0
+
+        dx = last_xirr
+        if cur_month != last_xirr_month and len(cf) >= 3 and eq > 0:
+            dx = _xirr(cf, cur_date, eq)
+            last_xirr = dx
+            last_xirr_month = cur_month
+
+        pe_pct = float(df.iloc[i][pe_pct_col]) if pe_pct_col in df.columns and not pd.isna(df.iloc[i].get(pe_pct_col)) else None
+        pb_pct = float(df.iloc[i][pb_pct_col]) if pb_pct_col in df.columns and not pd.isna(df.iloc[i].get(pb_pct_col)) else None
+        fed_pct_v = float(df.iloc[i][fed_pct_col]) if fed_pct_col in df.columns and not pd.isna(df.iloc[i].get(fed_pct_col)) else None
+        pe_raw = float(df.iloc[i]["pe"]) if "pe" in df.columns and not pd.isna(df.iloc[i].get("pe")) else None
+
+        daily.append({
+            "date": cur_date,
+            "price": round(cur_price, 2),
+            "cum_invested": round(last_cum, 0),
+            "equity": round(eq, 0),
+            "net_principal": round(net_principal, 0),
+            "total_value": round(total_value, 0),
+            "return_pct": round(ret, 2),
+            "xirr": round(dx, 4),
+            "buy_amount": round(buy_amt, 0) if buy_amt > 0 else 0,
+            "sell_amount": round(sell_amt, 0) if sell_amt > 0 else 0,
+            "pe_raw": round(pe_raw, 2) if pe_raw else None,
+            "pe_pct": round(pe_pct, 4) if pe_pct else None,
+            "pb_pct": round(pb_pct, 4) if pb_pct else None,
+            "fed_pct": round(fed_pct_v, 4) if fed_pct_v else None,
+        })
+
+    trades_detail = []
+    for t in flows:
+        d, act, amt, sh_, pr, pct, pbv, inv = t[0], t[1], float(t[2]), float(t[3]), float(t[4]), t[5], t[6], t[7]
+        pct_str = f"PE%={(pct*100):.1f}%"
+        if act == "buy":
+            if pct < bf: reason = f"{pct_str}<{bf*100:.0f}%→3x"
+            elif pct < bl: reason = f"{pct_str}<{bl*100:.0f}%→2x"
+            elif pct < bm: reason = f"{pct_str}<{bm*100:.0f}%→1x"
+            elif pct < bh: reason = f"{pct_str}<{bh*100:.0f}%→0.5x"
+            else: reason = ""
+        elif act == "sell":
+            reason = f"{pct_str}≥{sh*100:.0f}%→卖20%"
+        elif act == "clear":
+            reason = f"{pct_str}≥{se*100:.0f}%→极端卖出"
+        else:
+            reason = ""
+        trades_detail.append({
+            "date": str(d)[:10], "action": act,
+            "amount": round(amt, 0), "shares": round(sh_, 4),
+            "price": round(pr, 2), "pe_pct": round(float(pct), 4),
+            "pb_pct": round(float(pbv), 4) if pbv is not None else None,
+            "cum_invested": round(float(inv), 0), "reason": reason,
+        })
+
+    meta = {
+        "code": code, "window_years": w,
+        "params": params,
+        "total_invested": result["total_invested"],
+        "total_cash_in": result["total_cash_in"],
+        "net_principal": result["net_principal"],
+        "final_value": result["final_value"],
+        "position_value": result.get("position_value", 0),
+        "idle_cash": result.get("idle_cash", 0),
+        "interest_earned": result.get("interest_earned", 0),
+        "max_equity": max((d.get("equity", 0) for d in daily), default=0),
+        "xirr": result["xirr"],
+        "final_return": result["final_return"],
+        "trades": result["trades"],
+        "buys": result["buys"],
+        "sells": result["sells"],
+    }
+
+    return {"meta": meta, "daily": daily, "trades": trades_detail}
+
+
+# ── 蛋卷数据策略验证（5 年窗口）──
+
+@app.get("/aks-validate-dj", response_class=HTMLResponse)
+def aks_validate_dj_grid_page():
+    with open(BASE / "templates" / "aks_validate_dj_grid.html") as f:
+        return f.read()
+
+
+@app.get("/api/aks-validate-dj")
+def api_aks_validate_dj():
+    import json as _json
+    path = BASE / "grid_search_aks" / "output" / "latest_validate_dj.json"
+    if not path.exists():
+        return {"error": "未生成蛋卷验证结果，请先运行 grid_search_aks/validate_danjuan.py"}
+    with open(path) as f:
+        return _json.load(f)
+
+
+@app.get("/aks-validate-dj/{code}", response_class=HTMLResponse)
+def aks_validate_dj_detail_page(code: str):
+    merged_path = BASE / "data-store" / "parquet" / "aks_merged_dj" / f"{code}.parquet"
+    if not merged_path.exists():
+        raise HTTPException(404, "指数不存在")
+    with open(BASE / "templates" / "aks_validate_dj_detail.html") as f:
+        html = f.read()
+    return html.replace("{{CODE}}", code)
+
+
+@app.get("/api/aks-validate-dj/{code}")
+def api_aks_validate_dj_detail(code: str, w: int = 5):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE / "grid_search_aks"))
+    from grid_search import run_backtest, calc_xirr as _xirr
+
+    merged_path = BASE / "data-store" / "parquet" / "aks_merged_dj" / f"{code}.parquet"
+    if not merged_path.exists():
+        raise HTTPException(404, "指数不存在")
+
+    df = pd.read_parquet(merged_path)
+    df["date"] = pd.to_datetime(df["date"])
+
+    # 固定验证策略: B8/12/22/40 S75/85 FED=off PBv=off
+    bf, bl, bm, bh = 0.08, 0.12, 0.22, 0.40
+    sh, se = 0.75, 0.85
+    params = {
+        "buy_floor": bf, "buy_low": bl, "buy_mid": bm, "buy_high": bh,
+        "sell_heavy": sh, "sell_extreme": se,
+        "fed_gate": None, "pb_veto": None, "pb_sell": None,
+    }
+
+    result = run_backtest(df, params, int(w), base_amount=500,
+                          idle_cash_rate=0.02, min_trades=10)
+    flows = result.get("cash_flows", [])
+    if not flows:
+        return {"error": "无有效交易数据", "daily": [], "trades": [], "meta": {}}
+
+    pe_pct_col = f"pe_pct_w{w}"
+    pb_pct_col = f"pb_pct_w{w}"
+    fed_pct_col = f"fed_pct_w{w}"
+
+    daily = []
+    cf = []
+    last_shares = 0.0; last_cum = 0.0; total_cash = 0.0; flow_idx = 0
+    price_vals = df["price"].values
+    date_vals = df["date"].values
+    last_xirr = 0.0; last_xirr_month = -1
+
+    for i in range(len(df)):
+        cur_date = str(date_vals[i])[:10]
+        cur_price = price_vals[i] if not pd.isna(price_vals[i]) else None
+        buy_amt = 0.0; sell_amt = 0.0
+        parts = cur_date.split("-") if cur_date else []
+        cur_month = int(parts[0])*12 + int(parts[1]) if len(parts) >= 2 else -1
+
+        while flow_idx < len(flows):
+            fd, fa, famt = flows[flow_idx][0], flows[flow_idx][1], flows[flow_idx][2]
+            if fd <= cur_date:
+                if fa == "buy":
+                    cf.append((fd, -float(famt))); last_cum += float(famt); buy_amt += float(famt)
+                elif fa in ("sell", "clear"):
+                    cf.append((fd, -float(famt))); sell_amt += abs(float(famt)); total_cash += abs(float(famt))
+                last_shares = float(flows[flow_idx][3]); flow_idx += 1
+            else:
+                break
+
+        if cur_price is None:
+            daily.append({"date": cur_date, "cum_invested": 0, "equity": 0, "net_principal": 0,
+                          "total_value": 0, "return_pct": 0, "xirr": 0.0,
+                          "buy_amount": 0, "sell_amount": 0})
+            continue
+
+        eq = last_shares * cur_price if last_shares > 0 else 0
+        total_value = eq + total_cash
+        net_principal = max(last_cum - total_cash, 0)
+        ret = (total_value - last_cum) / last_cum * 100 if last_cum > 0 else 0
+
+        dx = last_xirr
+        if cur_month != last_xirr_month and len(cf) >= 3 and eq > 0:
+            dx = _xirr(cf, cur_date, eq)
+            last_xirr = dx
+            last_xirr_month = cur_month
+
+        pe_pct = float(df.iloc[i][pe_pct_col]) if pe_pct_col in df.columns and not pd.isna(df.iloc[i].get(pe_pct_col)) else None
+        pb_pct = float(df.iloc[i][pb_pct_col]) if pb_pct_col in df.columns and not pd.isna(df.iloc[i].get(pb_pct_col)) else None
+        fed_pct_v = float(df.iloc[i][fed_pct_col]) if fed_pct_col in df.columns and not pd.isna(df.iloc[i].get(fed_pct_col)) else None
+        pe_raw = float(df.iloc[i]["pe"]) if "pe" in df.columns and not pd.isna(df.iloc[i].get("pe")) else None
+
+        daily.append({
+            "date": cur_date,
+            "price": round(cur_price, 2),
+            "cum_invested": round(last_cum, 0),
+            "equity": round(eq, 0),
+            "net_principal": round(net_principal, 0),
+            "total_value": round(total_value, 0),
+            "return_pct": round(ret, 2),
+            "xirr": round(dx, 4),
+            "buy_amount": round(buy_amt, 0) if buy_amt > 0 else 0,
+            "sell_amount": round(sell_amt, 0) if sell_amt > 0 else 0,
+            "pe_raw": round(pe_raw, 2) if pe_raw else None,
+            "pe_pct": round(pe_pct, 4) if pe_pct else None,
+            "pb_pct": round(pb_pct, 4) if pb_pct else None,
+            "fed_pct": round(fed_pct_v, 4) if fed_pct_v else None,
+        })
+
+    trades_detail = []
+    for t in flows:
+        d, act, amt, sh_, pr, pct, pbv, inv = t[0], t[1], float(t[2]), float(t[3]), float(t[4]), t[5], t[6], t[7]
+        pct_str = f"PE%={(pct*100):.1f}%"
+        if act == "buy":
+            if pct < bf: reason = f"{pct_str}<{bf*100:.0f}%→3x"
+            elif pct < bl: reason = f"{pct_str}<{bl*100:.0f}%→2x"
+            elif pct < bm: reason = f"{pct_str}<{bm*100:.0f}%→1x"
+            elif pct < bh: reason = f"{pct_str}<{bh*100:.0f}%→0.5x"
+            else: reason = ""
+        elif act == "sell":
+            reason = f"{pct_str}≥{sh*100:.0f}%→卖20%"
+        elif act == "clear":
+            reason = f"{pct_str}≥{se*100:.0f}%→极端卖出"
+        else:
+            reason = ""
+        trades_detail.append({
+            "date": str(d)[:10], "action": act,
+            "amount": round(amt, 0), "shares": round(sh_, 4),
+            "price": round(pr, 2), "pe_pct": round(float(pct), 4),
+            "pb_pct": round(float(pbv), 4) if pbv is not None else None,
+            "cum_invested": round(float(inv), 0), "reason": reason,
+        })
+
+    meta = {
+        "code": code, "window_years": w,
+        "params": params,
+        "total_invested": result["total_invested"],
+        "total_cash_in": result["total_cash_in"],
+        "net_principal": result["net_principal"],
+        "final_value": result["final_value"],
+        "position_value": result.get("position_value", 0),
+        "idle_cash": result.get("idle_cash", 0),
+        "interest_earned": result.get("interest_earned", 0),
+        "max_equity": max((d.get("equity", 0) for d in daily), default=0),
+        "xirr": result["xirr"],
+        "final_return": result["final_return"],
+        "trades": result["trades"],
+        "buys": result["buys"],
+        "sells": result["sells"],
+    }
+
+    return {"meta": meta, "daily": daily, "trades": trades_detail}
+
+
+# ── 三数据源 PE 曲线对比 ──
+
+@app.get("/aks-pe-compare", response_class=HTMLResponse)
+def aks_pe_compare_page():
+    with open(BASE / "templates" / "aks_pe_compare.html") as f:
+        return f.read()
+
+
+@app.get("/api/aks-pe-compare")
+def api_aks_pe_compare():
+    import json as _json
+    path = BASE / "grid_search_aks" / "output" / "pe_comparison.json"
+    if not path.exists():
+        return {"error": "未生成 PE 对比数据，请先运行 grid_search_aks/build_pe_comparison.py"}
+    with open(path) as f:
+        return _json.load(f)
+
+
+# ── Wind vs 蛋卷 PE 值对比（各自原生频率） ──
+
+@app.get("/aks-pe-wind-dj", response_class=HTMLResponse)
+def aks_pe_wind_dj_page():
+    with open(BASE / "templates" / "aks_pe_wind_dj.html") as f:
+        return f.read()
+
+
+@app.get("/api/aks-pe-wind-dj")
+def api_aks_pe_wind_dj():
+    import json as _json
+    path = BASE / "grid_search_aks" / "output" / "pe_wind_dj.json"
+    if not path.exists():
+        return {"error": "未生成 Wind/蛋卷 PE 对比数据，请先运行 grid_search_aks/build_pe_wind_dj.py"}
+    with open(path) as f:
+        return _json.load(f)
+
+
+# ── 新版 Wind PE/PB/FED 训练集/测试集 ──
+
+WIND_NEW_MERGED_DIR = BASE / "data-store" / "parquet" / "wind_new_merged"
+WIND_NEW_OUT = BASE / "wind_new_search" / "output"
+
+WIND_NEW_NAMES = {
+    "000015": "上证红利", "000016": "上证50", "000300": "沪深300", "000688": "科创50",
+    "000852": "中证1000", "000905": "中证500", "399006": "创业板指", "399330": "深证100",
+    "930930": "港股综合", "930931": "港股通50", "HSI": "恒生指数", "HSTECH": "恒生科技",
+    "NDX100": "纳斯达克100", "SPX500": "标普500",
+}
+
+
+def _wind_new_best_params():
+    import json as _json
+    p = WIND_NEW_OUT / "train_results.json"
+    if not p.exists():
+        raise HTTPException(404, "未生成训练结果, 请先运行 wind_new_search/train.py")
+    data = _json.load(open(p))
+    best = data["top"][0]
+    return {k: best[k] for k in ["buy_signal", "buy_gate", "buy_gate_cap", "sell_signal",
+                                 "buy_floor", "buy_low", "buy_mid", "buy_high",
+                                 "sell_heavy", "sell_extreme"]}
+
+
+@app.get("/wind-new/train", response_class=HTMLResponse)
+def wind_new_train_page():
+    with open(BASE / "templates" / "wind_train.html") as f:
+        return f.read()
+
+
+@app.get("/wind-new/test", response_class=HTMLResponse)
+def wind_new_test_page():
+    with open(BASE / "templates" / "wind_test.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/train")
+def api_wind_new_train():
+    import json as _json
+    p = WIND_NEW_OUT / "train_results.json"
+    if not p.exists():
+        return {"error": "未生成训练结果, 请先运行 wind_new_search/train.py"}
+    return _json.load(open(p))
+
+
+@app.get("/api/wind-new/test")
+def api_wind_new_test():
+    import json as _json
+    p = WIND_NEW_OUT / "test_results.json"
+    if not p.exists():
+        return {"error": "未生成测试结果, 请先运行 wind_new_search/test.py"}
+    return _json.load(open(p))
+
+
+@app.get("/api/wind-new/curve/{code}")
+def api_wind_new_curve(code: str):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    params = _wind_new_best_params()
+    path = WIND_NEW_MERGED_DIR / f"{code}.parquet"
+    if not path.exists():
+        raise HTTPException(404, f"指数 {code} 不存在")
+    df = pd.read_parquet(path)
+    df["date"] = pd.to_datetime(df["date"])
+    window = int(df["window"].iloc[0])
+    curve = build_curve(df, params)
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = WIND_NEW_NAMES.get(code, code)
+    curve["meta"]["window"] = window
+    return curve
+
+
+# ── 固定30万本金池 训练集网格搜索 (策略 × 定投base) ──
+
+WIND_NEW_PRINCIPAL_CAP = 300_000
+WIND_NEW_PRINCIPAL_POOL = 300_000
+
+_PRINCIPAL_PARAM_KEYS = ["buy_signal", "buy_gate", "buy_gate_cap", "sell_signal",
+                         "sell_gate", "sell_gate_floor", "buy_floor", "buy_low",
+                         "buy_mid", "buy_high", "sell_heavy", "sell_extreme"]
+
+
+@app.get("/wind-new/train-principal", response_class=HTMLResponse)
+def wind_new_train_principal_page():
+    with open(BASE / "templates" / "wind_train_principal.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/train-principal")
+def api_wind_new_train_principal():
+    import json as _json
+    p = WIND_NEW_OUT / "train_principal.json"
+    if not p.exists():
+        return {"error": "未生成固定30万训练结果, 请先运行 wind_new_search/train_principal.py"}
+    return _json.load(open(p))
+
+
+@app.get("/api/wind-new/principal-curve/{code}")
+def api_wind_new_principal_curve(code: str, obj: str = "unified_principal_annual"):
+    import sys as _sys
+    import json as _json
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    p = WIND_NEW_OUT / "train_principal.json"
+    if not p.exists():
+        raise HTTPException(404, "未生成固定30万训练结果, 请先运行 wind_new_search/train_principal.py")
+    data = _json.load(open(p))
+    rk = data["rankings"].get(obj)
+    if not rk or not rk["top"]:
+        raise HTTPException(404, f"未知目标 {obj}")
+    best = rk["top"][0]
+    params = {k: best[k] for k in _PRINCIPAL_PARAM_KEYS}
+    base_amount = best.get("base_amount", 1000)
+    cost = data["cost_model"]
+    commission_rate = cost["commission_rate"]
+    min_commission = cost["min_commission"]
+    principal_cap = data["principal_cap"]
+    principal_pool = data["principal_pool"]
+    path = WIND_NEW_MERGED_DIR / f"{code}.parquet"
+    if not path.exists():
+        raise HTTPException(404, f"指数 {code} 不存在")
+    df = pd.read_parquet(path)
+    df["date"] = pd.to_datetime(df["date"])
+    curve = build_curve(df, params, base_amount=base_amount,
+                        commission_rate=commission_rate, min_commission=min_commission,
+                        lot_size=0, principal_cap=principal_cap, principal_pool=principal_pool)
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = WIND_NEW_NAMES.get(code, code)
+    curve["meta"]["base_amount"] = base_amount
+    curve["meta"]["objective"] = rk["label"]
+    return curve
+
+
+# ── 策略B + 本金阈值收缩 (20万阈值 + 30万封顶) 独立展示 ──
+
+@app.get("/wind-new/strategy-b-threshold", response_class=HTMLResponse)
+def wind_new_strategy_b_threshold_page():
+    with open(BASE / "templates" / "wind_strategy_b_threshold.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/strategy-b-threshold")
+def api_wind_new_strategy_b_threshold():
+    import json as _json
+    p = WIND_NEW_OUT / "strategy_b_threshold.json"
+    if not p.exists():
+        return {"error": "未生成结果, 请先运行 wind_new_search/strategy_b_threshold.py"}
+    return _json.load(open(p))
+
+
+@app.get("/api/wind-new/strategy-b-threshold/curve/{code}")
+def api_wind_new_strategy_b_threshold_curve(code: str):
+    import sys as _sys
+    import json as _json
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    from wind_new_search.test_windowed import OPTIMAL_PARAMS
+    p = WIND_NEW_OUT / "strategy_b_threshold.json"
+    if not p.exists():
+        raise HTTPException(404, "未生成结果, 请先运行 wind_new_search/strategy_b_threshold.py")
+    data = _json.load(open(p))
+    cost = data["cost_model"]
+    path = WIND_NEW_MERGED_DIR / f"{code}.parquet"
+    if not path.exists():
+        raise HTTPException(404, f"指数 {code} 不存在")
+    df = pd.read_parquet(path)
+    df["date"] = pd.to_datetime(df["date"])
+    curve = build_curve(df, OPTIMAL_PARAMS, base_amount=data["base_amount"],
+                        commission_rate=cost["commission_rate"], min_commission=cost["min_commission"],
+                        lot_size=0, principal_threshold=data["principal_threshold"],
+                        principal_cap=data["principal_cap"], principal_pool=data["principal_pool"])
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = WIND_NEW_NAMES.get(code, code)
+    curve["meta"]["base_amount"] = data["base_amount"]
+    curve["meta"]["principal_threshold"] = data["principal_threshold"]
+    curve["meta"]["principal_cap"] = data["principal_cap"]
+    return curve
+
+
+# ── 均衡策略验证 (测试集指数 + ETF) ──
+
+@app.get("/wind-new/balanced", response_class=HTMLResponse)
+def wind_new_balanced_page():
+    with open(BASE / "templates" / "wind_balanced.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/balanced")
+def api_wind_new_balanced():
+    import json as _json
+    p1 = WIND_NEW_OUT / "test_balanced.json"
+    p2 = WIND_NEW_OUT / "test_etf_balanced.json"
+    if not p1.exists() or not p2.exists():
+        return {"error": "请先运行 wind_new_search/test_balanced.py 和 wind_new_search/test_etf_balanced.py"}
+    return {"test": _json.load(open(p1)), "etf": _json.load(open(p2))}
+
+
+# 均衡策略参数 (训练集 000300/000905 固定30万口径最优)
+BALANCED_PARAMS = {
+    "buy_signal": "PB", "buy_gate": "FED", "buy_gate_cap": 0.55,
+    "sell_signal": "PE", "sell_gate": None, "sell_gate_floor": None,
+    "buy_floor": 0.10, "buy_low": 0.15, "buy_mid": 0.25, "buy_high": 0.70,
+    "sell_heavy": 0.85, "sell_extreme": 0.95,
+}
+BALANCED_MULTS = (8, 4, 2, 0)
+BALANCED_BASE = 1000
+BALANCED_THRESHOLD = 200_000
+BALANCED_CAP = 300_000
+BALANCED_POOL = 300_000
+BALANCED_ETF_MAP = {
+    "000300": ("510300", "华泰柏瑞沪深300ETF"),
+    "000905": ("510500", "南方中证500ETF"),
+    "000015": ("510880", "华泰柏瑞红利ETF"),
+    "000016": ("510050", "华夏上证50ETF"),
+    "399330": ("159901", "易方达深证100ETF"),
+    "399006": ("159915", "易方达创业板ETF"),
+    "000688": ("588000", "华夏科创50ETF"),
+    "000852": ("512100", "南方中证1000ETF"),
+    "HSI":    ("159920", "华夏恒生ETF"),
+    "HSTECH": ("513180", "华夏恒生科技ETF"),
+    "SPX500": ("513500", "博时标普500ETF"),
+    "NDX100": ("513100", "国泰纳指100ETF"),
+}
+
+
+@app.get("/api/wind-new/balanced/curve/{code}")
+def api_wind_new_balanced_curve(code: str):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    path = WIND_NEW_MERGED_DIR / f"{code}.parquet"
+    if not path.exists():
+        raise HTTPException(404, f"指数 {code} 不存在")
+    df = pd.read_parquet(path)
+    df["date"] = pd.to_datetime(df["date"])
+    curve = build_curve(df, BALANCED_PARAMS, base_amount=BALANCED_BASE,
+                        commission_rate=0.0005, min_commission=5.0,
+                        lot_size=0, principal_threshold=BALANCED_THRESHOLD,
+                        principal_cap=BALANCED_CAP, principal_pool=BALANCED_POOL,
+                        buy_mults=BALANCED_MULTS)
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = WIND_NEW_NAMES.get(code, code)
+    curve["meta"]["buy_mults"] = list(BALANCED_MULTS)
+    curve["meta"]["principal_threshold"] = BALANCED_THRESHOLD
+    curve["meta"]["principal_cap"] = BALANCED_CAP
+    curve["meta"]["principal_pool"] = BALANCED_POOL
+    return curve
+
+
+@app.get("/api/wind-new/balanced/etf-curve/{idx_code}")
+def api_wind_new_balanced_etf_curve(idx_code: str):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    if idx_code not in BALANCED_ETF_MAP:
+        raise HTTPException(404, f"指数 {idx_code} 无对应 ETF")
+    etf_code, etf_name = BALANCED_ETF_MAP[idx_code]
+    path = WIND_NEW_MERGED_DIR / f"{idx_code}.parquet"
+    etf_path = BASE / "data-store" / "parquet" / "etf" / f"{etf_code}.parquet"
+    if not path.exists() or not etf_path.exists():
+        raise HTTPException(404, f"{idx_code} 或 ETF {etf_code} 数据不存在")
+    df = pd.read_parquet(path)
+    df["date"] = pd.to_datetime(df["date"]).astype("datetime64[ns]")
+    etf = pd.read_parquet(etf_path)
+    etf["date"] = pd.to_datetime(etf["date"]).astype("datetime64[ns]")
+    aligned = pd.merge_asof(df[["date"]], etf[["date", "hfq"]], on="date", direction="backward")
+    mask = aligned["hfq"].notna() & df["pe_pct"].notna()
+    df_etf = df[mask].reset_index(drop=True)
+    exec_price = aligned.loc[mask, "hfq"].to_numpy(float)
+    curve = build_curve(df_etf, BALANCED_PARAMS, base_amount=BALANCED_BASE,
+                        exec_price=exec_price, commission_rate=0.0005, min_commission=5.0,
+                        lot_size=100, principal_threshold=BALANCED_THRESHOLD,
+                        principal_cap=BALANCED_CAP, principal_pool=BALANCED_POOL,
+                        buy_mults=BALANCED_MULTS)
+    curve["meta"]["code"] = idx_code
+    curve["meta"]["name"] = WIND_NEW_NAMES.get(idx_code, idx_code)
+    curve["meta"]["etf_code"] = etf_code
+    curve["meta"]["etf_name"] = etf_name
+    curve["meta"]["buy_mults"] = list(BALANCED_MULTS)
+    curve["meta"]["principal_threshold"] = BALANCED_THRESHOLD
+    curve["meta"]["principal_cap"] = BALANCED_CAP
+    curve["meta"]["principal_pool"] = BALANCED_POOL
+    return curve
+
+
+# ── 均衡策略 v2 (Sharpe 提升版) ──
+# v2 = 更早止盈(卖PE 0.80) + 20周均线软制动(β0.5) + 顺势加码(γ1.5)
+# 页面/接口独立于 /wind-new/balanced, 不改变原均衡策略行为。
+
+@app.get("/wind-new/balanced-v2", response_class=HTMLResponse)
+def wind_new_balanced_v2_page():
+    with open(BASE / "templates" / "wind_balanced_v2.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/balanced-v2")
+def api_wind_new_balanced_v2():
+    import json as _json
+    p = WIND_NEW_OUT / "test_balanced_v2.json"
+    if not p.exists():
+        return {"error": "请先运行 wind_new_search/test_balanced_v2.py"}
+    return _json.load(open(p))
+
+
+def _balanced_v2_curve(code, etf=False):
+    """构建 v2 (或基线) 曲线: 返回 {"base": ..., "v2": ...}."""
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    from wind_new_search.balanced_v2 import (
+        PARAMS as V2_PARAMS, KW as V2_KW, MULTS as V2_MULTS,
+        BASE as V2_BASE, COMMISSION_RATE, MIN_COMMISSION, THRESHOLD, CAP, POOL, ETF_MAP,
+    )
+    from wind_new_search.test_balanced import BALANCED_PARAMS, BALANCED_MULTS
+
+    path = WIND_NEW_MERGED_DIR / f"{code}.parquet"
+    if not path.exists():
+        raise HTTPException(404, f"指数 {code} 不存在")
+
+    def _build(params, mults, v2_mods=False):
+        df = pd.read_parquet(path)
+        df["date"] = pd.to_datetime(df["date"])
+        kw = dict(base_amount=V2_BASE, commission_rate=COMMISSION_RATE, min_commission=MIN_COMMISSION,
+                  lot_size=0, principal_threshold=THRESHOLD, principal_cap=CAP, principal_pool=POOL,
+                  buy_mults=mults)
+        if v2_mods:
+            kw.update(V2_KW)
+        if etf:
+            if code not in ETF_MAP:
+                raise HTTPException(404, f"指数 {code} 无对应 ETF")
+            etf_code, etf_name = ETF_MAP[code]
+            etf_path = BASE / "data-store" / "parquet" / "etf" / f"{etf_code}.parquet"
+            if not etf_path.exists():
+                raise HTTPException(404, f"ETF {etf_code} 数据不存在")
+            etf_df = pd.read_parquet(etf_path)
+            etf_df["date"] = pd.to_datetime(etf_df["date"]).astype("datetime64[ns]")
+            df["date"] = df["date"].astype("datetime64[ns]")
+            aligned = pd.merge_asof(df[["date"]], etf_df[["date", "hfq"]], on="date", direction="backward")
+            mask = aligned["hfq"].notna() & df["pe_pct"].notna()
+            df = df[mask].reset_index(drop=True)
+            kw["exec_price"] = aligned.loc[mask, "hfq"].to_numpy(float)
+            kw["lot_size"] = 100
+        return build_curve(df, params, **kw)
+
+    base = _build(BALANCED_PARAMS, BALANCED_MULTS, v2_mods=False)
+    v2 = _build(V2_PARAMS, V2_MULTS, v2_mods=True)
+    for c in (base, v2):
+        c["meta"]["code"] = code
+        c["meta"]["name"] = WIND_NEW_NAMES.get(code, code)
+        if etf:
+            etf_code, etf_name = ETF_MAP[code]
+            c["meta"]["etf_code"] = etf_code
+            c["meta"]["etf_name"] = etf_name
+    return {"base": base, "v2": v2}
+
+
+@app.get("/api/wind-new/balanced-v2/curve/{code}")
+def api_wind_new_balanced_v2_curve(code: str):
+    return _balanced_v2_curve(code, etf=False)
+
+
+@app.get("/api/wind-new/balanced-v2/etf-curve/{idx_code}")
+def api_wind_new_balanced_v2_etf_curve(idx_code: str):
+    return _balanced_v2_curve(idx_code, etf=True)
+
+
+# ── 均衡策略 v3 (PB×PE 双闸门 · 信号质量版) ──
+# v3 = v2 + 买入需PE%≤45%(更谨慎) + 卖出需PB%≥70%(更严格)
+
+@app.get("/wind-new/pbpe-v3", response_class=HTMLResponse)
+def wind_new_pbpe_v3_page():
+    with open(BASE / "templates" / "wind_pbpe_v3.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/pbpe-v3")
+def api_wind_new_pbpe_v3():
+    import json as _json
+    p = WIND_NEW_OUT / "test_pbpe_v3.json"
+    v = WIND_NEW_OUT / "pbpe_variant_summary.json"
+    if not p.exists():
+        return {"error": "请先运行 wind_new_search/test_pbpe_v3.py"}
+    d = _json.load(open(p))
+    if v.exists():
+        d["variants"] = _json.load(open(v))
+    return d
+
+
+def _pbpe_v3_curve(code, etf=False):
+    """返回 {"base": ..., "v2": ..., "v3": ...} 三方曲线."""
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    from wind_new_search.test_balanced import BALANCED_PARAMS, BALANCED_MULTS
+    from wind_new_search.balanced_v2 import (
+        PARAMS as V2_PARAMS, KW as V2_KW, MULTS as V2_MULTS,
+        BASE as V2_BASE, COMMISSION_RATE, MIN_COMMISSION, THRESHOLD, CAP, POOL, ETF_MAP,
+    )
+    from wind_new_search.pbpe_v3 import PARAMS as V3_PARAMS, KW as V3_KW
+
+    path = WIND_NEW_MERGED_DIR / f"{code}.parquet"
+    if not path.exists():
+        raise HTTPException(404, f"指数 {code} 不存在")
+
+    def _build(params, mults, kw):
+        df = pd.read_parquet(path)
+        df["date"] = pd.to_datetime(df["date"])
+        base = dict(base_amount=V2_BASE, commission_rate=COMMISSION_RATE, min_commission=MIN_COMMISSION,
+                    lot_size=0, principal_threshold=THRESHOLD, principal_cap=CAP, principal_pool=POOL,
+                    buy_mults=mults)
+        base.update(kw)
+        if etf:
+            if code not in ETF_MAP:
+                raise HTTPException(404, f"指数 {code} 无对应 ETF")
+            etf_code, etf_name = ETF_MAP[code]
+            etf_path = BASE / "data-store" / "parquet" / "etf" / f"{etf_code}.parquet"
+            if not etf_path.exists():
+                raise HTTPException(404, f"ETF {etf_code} 数据不存在")
+            etf_df = pd.read_parquet(etf_path)
+            etf_df["date"] = pd.to_datetime(etf_df["date"]).astype("datetime64[ns]")
+            df["date"] = df["date"].astype("datetime64[ns]")
+            aligned = pd.merge_asof(df[["date"]], etf_df[["date", "hfq"]], on="date", direction="backward")
+            mask = aligned["hfq"].notna() & df["pe_pct"].notna()
+            df = df[mask].reset_index(drop=True)
+            base["exec_price"] = aligned.loc[mask, "hfq"].to_numpy(float)
+            base["lot_size"] = 100
+        return build_curve(df, params, **base)
+
+    out = {}
+    for key, params, mults, kw in (
+        ("base", BALANCED_PARAMS, BALANCED_MULTS, {}),
+        ("v2", V2_PARAMS, V2_MULTS, V2_KW),
+        ("v3", V3_PARAMS, V2_MULTS, V3_KW),
+    ):
+        c = _build(params, mults, kw)
+        c["meta"]["code"] = code
+        c["meta"]["name"] = WIND_NEW_NAMES.get(code, code)
+        if etf:
+            etf_code, etf_name = ETF_MAP[code]
+            c["meta"]["etf_code"] = etf_code
+            c["meta"]["etf_name"] = etf_name
+        out[key] = c
+    return out
+
+
+@app.get("/api/wind-new/pbpe-v3/curve/{code}")
+def api_wind_new_pbpe_v3_curve(code: str):
+    return _pbpe_v3_curve(code, etf=False)
+
+
+@app.get("/api/wind-new/pbpe-v3/etf-curve/{idx_code}")
+def api_wind_new_pbpe_v3_etf_curve(idx_code: str):
+    return _pbpe_v3_curve(idx_code, etf=True)
+
+
+# ── 赫斯特信心指数策略 (买入侧打折0.5 / 卖出侧不变) ──
+
+@app.get("/wind-new/hurst", response_class=HTMLResponse)
+def wind_new_hurst_page():
+    with open(BASE / "templates" / "wind_hurst.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/hurst")
+def api_wind_new_hurst():
+    import json as _json
+    p1 = WIND_NEW_OUT / "hurst_force_sweep.json"
+    p2 = WIND_NEW_OUT / "hurst_sell_sweep.json"
+    if not p1.exists() or not p2.exists():
+        return {"error": "请先运行 wind_new_search/hurst_force_sweep.py 和 hurst_sell_sweep.py"}
+    return {"force": _json.load(open(p1)), "sell": _json.load(open(p2))}
+
+
+@app.get("/api/wind-new/hurst/curve/{code}")
+def api_wind_new_hurst_curve(code: str):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    path = WIND_NEW_MERGED_DIR / f"{code}.parquet"
+    if not path.exists():
+        raise HTTPException(404, f"指数 {code} 不存在")
+    df = pd.read_parquet(path)
+    df["date"] = pd.to_datetime(df["date"])
+    w = int(df["window"].iloc[0])
+    hurst_window = 250 if w >= 10 else 104
+    curve = build_curve(df, BALANCED_PARAMS, base_amount=BALANCED_BASE,
+                        commission_rate=0.0005, min_commission=5.0,
+                        lot_size=0, principal_threshold=BALANCED_THRESHOLD,
+                        principal_cap=BALANCED_CAP, principal_pool=BALANCED_POOL,
+                        buy_mults=BALANCED_MULTS,
+                        hurst_window=hurst_window, hurst_discount=0.5, hurst_boost=1.0)
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = WIND_NEW_NAMES.get(code, code)
+    curve["meta"]["hurst_window"] = hurst_window
+    return curve
+
+
+# ── 窗口分层回测 (10yr固定2015-03 / 5yr各自+5 / 3yr各自+3) ──
+
+@app.get("/wind-new/test-windowed", response_class=HTMLResponse)
+def wind_new_windowed_page():
+    with open(BASE / "templates" / "wind_windowed.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/test-windowed")
+def api_wind_new_windowed():
+    import json as _json
+    p = WIND_NEW_OUT / "test_windowed.json"
+    if not p.exists():
+        return {"error": "未生成窗口分层回测结果, 请先运行 wind_new_search/test_windowed.py"}
+    return _json.load(open(p))
+
+
+@app.get("/api/wind-new/windowed-curve/{code}")
+def api_wind_new_windowed_curve(code: str):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    from wind_new_search.test_windowed import build_windowed_df, OPTIMAL_PARAMS, NAMES
+    df, cfg = build_windowed_df(code)
+    if df is None:
+        raise HTTPException(404, f"指数 {code} 不在窗口分层范围内")
+    curve = build_curve(df, OPTIMAL_PARAMS)
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = NAMES.get(code, code)
+    curve["meta"]["window"] = cfg["window"]
+    curve["meta"]["start_date"] = str(df["date"].min().date())
+    return curve
+
+
+# ── ETF 实盘可行性回测 ──
+
+WIND_NEW_ETF_DIR = BASE / "data-store" / "parquet" / "etf"
+WIND_NEW_ETF_CODE = {
+    "000300": "510300", "000905": "510500", "000015": "510880", "000016": "510050",
+    "399330": "159901", "399006": "159915", "000688": "588000", "000852": "512100",
+    "HSI": "159920", "HSTECH": "513180", "SPX500": "513500", "NDX100": "513100",
+}
+WIND_NEW_ETF_COMMISSION = 0.0005  # 万5
+WIND_NEW_ETF_MIN_COMMISSION = 5.0
+WIND_NEW_ETF_LOT = 100
+
+
+@app.get("/wind-new/test-etf", response_class=HTMLResponse)
+def wind_new_etf_page():
+    with open(BASE / "templates" / "wind_etf.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/test-etf")
+def api_wind_new_test_etf():
+    import json as _json
+    p = WIND_NEW_OUT / "test_etf.json"
+    if not p.exists():
+        return {"error": "未生成 ETF 回测结果, 请先运行 wind_new_search/test_etf.py"}
+    return _json.load(open(p))
+
+
+@app.get("/api/wind-new/etf-curve/{code}")
+def api_wind_new_etf_curve(code: str):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    from wind_new_search.test_windowed import build_windowed_df, OPTIMAL_PARAMS, NAMES
+    etf_code = WIND_NEW_ETF_CODE.get(code)
+    if etf_code is None:
+        raise HTTPException(404, f"指数 {code} 不在 ETF 映射范围内")
+    df, cfg = build_windowed_df(code)
+    if df is None:
+        raise HTTPException(404, f"指数 {code} 无数据")
+    etf_path = WIND_NEW_ETF_DIR / f"{etf_code}.parquet"
+    if not etf_path.exists():
+        raise HTTPException(404, f"ETF {etf_code} 数据不存在")
+    etf = pd.read_parquet(etf_path)
+    etf["date"] = pd.to_datetime(etf["date"]).astype("datetime64[ns]")
+    df["date"] = df["date"].astype("datetime64[ns]")
+    aligned = pd.merge_asof(df[["date"]], etf[["date", "hfq"]], on="date", direction="backward")
+    mask = aligned["hfq"].notna()
+    df_etf = df[mask].reset_index(drop=True)
+    exec_price = aligned.loc[mask, "hfq"].to_numpy(float)
+
+    curve = build_curve(df_etf, OPTIMAL_PARAMS, exec_price=exec_price,
+                        commission_rate=WIND_NEW_ETF_COMMISSION,
+                        min_commission=WIND_NEW_ETF_MIN_COMMISSION,
+                        lot_size=WIND_NEW_ETF_LOT)
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = NAMES.get(code, code)
+    curve["meta"]["etf_code"] = etf_code
+    curve["meta"]["window"] = cfg["window"]
+    curve["meta"]["commission_rate"] = WIND_NEW_ETF_COMMISSION
+    curve["meta"]["min_commission"] = WIND_NEW_ETF_MIN_COMMISSION
+    curve["meta"]["lot_size"] = WIND_NEW_ETF_LOT
+    return curve
+
+
+# ── ETF 本金阈值回测 (策略 B + 本金阈值 30万) ──
+
+WIND_NEW_ETF_PRINCIPAL_THRESHOLD = 300_000
+
+
+@app.get("/wind-new/test-etf-capped", response_class=HTMLResponse)
+def wind_new_etf_capped_page():
+    with open(BASE / "templates" / "wind_etf_capped.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/test-etf-capped")
+def api_wind_new_test_etf_capped():
+    import json as _json
+    p = WIND_NEW_OUT / "test_etf_capped.json"
+    if not p.exists():
+        return {"error": "未生成 ETF 本金阈值回测结果, 请先运行 wind_new_search/test_etf_capped.py"}
+    return _json.load(open(p))
+
+
+@app.get("/api/wind-new/etf-capped-curve/{code}")
+def api_wind_new_etf_capped_curve(code: str):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    from wind_new_search.test_windowed import build_windowed_df, OPTIMAL_PARAMS, NAMES
+    etf_code = WIND_NEW_ETF_CODE.get(code)
+    if etf_code is None:
+        raise HTTPException(404, f"指数 {code} 不在 ETF 映射范围内")
+    df, cfg = build_windowed_df(code)
+    if df is None:
+        raise HTTPException(404, f"指数 {code} 无数据")
+    etf_path = WIND_NEW_ETF_DIR / f"{etf_code}.parquet"
+    if not etf_path.exists():
+        raise HTTPException(404, f"ETF {etf_code} 数据不存在")
+    etf = pd.read_parquet(etf_path)
+    etf["date"] = pd.to_datetime(etf["date"]).astype("datetime64[ns]")
+    df["date"] = df["date"].astype("datetime64[ns]")
+    aligned = pd.merge_asof(df[["date"]], etf[["date", "hfq"]], on="date", direction="backward")
+    mask = aligned["hfq"].notna()
+    df_etf = df[mask].reset_index(drop=True)
+    exec_price = aligned.loc[mask, "hfq"].to_numpy(float)
+
+    curve = build_curve(df_etf, OPTIMAL_PARAMS, exec_price=exec_price,
+                        commission_rate=WIND_NEW_ETF_COMMISSION,
+                        min_commission=WIND_NEW_ETF_MIN_COMMISSION,
+                        lot_size=WIND_NEW_ETF_LOT,
+                        principal_threshold=WIND_NEW_ETF_PRINCIPAL_THRESHOLD)
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = NAMES.get(code, code)
+    curve["meta"]["etf_code"] = etf_code
+    curve["meta"]["window"] = cfg["window"]
+    curve["meta"]["commission_rate"] = WIND_NEW_ETF_COMMISSION
+    curve["meta"]["min_commission"] = WIND_NEW_ETF_MIN_COMMISSION
+    curve["meta"]["lot_size"] = WIND_NEW_ETF_LOT
+    curve["meta"]["principal_threshold"] = WIND_NEW_ETF_PRINCIPAL_THRESHOLD
+    return curve
+
+
+# ── ETF 本金阈值回测 · 自定义交易起点 (如 2007-10-16 / 2015-06-12), 终点为数据最后一天 ──
+
+
+def _wind_new_etf_capped_since_df(code, start_date):
+    """按指定起点构建 ETF 回测数据 (信号来自指数, 执行价用 ETF 后复权价)."""
+    from wind_new_search.test_windowed import build_windowed_df, OPTIMAL_PARAMS, NAMES  # noqa: F401
+    etf_code = WIND_NEW_ETF_CODE.get(code)
+    if etf_code is None:
+        raise HTTPException(404, f"指数 {code} 不在 ETF 映射范围内")
+    df, cfg = build_windowed_df(code, start_date=start_date, uniform10yr=True)
+    if df is None:
+        raise HTTPException(404, f"指数 {code} 无数据")
+    etf_path = WIND_NEW_ETF_DIR / f"{etf_code}.parquet"
+    if not etf_path.exists():
+        raise HTTPException(404, f"ETF {etf_code} 数据不存在")
+    etf = pd.read_parquet(etf_path)
+    etf["date"] = pd.to_datetime(etf["date"]).astype("datetime64[ns]")
+    df["date"] = df["date"].astype("datetime64[ns]")
+    aligned = pd.merge_asof(df[["date"]], etf[["date", "hfq"]], on="date", direction="backward")
+    mask = aligned["hfq"].notna()
+    df_etf = df[mask].reset_index(drop=True)
+    exec_price = aligned.loc[mask, "hfq"].to_numpy(float)
+    if len(df_etf) == 0:
+        raise HTTPException(404, f"ETF {etf_code} 在起点 {start_date} 之前尚无数据")
+    return df_etf, exec_price, etf_code, cfg
+
+
+@app.get("/wind-new/test-etf-capped/since/{start_date}", response_class=HTMLResponse)
+def wind_new_etf_capped_since_page(start_date: str):
+    with open(BASE / "templates" / "wind_etf_capped_since.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/test-etf-capped/since/{start_date}")
+def api_wind_new_test_etf_capped_since(start_date: str):
+    import json as _json
+    tag = start_date.replace("-", "")
+    p = WIND_NEW_OUT / f"test_etf_capped_since_{tag}.json"
+    if not p.exists():
+        return {"error": f"未生成起点 {start_date} 的 ETF 本金阈值回测结果, "
+                        f"请先运行 wind_new_search/test_etf_capped_since.py --start {start_date}"}
+    return _json.load(open(p))
+
+
+@app.get("/api/wind-new/etf-capped-curve/since/{start_date}/{code}")
+def api_wind_new_etf_capped_curve_since(start_date: str, code: str):
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine import build_curve
+    from wind_new_search.test_windowed import OPTIMAL_PARAMS, NAMES
+    df_etf, exec_price, etf_code, cfg = _wind_new_etf_capped_since_df(code, start_date)
+    curve = build_curve(df_etf, OPTIMAL_PARAMS, exec_price=exec_price,
+                        commission_rate=WIND_NEW_ETF_COMMISSION,
+                        min_commission=WIND_NEW_ETF_MIN_COMMISSION,
+                        lot_size=WIND_NEW_ETF_LOT,
+                        principal_threshold=WIND_NEW_ETF_PRINCIPAL_THRESHOLD)
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = NAMES.get(code, code)
+    curve["meta"]["etf_code"] = etf_code
+    curve["meta"]["window"] = cfg["window"]
+    curve["meta"]["start_date"] = start_date
+    curve["meta"]["commission_rate"] = WIND_NEW_ETF_COMMISSION
+    curve["meta"]["min_commission"] = WIND_NEW_ETF_MIN_COMMISSION
+    curve["meta"]["lot_size"] = WIND_NEW_ETF_LOT
+    curve["meta"]["principal_threshold"] = WIND_NEW_ETF_PRINCIPAL_THRESHOLD
+    return curve
 
 
 if __name__ == "__main__":

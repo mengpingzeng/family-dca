@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>均衡策略 v2 — Sharpe提升版 (固定30万口径) — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.meta{font-size:13px;color:#94a3b8;margin-left:auto}
+.container{max-width:1400px;margin:0 auto;padding:16px 24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px;margin-bottom:14px}
+.card h2{font-size:14px;color:#94a3b8;margin-bottom:10px;border-bottom:1px solid #334155;padding-bottom:6px}
+.rules-box{font-size:13px;line-height:1.9;color:#cbd5e1}
+.rules-box b{color:#e2e8f0}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:0 2px}
+.tag-v2{background:#1e40af;color:#93c5fd}
+.tag-brake{background:#164e63;color:#67e8f9}
+.tag-sell{background:#7f1d1d;color:#f87171}
+.tag-cap{background:#854d0e;color:#fbbf24}
+.tag-broad{background:#312e81;color:#c7d2fe}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #334155;white-space:nowrap}
+th{color:#94a3b8;font-weight:600;position:sticky;top:0;background:#1e293b}
+td.l,th.l{text-align:left}
+tr:hover td{background:#263244}
+tr.broad td{background:#1e1b4b44}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}.dim{color:#64748b}
+.summary-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.sum-box{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 12px;text-align:center}
+.sum-box .k{font-size:11px;color:#94a3b8}
+.sum-box .v{font-size:17px;font-weight:700;margin-top:4px}
+.sum-box .d{font-size:11px;margin-top:2px}
+.concl{font-size:13px;line-height:1.9;color:#cbd5e1}
+.concl li{margin-left:18px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:340px}
+.tabs{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.tabs button{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+.tabs button.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+.tabs select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:13px;cursor:pointer}
+@media(max-width:1000px){.chart-grid{grid-template-columns:1fr}.summary-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/wind-new/balanced">← 均衡策略(基线)</a>
+  <h1>均衡策略 v2 · Sharpe提升版</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+
+  <div class="card">
+    <h2>v2 方法 (在基线上加三项调制)</h2>
+    <div class="rules-box" id="rules"></div>
+  </div>
+
+  <div class="card">
+    <h2>宽基 7 指数 平均表现 (固定30万口径)</h2>
+    <div class="summary-grid" id="summary-grid"></div>
+  </div>
+
+  <div class="card">
+    <h2>逐指数对比 · 指数口径 (夏普提升为核心目标)</h2>
+    <div style="max-height:480px;overflow-y:auto"><table id="idx-table"><thead><tr>
+      <th class="l">指数</th><th>基线年化</th><th>v2年化</th><th>Δ年化</th>
+      <th>基线夏普</th><th>v2夏普</th><th>Δ夏普</th>
+      <th>基线回撤</th><th>v2回撤</th><th>Δ回撤</th>
+      <th>基线终值</th><th>v2终值</th><th>买/卖</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>ETF 对比 (真实 ETF · 后复权价 + 整手100 + 万5低消5)</h2>
+    <div style="max-height:400px;overflow-y:auto"><table id="etf-table"><thead><tr>
+      <th class="l">ETF</th><th class="l">跟踪指数</th>
+      <th>基线年化</th><th>v2年化</th><th>基线夏普</th><th>v2夏普</th><th>Δ夏普</th>
+      <th>基线回撤</th><th>v2回撤</th><th>Δ回撤</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>回测曲线对比 (蓝=v2 · 灰=基线)</h2>
+    <div class="tabs">
+      <button id="mode-index" class="active">指数</button>
+      <button id="mode-etf">ETF</button>
+      <select id="picker"></select>
+      <span style="font-size:12px;color:#64748b" id="curve-meta"></span>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box" id="chart-principal"></div>
+      <div class="chart-box" id="chart-dd"></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box" id="chart-annual"></div>
+      <div class="chart-box" id="chart-daily"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>结论与局限</h2>
+    <div class="concl" id="conclusion"></div>
+  </div>
+</div>
+
+<script>
+let data=null, curve=null, mode='index', cur='000300';
+let indexList=[], etfList=[];
+let c1=null,c2=null,c3=null,c4=null;
+var _origInit=echarts.init;
+echarts.init=function(el){var i=_origInit.call(this,el);i.group='v2-link';el._echart=i;return i};
+
+function fmtPct(x){return (x==null?'—':(x*100).toFixed(2)+'%');}
+function fmtNum(x,d){return (x==null?'—':Number(x).toFixed(d==null?2:d));}
+function cl(v){return v>0?'green':v<0?'red':'';}
+function arrow(v){return v>0?'▲':v<0?'▼':'';}
+function fmtDelta(x){return x==null?'—':'<span class="'+cl(x)+'">'+arrow(x)+(x*100).toFixed(1)+'</span>';}
+function fmtDeltaShp(x){return x==null?'—':'<span class="'+cl(x)+'">'+arrow(x)+fmtNum(x)+'</span>';}
+
+async function load(){
+  const r=await fetch('/api/wind-new/balanced-v2'); data=await r.json();
+  if(data.error){document.getElementById('meta-info').textContent=data.error;return;}
+  document.getElementById('meta-info').textContent=
+    '阈值'+data.principal.threshold/10000+'万收缩 · 封顶'+data.principal.cap/10000+'万 · 池'+data.principal.pool/10000+'万 · 费用万5+低消5';
+  renderRules();
+  renderSummary();
+  renderTable('#idx-table tbody', data.results, false);
+  renderTable('#etf-table tbody', data.results, true);
+  renderConclusion();
+  buildLists(); renderPicker(); loadCurve();
+}
+
+function renderRules(){
+  const p=data.v2_params;
+  document.getElementById('rules').innerHTML=
+    '<b>保持基线的核心框架</b>：主信号 <span class="tag tag-v2">PB</span> 买入 · 闸门 <span class="tag">FED ≤55%</span> · 卖出 <span class="tag tag-sell">PE</span> · 档 8x/4x/2x/0x · 本金阈值20万收缩/封顶30万/池30万<br/>'+
+    '<b>v2 新增三项调制</b>：'+
+    '<span class="tag tag-sell">① 更早止盈 sell_heavy 0.85→0.80</span>'+
+    '<span class="tag tag-brake">② 20周均线软制动 β=0.5 (下跌趋势买入打5折)</span>'+
+    '<span class="tag tag-v2">③ 顺势加码 γ=1.5 (上涨趋势买入×1.5)</span>'+
+    '<br/><span class="dim">夏普口径：超额夏普 = (收益均值 − 周期无风险利率) / 收益标准差 ×√每年周期数；数据为周频，无风险利率按年化'+
+    ((data.risk_free_rate||0)*100).toFixed(1)+'%/52 扣减。回撤=本金曲线最大回撤。</span>';
+}
+
+function renderSummary(){
+  const s=data.summary, g=document.getElementById('summary-grid');
+  const items=[
+    ['年化均值', s.base.annual_mean, s.v2.annual_mean],
+    ['夏普均值', s.base.sharpe_mean, s.v2.sharpe_mean],
+    ['最大回撤均值', s.base.mdd_mean, s.v2.mdd_mean],
+    ['资金占用率', s.base.occupancy_mean, s.v2.occupancy_mean],
+    ['资金效率', s.base.efficiency_mean, s.v2.efficiency_mean],
+    ['夏普跑赢', data.win_sharpe+'/'+data.n_broad, '—'],
+  ];
+  g.innerHTML='';
+  items.forEach(([k,b,v])=>{
+    let val, d;
+    if(k.includes('夏普跑赢')){val='<span class="'+cl(v==data.n_broad?'green':'')+'">'+v+'</span>';d='<span class="dim">目标'+data.n_broad+'/'+data.n_broad+'</span>';}
+    else{
+      const isPct=k.includes('年化')||k.includes('回撤')||k.includes('占用率');
+      const bv=isPct?fmtPct(b):fmtNum(b);
+      const vv=isPct?fmtPct(v):fmtNum(v);
+      const dv=isPct?(v-b)*100:(v-b);
+      d='<span class="'+cl(dv)+'">'+arrow(dv)+' '+(isPct?Math.abs(dv).toFixed(1)+'pp':fmtNum(dv))+': '+b+'→'+v+'</span>';
+      val='<span class="'+(dv>0&&k!=='最大回撤均值'||dv<0&&k==='最大回撤均值'?'green':dv<0&&k!=='最大回撤均值'||dv>0&&k==='最大回撤均值'?'red':'')+'">'+vv+'</span>';
+    }
+    const box=document.createElement('div');box.className='sum-box';
+    box.innerHTML='<div class="k">'+k+'</div><div class="v">'+val+'</div><div class="d">'+d+'</div>';
+    g.appendChild(box);
+  });
+}
+
+function renderTable(sel, rows, isEtf){
+  const tb=document.querySelector(sel); tb.innerHTML='';
+  rows.forEach(r=>{
+    const b=r.base, v=r.v2, broad=data.broad.includes(r.code);
+    const dshp=v.sharpe-b.sharpe, dann=v.principal_annual-b.principal_annual;
+    const ddd=v.max_drawdown-b.max_drawdown;
+    const cls=broad?' class="broad"':'';
+    if(isEtf){
+      if(!r.etf_base) return;
+      const eb=r.etf_base, ev=r.etf_v2;
+      const eshp=ev.sharpe-eb.sharpe, eddd=ev.max_drawdown-eb.max_drawdown;
+      tb.innerHTML+='<tr'+cls+'><td class="l"><b>'+eb.etf_code+'</b> '+eb.etf_name+'</td><td class="l dim">'+r.name+'</td>'+
+        '<td>'+fmtPct(eb.principal_annual)+'</td><td>'+fmtPct(ev.principal_annual)+'</td>'+
+        '<td>'+fmtNum(eb.sharpe)+'</td><td>'+fmtNum(ev.sharpe)+'</td><td>'+fmtDeltaShp(eshp)+'</td>'+
+        '<td>'+fmtPct(eb.max_drawdown)+'</td><td>'+fmtPct(ev.max_drawdown)+'</td><td>'+fmtDelta(ddd)+'pp</td></tr>';
+    }else{
+      tb.innerHTML+='<tr'+cls+'><td class="l"><b>'+r.name+'</b>'+ (broad?' <span class="tag tag-broad">宽基</span>':'')+'</td>'+
+        '<td>'+fmtPct(b.principal_annual)+'</td><td>'+fmtPct(v.principal_annual)+'</td><td>'+fmtDelta(dann)+'%</td>'+
+        '<td>'+fmtNum(b.sharpe)+'</td><td>'+fmtNum(v.sharpe)+'</td><td>'+fmtDeltaShp(dshp)+'</td>'+
+        '<td>'+fmtPct(b.max_drawdown)+'</td><td>'+fmtPct(v.max_drawdown)+'</td><td>'+fmtDelta(ddd)+'pp</td>'+
+        '<td>¥'+b.principal_final.toLocaleString()+'</td><td>¥'+v.principal_final.toLocaleString()+'</td>'+
+        '<td>'+v.buys+'/'+v.sells+'</td></tr>';
+    }
+  });
+}
+
+function renderConclusion(){
+  const s=data.summary;
+  const wins=[] , loses=[];
+  data.results.forEach(r=>{
+    if(!data.broad.includes(r.code)) return;
+    const d=r.v2.sharpe-r.base.sharpe;
+    if(d>0) wins.push(r.name+' +'+d.toFixed(2)); else loses.push(r.name+' '+d.toFixed(2));
+  });
+  document.getElementById('conclusion').innerHTML=
+    '<b>宽基 7 指数平均</b>：夏普 '+fmtNum(s.base.sharpe_mean)+' → <span class="green">'+fmtNum(s.v2.sharpe_mean)+'</span> (+'+((s.v2.sharpe_mean/s.base.sharpe_mean-1)*100).toFixed(1)+'%)，'+
+    '年化 '+fmtPct(s.base.annual_mean)+' → <span>'+fmtPct(s.v2.annual_mean)+'</span>，'+
+    '回撤 '+fmtPct(s.base.mdd_mean)+' → <span class="green">'+fmtPct(s.v2.mdd_mean)+'</span>，'+
+    '资金效率 '+fmtNum(s.base.efficiency_mean)+' → <span class="green">'+fmtNum(s.v2.efficiency_mean)+'</span>。<br/>'+
+    '<b>夏普提升</b>：'+data.win_sharpe+'/'+data.n_broad+' 个宽基指数夏普上升<br/>'+
+    '<b>提升明显</b>：'+wins.join('、')+'<br/>'+
+    '<b>仍下降</b>：'+loses.join('、')+'（多为前期在下跌趋势中的低吸贡献了收益，制动后略降）<br/><br/>'+
+    '<b>核心思路</b><ul>'+
+    '<li><b>更早止盈</b>：PE% ≥80% 即开始分批兑现 (原85%)，落袋为安，降低高位回吐；</li>'+
+    '<li><b>下跌少买</b>：价格低于20周均线时买入倍数×0.5，避免在趋势性下跌中过早把仓位打满；</li>'+
+    '<li><b>顺势加码</b>：价格站上20周均线时买入倍数×1.5，把资金更多地配置在企稳上行阶段，提升资金效率；</li>'+
+    '<li>三者叠加的核心效果是 <b>压缩最大回撤、提高单位波动的回报 (夏普)</b>，宽基平均回撤从 '+fmtPct(s.base.mdd_mean)+' 降到 '+fmtPct(s.v2.mdd_mean)+'。</li>'+
+    '</ul>'+
+    '<b>局限</b>：<ul>'+
+    '<li>无单一参数可让全部 7 个宽基同时提升（不同指数的最优交易节奏不同），v2 追求的是<b>平均夏普与回撤的稳健改善</b>；</li>'+
+    '<li>美股成长指数（纳指100/标普500）PB 长期偏高、从不触发买入，v2 亦无法改善；</li>'+
+    '<li>夏普指标基于固定30万本金曲线的日收益，口径与既有 hurst 页面一致，仅作内部对比用。</li>'+
+    '</ul>';
+}
+
+// ── 曲线 ──
+function buildLists(){
+  indexList=data.results.map(r=>({code:r.code,name:r.name}));
+  etfList=data.results.filter(r=>r.etf_base).map(r=>({code:r.code,name:r.name,etf_code:r.etf_base.etf_code,etf_name:r.etf_base.etf_name}));
+}
+function renderPicker(){
+  const sel=document.getElementById('picker');
+  const list=mode==='index'?indexList:etfList;
+  sel.innerHTML='';
+  list.forEach(it=>{
+    const o=document.createElement('option');
+    o.value=it.code;
+    o.textContent=mode==='index'?(it.name+' ('+it.code+')'):(it.etf_name+' ('+it.etf_code+')');
+    sel.appendChild(o);
+  });
+  sel.value=cur;
+}
+function underwater(princ){
+  let peak=-Infinity, out=[];
+  princ.forEach(p=>{
+    if(p==null){out.push(null);return;}
+    if(p>peak) peak=p;
+    out.push(peak>0?(p/peak-1)*100:null);
+  });
+  return out;
+}
+function rollAnn(princ){
+  const out=[], N=52;
+  princ.forEach((p,i)=>{
+    if(p==null||i<N){out.push(null);return;}
+    const p0=princ[i-N];
+    if(!p0||p0<=0){out.push(null);return;}
+    out.push((p/p0-1)*100);
+  });
+  return out;
+}
+async function loadCurve(){
+  const url=mode==='index'?('/api/wind-new/balanced-v2/curve/'+cur):('/api/wind-new/balanced-v2/etf-curve/'+cur);
+  const r=await fetch(url);
+  if(!r.ok){document.getElementById('curve-meta').textContent='曲线加载失败';return;}
+  curve=await r.json();
+  const m=curve.v2.meta;
+  document.getElementById('curve-meta').textContent=
+    (mode==='index'?m.name:m.etf_name)+' · v2 年化 '+fmtPct(m.principal_annual)+' · 基线年化 '+fmtPct(curve.base.meta.principal_annual)+' · v2 XIRR '+fmtPct(m.xirr);
+  renderCurve();
+}
+function renderCurve(){
+  const db=curve.base.daily, dv=curve.v2.daily, dates=dv.map(x=>x.date);
+  const pb=db.map(x=>x.principal), pv=dv.map(x=>x.principal);
+  const buyMk=[], sellMk=[];
+  dv.forEach((v,i)=>{ if(v.buy_amount>0) buyMk.push([dates[i],pv[i]]); if(v.sell_amount>0) sellMk.push([dates[i],pv[i]]); });
+  const optBase={
+    tooltip:{trigger:'axis',axisPointer:{type:'cross'}},
+    legend:{textStyle:{color:'#94a3b8'},top:5},
+    grid:{left:70,right:20,top:40,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v/10000).toFixed(0)+'万'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}],
+  };
+  if(!c1) c1=echarts.init(document.getElementById('chart-principal'));
+  c1.setOption({...optBase,
+    title:{text:(mode==='index'?curve.v2.meta.name:curve.v2.meta.etf_name)+' 固定30万本金曲线 (v2 vs 基线)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    legend:{...optBase.legend,data:['v2本金','基线本金','v2买入','v2卖出']},
+    series:[
+      {name:'v2本金',type:'line',data:pv,lineStyle:{color:'#3b82f6',width:2.2},itemStyle:{color:'#3b82f6'},symbol:'none',connectNulls:true,areaStyle:{color:'rgba(59,130,246,0.06)'}},
+      {name:'基线本金',type:'line',data:pb,lineStyle:{color:'#94a3b8',width:1.4,type:'dashed'},itemStyle:{color:'#94a3b8'},symbol:'none',connectNulls:true},
+      {name:'v2买入',type:'scatter',data:buyMk,symbolSize:7,itemStyle:{color:'#4ade80'},z:10},
+      {name:'v2卖出',type:'scatter',data:sellMk,symbolSize:7,itemStyle:{color:'#f87171'},z:10},
+    ]});
+
+  if(!c2) c2=echarts.init(document.getElementById('chart-dd'));
+  c2.setOption({...optBase,
+    title:{text:'水下回撤曲线 % (v2 vs 基线)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    legend:{...optBase.legend,data:['v2回撤','基线回撤']},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    series:[
+      {name:'v2回撤',type:'line',data:underwater(pv),lineStyle:{color:'#3b82f6',width:1.6},itemStyle:{color:'#3b82f6'},symbol:'none',connectNulls:true,areaStyle:{color:'rgba(59,130,246,0.12)'}},
+      {name:'基线回撤',type:'line',data:underwater(pb),lineStyle:{color:'#f87171',width:1.2},itemStyle:{color:'#f87171'},symbol:'none',connectNulls:true},
+    ]});
+
+  if(!c3) c3=echarts.init(document.getElementById('chart-annual'));
+  c3.setOption({...optBase,
+    title:{text:'滚动52周年化 % (v2 vs 基线)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    legend:{...optBase.legend,data:['v2滚动年化','基线滚动年化']},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    series:[
+      {name:'v2滚动年化',type:'line',data:rollAnn(pv),lineStyle:{color:'#3b82f6',width:1.6},itemStyle:{color:'#3b82f6'},symbol:'none',connectNulls:true},
+      {name:'基线滚动年化',type:'line',data:rollAnn(pb),lineStyle:{color:'#94a3b8',width:1.2},itemStyle:{color:'#94a3b8'},symbol:'none',connectNulls:true},
+    ]});
+
+  if(!c4) c4=echarts.init(document.getElementById('chart-daily'));
+  const rb=db.map((x,i)=>dv[i]&&dv[i].principal&&x.principal?(dv[i].principal/x.principal-1)*100:null);
+  const rv=dv.map((x,i)=>x.daily_return!=null?x.daily_return:null);
+  c4.setOption({...optBase,
+    title:{text:'v2 日收益 % (本金环比)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    legend:{...optBase.legend,data:['v2日收益%']},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    series:[
+      {name:'v2日收益%',type:'bar',data:rv,itemStyle:{color:function(p){return p.value>=0?'rgba(59,130,246,0.6)':'rgba(239,68,68,0.6)';}}},
+    ]});
+  echarts.connect('v2-link');
+}
+
+document.getElementById('mode-index').addEventListener('click',()=>{mode='index';cur='000300';switchMode();});
+document.getElementById('mode-etf').addEventListener('click',()=>{mode='etf';cur='000300';switchMode();});
+document.getElementById('picker').addEventListener('change',e=>{cur=e.target.value;loadCurve();});
+function switchMode(){
+  document.getElementById('mode-index').classList.toggle('active',mode==='index');
+  document.getElementById('mode-etf').classList.toggle('active',mode==='etf');
+  renderPicker(); loadCurve();
+}
+load();
+</script>
+</body>
+</html>

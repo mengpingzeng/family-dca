@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新版 Wind · ETF 本金阈值回测 (B+30万阈值) — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.meta{font-size:13px;color:#94a3b8;margin-left:auto}
+.container{max-width:1600px;margin:0 auto;padding:16px 24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px;margin-bottom:14px}
+.card h2{font-size:14px;color:#94a3b8;margin-bottom:10px;border-bottom:1px solid #334155;padding-bottom:6px}
+.rules-box{font-size:13px;line-height:1.9;color:#cbd5e1}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:0 2px}
+.tag-buy{background:#166534;color:#4ade80}
+.tag-sell{background:#7f1d1d;color:#f87171}
+.tag-mode{background:#1e40af;color:#93c5fd}
+.tag-cost{background:#713f12;color:#fbbf24}
+.tag-cap{background:#4a044e;color:#e879f9}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #334155;white-space:nowrap}
+th{color:#94a3b8;font-weight:600;position:sticky;top:0;background:#1e293b}
+td.l,th.l{text-align:left}
+tr:hover td{background:#263244}
+tr.clickable{cursor:pointer}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:340px}
+.chart-full{background:#1e293b;border-radius:10px;border:1px solid #334155;height:340px;margin-bottom:14px}
+select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 14px;border-radius:6px;font-size:14px;margin-bottom:12px}
+.note{font-size:12px;color:#64748b;margin-top:6px}
+@media(max-width:1000px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/wind-new/test-etf">ETF 原版 B</a>
+  <a href="/wind-new/test-windowed">窗口分层回测</a>
+  <h1>新版 Wind · ETF 本金阈值回测 (策略 B + 30万本金阈值)</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+
+  <div class="card">
+    <h2>策略 + 本金阈值规则 + 费用模型</h2>
+    <div class="rules-box" id="rules-box"></div>
+  </div>
+
+  <div class="card">
+    <h2>12 只 ETF 对比汇总 — 原版 B vs B+本金阈值 (后复权价 · 万5最低5元 · 整手100份)</h2>
+    <div class="note">阈值规则: 单只 ETF 累计买入本金达 30万 → 只做 1x/2x/3x; 达 36万 → 只做 2x/3x; 超 42万 → 只做 3x。目标: 削减"投入很大但收益不成正比"的 ETF 本金。</div>
+    <table id="tbl"><thead><tr>
+      <th class="l">指数</th><th class="l">对应 ETF</th><th>窗口</th>
+      <th>原版 XIRR</th><th>阈值 XIRR</th><th>ΔXIRR</th>
+      <th>原版投入</th><th>阈值投入</th><th>Δ投入</th>
+      <th>买入(原/阈)</th><th class="l">起止日期</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div>
+    <select id="idx-select"></select>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box" id="chart-pct"></div>
+    <div class="chart-box" id="chart-equity"></div>
+  </div>
+  <div class="chart-full" id="chart-xirr"></div>
+
+  <div class="card">
+    <h2>交易明细 (<span id="trades-count">0</span>笔) <span id="trades-summary"></span></h2>
+    <div class="note">买入触发原因中带「本金xx~xx万: 1x/2x/3x」为阈值生效后的档位。</div>
+    <div id="trades-table" style="max-height:480px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<script>
+let testData=null, curve=null, cur=null, bp=null, cm=null, pt=null, chartPct=null, chartEq=null, chartXirr=null;
+var _origInit=echarts.init;
+echarts.init=function(el){var i=_origInit.call(this,el);i.group='etf-cap-link';el._echart=i;return i};
+
+function pctCmp(sig,op,val){
+  if(sig==='FED'){return 'FED%'+(op==='le'?'≥':'≤')+((1-val)*100).toFixed(0)+'%';}
+  return sig+'%'+(op==='le'?'≤':'≥')+(val*100).toFixed(0)+'%';
+}
+function buyTiers4(bp){
+  if(bp.buy_signal==='FED'){
+    const f=1-bp.buy_floor,l=1-bp.buy_low,m=1-bp.buy_mid,h=1-bp.buy_high;
+    return '<span class="tag tag-buy">&gt;'+(f*100).toFixed(0)+'%→3x</span>'+
+      '<span class="tag tag-buy">'+(l*100).toFixed(0)+'~'+(f*100).toFixed(0)+'%→2x</span>'+
+      '<span class="tag tag-buy">'+(m*100).toFixed(0)+'~'+(l*100).toFixed(0)+'%→1x</span>'+
+      '<span class="tag tag-buy">'+(h*100).toFixed(0)+'~'+(m*100).toFixed(0)+'%→0.5x</span>';
+  }
+  return '<span class="tag tag-buy">&lt;'+(bp.buy_floor*100).toFixed(0)+'%→3x</span>'+
+    '<span class="tag tag-buy">'+(bp.buy_floor*100).toFixed(0)+'~'+(bp.buy_low*100).toFixed(0)+'%→2x</span>'+
+    '<span class="tag tag-buy">'+(bp.buy_low*100).toFixed(0)+'~'+(bp.buy_mid*100).toFixed(0)+'%→1x</span>'+
+    '<span class="tag tag-buy">'+(bp.buy_mid*100).toFixed(0)+'~'+(bp.buy_high*100).toFixed(0)+'%→0.5x</span>';
+}
+
+async function load(){
+  const r=await fetch('/api/wind-new/test-etf-capped'); testData=await r.json();
+  bp=testData.params; cm=testData.cost_model; pt=testData.principal_threshold;
+  const bgText=bp.buy_gate?pctCmp(bp.buy_gate,'le',bp.buy_gate_cap):'无';
+  const sgText=bp.sell_gate?pctCmp(bp.sell_gate,'ge',bp.sell_gate_floor):'无';
+  const tiers=pt.tiers.map(t=>'<span class="tag tag-cap">'+(t.up_to!=null?('≤'+(t.up_to/10000).toFixed(0)+'万'):'&gt;42万')+' → '+t.desc+'</span>').join('');
+  document.getElementById('rules-box').innerHTML=
+    '主信号 <span class="tag tag-mode">'+bp.buy_signal+'</span>'+
+    ' 买入闸门 <span class="tag">'+bgText+'</span>'+
+    ' 卖出 <span class="tag tag-sell">'+pctCmp(bp.sell_signal,'ge',bp.sell_heavy)+'</span>'+
+    '<span class="tag tag-sell">'+pctCmp(bp.sell_signal,'ge',bp.sell_extreme)+'</span>'+
+    ' 卖出闸门 <span class="tag tag-sell">'+sgText+'</span>'+
+    '<br>买入分档: '+buyTiers4(bp)+
+    '<br>本金阈值 <span class="tag tag-cap">'+(pt.threshold/10000).toFixed(0)+'万</span> '+tiers+' '+pt.note+
+    '<br>费用: 佣金 <span class="tag tag-cost">万'+(cm.commission_rate*10000)+' 最低'+cm.min_commission+'元/笔</span>'+
+    '<span class="tag tag-cost">整手 '+cm.lot_size+' 份</span>'+
+    ' 管理费/托管费已含在后复权价中 · ETF 免印花税/过户费 · 滑点未计'+
+    '<br><span style="color:#94a3b8">执行价=ETF后复权价; 信号仍来自指数 PE/PB/FED 百分位; 本金阈值作用于单只 ETF 的累计买入本金。</span>';
+  document.getElementById('meta-info').textContent='共 '+testData.results.length+' 只 ETF';
+
+  const tb=document.querySelector('#tbl tbody'); const sel=document.getElementById('idx-select');
+  sel.innerHTML='';
+  testData.results.forEach(x=>{
+    const bc=(x.base_xirr*100).toFixed(2)+'%';
+    const cc=(x.capped_xirr*100).toFixed(2)+'%';
+    const dc=((x.diff_xirr)*100).toFixed(2);
+    const dcls=x.diff_xirr>0.0005?'green':x.diff_xirr<-0.0005?'red':'yellow';
+    const di=(x.diff_invested).toLocaleString();
+    const dicols=x.diff_invested<0?'green':x.diff_invested>0?'red':'#94a3b8';
+    tb.innerHTML+='<tr class="clickable" data-code="'+x.code+'"><td class="l">'+x.name+' ('+x.code+')</td>'+
+      '<td class="l" style="color:#94a3b8">'+x.etf_name+' ('+x.etf_code+')</td>'+
+      '<td>'+x.window+'yr</td>'+
+      '<td>'+bc+'</td>'+
+      '<td class="green"><b>'+cc+'</b></td>'+
+      '<td class="'+dcls+'">'+dc+'pp</td>'+
+      '<td>¥'+x.base_invested.toLocaleString()+'</td>'+
+      '<td>¥'+x.capped_invested.toLocaleString()+'</td>'+
+      '<td style="color:'+dicols+'">'+di+'</td>'+
+      '<td>'+x.base_buys+'/'+x.capped_buys+'</td>'+
+      '<td class="l" style="color:#64748b">'+x.start_date+' ~ '+x.end_date+'</td></tr>';
+    sel.innerHTML+='<option value="'+x.code+'">'+x.name+' ('+x.code+') → '+x.etf_code+'</option>';
+  });
+  document.querySelectorAll('tr.clickable').forEach(tr=>{
+    tr.addEventListener('click',()=>{cur=tr.dataset.code;document.getElementById('idx-select').value=cur;loadCurve()});
+  });
+  sel.addEventListener('change',e=>{cur=e.target.value;loadCurve()});
+  cur=testData.results[0].code;
+  await loadCurve();
+}
+
+function fmtPct(x){return (x*100).toFixed(1)+'%';}
+
+async function loadCurve(){
+  const r=await fetch('/api/wind-new/etf-capped-curve/'+cur); curve=await r.json();
+  renderCurve(); renderTrades();
+}
+
+function renderCurve(){
+  const d=curve.daily, m=curve.meta, dates=d.map(x=>x.date);
+  if(!chartPct) chartPct=echarts.init(document.getElementById('chart-pct'));
+  if(!chartEq) chartEq=echarts.init(document.getElementById('chart-equity'));
+  if(!chartXirr) chartXirr=echarts.init(document.getElementById('chart-xirr'));
+
+  chartPct.setOption({
+    title:{text:m.name+' 估值百分位 + ETF价 ('+m.etf_code+', '+m.window+'yr)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis',axisPointer:{type:'cross'},formatter:ps=>{let s='<b>'+ps[0].axisValue+'</b>';ps.forEach(p=>{if(p.value==null)return;s+='<br/>'+p.marker+p.seriesName+': '+(p.seriesName==='ETF价'?(p.value):(p.value*100).toFixed(0)+'%')});return s}},
+    legend:{data:['PE%','PB%','FED%','ETF价'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:55,right:60,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:[
+      {type:'value',min:0,max:1,axisLabel:{color:'#94a3b8',formatter:v=>(v*100).toFixed(0)+'%'},splitLine:{lineStyle:{color:'#334155'}}},
+      {type:'value',scale:true,axisLabel:{color:'#94a3b8'},splitLine:{show:false}}
+    ],
+    dataZoom:[{type:'slider',start:0,end:100,height:16,bottom:0}],
+    series:[
+      {name:'PE%',type:'line',data:d.map(x=>x.pe_pct),lineStyle:{color:'#60a5fa',width:1.4},itemStyle:{color:'#60a5fa'},symbol:'none',connectNulls:true},
+      {name:'PB%',type:'line',data:d.map(x=>x.pb_pct),lineStyle:{color:'#a78bfa',width:1.4},itemStyle:{color:'#a78bfa'},symbol:'none',connectNulls:true},
+      {name:'FED%',type:'line',data:d.map(x=>x.fed_pct),lineStyle:{color:'#34d399',width:1.4},itemStyle:{color:'#34d399'},symbol:'none',connectNulls:true,
+        markLine:{silent:true,symbol:'none',label:{color:'#94a3b8',fontSize:9},lineStyle:{color:'#64748b',type:'dashed'},data:[
+          {yAxis:bp.buy_floor,label:{formatter:'buy '+fmtPct(bp.buy_floor)}},
+          {yAxis:bp.buy_high,label:{formatter:'buy '+fmtPct(bp.buy_high)}},
+          {yAxis:bp.sell_heavy,label:{formatter:'sell '+fmtPct(bp.sell_heavy)}},
+          {yAxis:bp.sell_extreme,label:{formatter:'sell '+fmtPct(bp.sell_extreme)}}]}},
+      {name:'ETF价',type:'line',yAxisIndex:1,data:d.map(x=>x.price),lineStyle:{color:'#fbbf24',width:1.2},itemStyle:{color:'#fbbf24'},symbol:'none',connectNulls:true},
+    ]
+  });
+
+  let cum=[],eq=[],tot=[],buyMk=[],sellMk=[];
+  d.forEach(v=>{cum.push(v.cum_invested);eq.push(v.equity);tot.push(v.total_value);
+    buyMk.push(v.buy_amount>0?v.equity:null);sellMk.push(v.sell_amount>0?v.equity:null)});
+  chartEq.setOption({
+    title:{text:m.name+' 总投入/市值/总资产(元)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['总投入','市值','总资产(含现金)','买入','卖出'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:70,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v/10000).toFixed(0)+'万'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:0,end:100,height:16,bottom:0}],
+    series:[
+      {name:'总投入',type:'line',data:cum,lineStyle:{color:'#fb923c',width:2,type:'dashed'},itemStyle:{color:'#fb923c'},symbol:'none',
+        markLine:{silent:true,symbol:'none',label:{color:'#e879f9',fontSize:9},lineStyle:{color:'#e879f9',type:'dashed'},data:[
+          {yAxis:300000,label:{formatter:'30万'}},{yAxis:360000,label:{formatter:'36万'}},{yAxis:420000,label:{formatter:'42万'}}]}},
+      {name:'市值',type:'line',data:eq,lineStyle:{color:'#c084fc',width:2},itemStyle:{color:'#c084fc'},symbol:'none'},
+      {name:'总资产(含现金)',type:'line',data:tot,lineStyle:{color:'#60a5fa',width:1.5},itemStyle:{color:'#60a5fa'},areaStyle:{color:'rgba(96,165,250,0.1)'},symbol:'none'},
+      {name:'买入',type:'scatter',data:buyMk,symbolSize:7,itemStyle:{color:'#4ade80'},z:10},
+      {name:'卖出',type:'scatter',data:sellMk,symbolSize:7,itemStyle:{color:'#f87171'},z:10},
+    ]
+  });
+
+  chartXirr.setOption({
+    title:{text:m.name+' 收益率 (简单回报% / 年化XIRR%)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['简单回报%','年化XIRR%'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:60,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:0,end:100,height:16,bottom:0}],
+    series:[
+      {name:'简单回报%',type:'line',data:d.map(x=>x.return_pct),lineStyle:{color:'#facc15',width:1.5},itemStyle:{color:'#facc15'},symbol:'none'},
+      {name:'年化XIRR%',type:'line',data:d.map(x=>x.xirr!=null?(x.xirr*100):null),lineStyle:{color:'#f97316',width:1.5},itemStyle:{color:'#f97316'},symbol:'none',connectNulls:true,
+        markLine:{silent:true,symbol:'none',data:[{yAxis:0,lineStyle:{color:'#94a3b8',type:'dashed'}}]}},
+    ]
+  });
+
+  echarts.connect('etf-cap-link');
+}
+
+function renderTrades(){
+  const t=curve.trades||[]; let b=0,s=0;
+  t.forEach(x=>{x.action==='buy'?b++:s++});
+  document.getElementById('trades-count').textContent=t.length;
+  document.getElementById('trades-summary').textContent='(买入'+b+' / 卖出'+s+')';
+  const el=document.getElementById('trades-table');
+  if(!t.length){el.innerHTML='<span style="color:#64748b">无交易</span>';return}
+  let h='<table><thead><tr><th class="l">日期</th><th class="l">操作</th><th>PE%</th><th>PB%</th><th>金额</th><th>份额</th><th>ETF价</th><th>累计投入</th><th class="l">触发</th></tr></thead><tbody>';
+  for(const x of t){
+    const act=x.action==='buy'?'买入':x.action==='sell'?'卖出':'清仓';
+    const cl=x.action==='buy'?'color:#4ade80':'color:#f87171';
+    h+='<tr><td class="l">'+x.date+'</td><td class="l" style="'+cl+';font-weight:600">'+act+'</td>'+
+      '<td>'+(x.pe_pct!=null?fmtPct(x.pe_pct):'—')+'</td><td>'+(x.pb_pct!=null?fmtPct(x.pb_pct):'—')+'</td>'+
+      '<td style="'+cl+'">¥'+Math.abs(x.amount).toLocaleString()+'</td><td>'+x.shares.toFixed(0)+'</td>'+
+      '<td>'+x.price.toFixed(3)+'</td><td>¥'+x.cum_invested.toLocaleString()+'</td>'+
+      '<td class="l" style="color:#94a3b8">'+x.reason+'</td></tr>';
+  }
+  h+='</tbody></table>'; el.innerHTML=h;
+}
+
+load();
+</script>
+</body>
+</html>

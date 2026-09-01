@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wind vs 蛋卷 PE 值对比 — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:18px;font-weight:600}
+.container{max-width:1600px;margin:0 auto;padding:16px 24px}
+.tabs-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.btn-tab{padding:8px 16px;background:#1e293b;border:1px solid #334155;border-radius:6px;cursor:pointer;font-size:14px;color:#94a3b8}
+.btn-tab.active{background:#1d4ed8;color:#fff;border-color:#2563eb}
+.btn-tab:hover:not(.active){border-color:#475569}
+.note{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;line-height:1.8;color:#94a3b8}
+.note b{color:#e2e8f0}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:640px}
+.legend-note{display:flex;gap:16px;margin-bottom:10px;font-size:12px;color:#94a3b8}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <h1>Wind vs 蛋卷 PE 值对比（各自原生频率 · 完整历史）</h1>
+</header>
+<div class="container">
+  <div class="note">
+    <b>说明:</b> 对 Wind 与蛋卷共有的指数，在同一图表中叠加绘制 PE 值曲线。
+    <br><b>口径差异:</b> Wind=pe_ttm_wind（日频） · 蛋卷=等权 TTM（周频）。
+    <br><b>频率:</b> 各自原生频率，不做重采样/裁剪 — Wind 日频（点密集），蛋卷周频（点稀疏）。
+    <br><b>时间区间:</b> 各自完整历史，不做统一窗口对齐。
+  </div>
+
+  <div class="tabs-row" id="tabs"></div>
+  <div class="legend-note">
+    <span><span class="dot" style="background:#f59e0b"></span>Wind（日频）</span>
+    <span><span class="dot" style="background:#4ade80"></span>蛋卷（周频）</span>
+  </div>
+  <div class="chart-box" id="chart-pe"></div>
+</div>
+
+<script>
+let DATA = null;
+
+async function init() {
+  try {
+    const r = await fetch('/api/aks-pe-wind-dj');
+    DATA = await r.json();
+    renderTabs();
+    if (DATA.indices.length > 0) {
+      showIndex(DATA.indices[0].code);
+    }
+  } catch(e) {
+    document.getElementById('tabs').innerHTML = '<p style="color:#f87171">加载失败: ' + e + '</p>';
+  }
+}
+
+function renderTabs() {
+  const tabs = DATA.indices.map(i => {
+    return '<div class="btn-tab" data-code="' + i.code + '" onclick="showIndex(\'' + i.code + '\')">' + i.name + '</div>';
+  }).join('');
+  document.getElementById('tabs').innerHTML = tabs;
+}
+
+function showIndex(code) {
+  const tabs = document.querySelectorAll('.btn-tab');
+  tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-code') === code));
+
+  const idx = DATA.indices.find(i => i.code === code);
+  if (!idx) return;
+
+  const series = [];
+  const legend = [];
+  const wind = idx.sources.wind;
+  const dj = idx.sources.dj;
+
+  if (wind && wind.pe.length > 0) {
+    series.push({
+      name: 'Wind（日频）', type: 'line', symbol: 'none',
+      data: wind.pe,
+      lineStyle: { color: '#f59e0b', width: 1.2 },
+    });
+    legend.push('Wind（日频）');
+  }
+  if (dj && dj.pe.length > 0) {
+    series.push({
+      name: '蛋卷（周频）', type: 'line', symbol: 'none',
+      data: dj.pe,
+      lineStyle: { color: '#4ade80', width: 1.6 },
+    });
+    legend.push('蛋卷（周频）');
+  }
+
+  const chart = echarts.init(document.getElementById('chart-pe'));
+  chart.setOption({
+    title: { text: idx.name + ' — PE 值对比（Wind 日频 vs 蛋卷 周频）', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis' },
+    legend: { data: legend, textStyle: { color: '#94a3b8' }, top: 30 },
+    grid: { left: 60, right: 20, top: 60, bottom: 60 },
+    xAxis: { type: 'time', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    yAxis: { type: 'value', name: 'PE', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 0, end: 100, height: 16, bottom: 4 }],
+    series: series,
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+init();
+</script>
+</body>
+</html>

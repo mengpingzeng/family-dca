@@ -1,0 +1,136 @@
+{
+  "title": "策略B + 本金阈值收缩",
+  "params": {
+    "buy_signal": "PB",
+    "buy_gate": "FED",
+    "buy_gate_cap": 0.55,
+    "sell_signal": "PE",
+    "sell_gate": null,
+    "sell_gate_floor": null,
+    "buy_floor": 0.1,
+    "buy_low": 0.15,
+    "buy_mid": 0.3,
+    "buy_high": 0.7,
+    "sell_heavy": 0.85,
+    "sell_extreme": 0.95
+  },
+  "base_amount": 1000,
+  "cost_model": {
+    "commission_rate": 0.0005,
+    "min_commission": 5.0,
+    "lot_size": 0,
+    "note": "指数口径, 无整手限制; 佣金万5 低消5元, 双向"
+  },
+  "principal_threshold": 200000,
+  "principal_cap": 300000,
+  "principal_pool": 300000,
+  "note": "固定30万口径: 从回测区间第一天(pe_pct首次有效)固化30万, 闲置部分无息",
+  "threshold_tiers": [
+    {
+      "up_to": 200000,
+      "min_mult": 0.5,
+      "desc": "0.5x/1x/2x/3x"
+    },
+    {
+      "up_to": 240000,
+      "min_mult": 1.0,
+      "desc": "1x/2x/3x"
+    },
+    {
+      "up_to": 280000,
+      "min_mult": 2.0,
+      "desc": "2x/3x"
+    },
+    {
+      "up_to": 300000,
+      "min_mult": 3.0,
+      "desc": "仅3x"
+    },
+    {
+      "up_to": null,
+      "min_mult": null,
+      "desc": "达30万停止买入"
+    }
+  ],
+  "results": [
+    {
+      "code": "000300",
+      "name": "沪深300",
+      "start_date": "2015-04-17",
+      "end_date": "2026-08-14",
+      "xirr": 0.1151,
+      "final_return": 0.3732,
+      "total_invested": 298645.0,
+      "total_cash_in": 403055.0,
+      "position_value": 7033.0,
+      "final_value": 410088.0,
+      "principal_final": 411443.0,
+      "principal_annual": 0.0283,
+      "principal_return": 0.3715,
+      "trades": 253,
+      "buys": 229,
+      "sells": 24
+    },
+    {
+      "code": "000905",
+      "name": "中证500",
+      "start_date": "2017-01-13",
+      "end_date": "2026-08-14",
+      "xirr": 0.0674,
+      "final_return": 0.6092,
+      "total_invested": 297755.0,
+      "total_cash_in": 400242.0,
+      "position_value": 78913.0,
+      "final_value": 479155.0,
+      "principal_final": 481400.0,
+      "principal_annual": 0.0506,
+      "principal_return": 0.6047,
+      "trades": 159,
+      "buys": 151,
+      "sells": 8
+    }
+  ],
+  "baseline": {
+    "label": "纯硬封顶30万(无收缩)",
+    "principal_threshold": null,
+    "principal_cap": 300000,
+    "results": [
+      {
+        "code": "000300",
+        "name": "沪深300",
+        "start_date": "2015-04-17",
+        "end_date": "2026-08-14",
+        "xirr": 0.1115,
+        "final_return": 0.3607,
+        "total_invested": 299825.0,
+        "total_cash_in": 401368.0,
+        "position_value": 6617.0,
+        "final_value": 407985.0,
+        "principal_final": 408160.0,
+        "principal_annual": 0.0276,
+        "principal_return": 0.3605,
+        "trades": 289,
+        "buys": 265,
+        "sells": 24
+      },
+      {
+        "code": "000905",
+        "name": "中证500",
+        "start_date": "2017-01-13",
+        "end_date": "2026-08-14",
+        "xirr": 0.0672,
+        "final_return": 0.6069,
+        "total_invested": 299765.0,
+        "total_cash_in": 402369.0,
+        "position_value": 79332.0,
+        "final_value": 481701.0,
+        "principal_final": 481936.0,
+        "principal_annual": 0.0507,
+        "principal_return": 0.6065,
+        "trades": 161,
+        "buys": 153,
+        "sells": 8
+      }
+    ]
+  }
+}

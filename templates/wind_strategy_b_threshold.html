@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>策略B · 本金阈值收缩 — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.meta{font-size:13px;color:#94a3b8;margin-left:auto}
+.container{max-width:1600px;margin:0 auto;padding:16px 24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px;margin-bottom:14px}
+.card h2{font-size:14px;color:#94a3b8;margin-bottom:10px;border-bottom:1px solid #334155;padding-bottom:6px}
+.rules-box{font-size:13px;line-height:1.9;color:#cbd5e1}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:0 2px}
+.tag-buy{background:#166534;color:#4ade80}
+.tag-sell{background:#7f1d1d;color:#f87171}
+.tag-mode{background:#1e40af;color:#93c5fd}
+.tag-cap{background:#854d0e;color:#fbbf24}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #334155;white-space:nowrap}
+th{color:#94a3b8;font-weight:600;position:sticky;top:0;background:#1e293b}
+td.l,th.l{text-align:left}
+tr:hover td{background:#263244}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:340px}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tabs button{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+.tabs button.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+@media(max-width:1000px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/wind-new/train-principal">固定30万训练 →</a>
+  <h1>策略B · 本金阈值收缩 (20万阈值 + 30万封顶)</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+
+  <div class="card">
+    <h2>策略与本金管理规则</h2>
+    <div class="rules-box" id="rules"></div>
+  </div>
+
+  <div class="card">
+    <h2>结果汇总 (阈值收缩 vs 纯硬封顶基线)</h2>
+    <div style="max-height:360px;overflow-y:auto">
+      <table id="summary"><thead><tr>
+        <th class="l">指数</th><th class="l">可交易区间</th>
+        <th>XIRR</th><th>固定30万年化</th><th>累计投入</th><th>账户终值(30万→)</th><th>交易(买/卖)</th>
+        <th>ΔXIRR</th><th>Δ固定年化</th><th>Δ终值</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button id="tab-000300" class="active">沪深300 (000300)</button>
+    <button id="tab-000905">中证500 (000905)</button>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box" id="chart-pct"></div>
+    <div class="chart-box" id="chart-equity"></div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box" id="chart-xirr"></div>
+    <div class="chart-box" id="chart-daily"></div>
+  </div>
+
+  <div class="card">
+    <h2>交易明细 (<span id="trades-count">0</span>笔) <span id="trades-summary"></span></h2>
+    <div id="trades-table" style="max-height:480px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<script>
+let cur='000300', data=null, curve=null;
+let chartPct=null, chartEq=null, chartXirr=null, chartDaily=null;
+var _origInit=echarts.init;
+echarts.init=function(el){var i=_origInit.call(this,el);i.group='wind-link';el._echart=i;return i};
+
+async function load(){
+  const r=await fetch('/api/wind-new/strategy-b-threshold'); data=await r.json();
+  if(data.error){document.getElementById('meta-info').textContent=data.error;return;}
+  renderRules(); renderSummary();
+  document.getElementById('meta-info').textContent=
+    'base=¥'+data.base_amount+' | 阈值'+data.principal_threshold/10000+'万收缩 | 封顶'+data.principal_cap/10000+'万 | 费用万5+低消5元';
+  await loadCurve();
+}
+
+function fmtPct(x){return (x*100).toFixed(2)+'%';}
+function pctCmpT(sig,op,val){
+  if(sig==='FED'){return 'FED%'+(op==='le'?'≥':'≤')+((1-val)*100).toFixed(1)+'%';}
+  return sig+'%'+(op==='le'?'≤':'≥')+(val*100).toFixed(1)+'%';
+}
+function gateText(r){return r.buy_gate? pctCmpT(r.buy_gate,'le',r.buy_gate_cap) : '无';}
+function sellGateText(r){return r.sell_gate? pctCmpT(r.sell_gate,'ge',r.sell_gate_floor) : '无';}
+function renderRules(){
+  const p=data.params;
+  let tiers='<span class="tag tag-buy">&lt;'+fmtPct(p.buy_floor)+'→3x</span>'+
+    '<span class="tag tag-buy">'+fmtPct(p.buy_floor)+'~'+fmtPct(p.buy_low)+'→2x</span>'+
+    '<span class="tag tag-buy">'+fmtPct(p.buy_low)+'~'+fmtPct(p.buy_mid)+'→1x</span>'+
+    '<span class="tag tag-buy">'+fmtPct(p.buy_mid)+'~'+fmtPct(p.buy_high)+'→0.5x</span>';
+  let capTiers='';
+  data.threshold_tiers.forEach(t=>{
+    const up=t.up_to==null?'30万+':(t.up_to/10000)+'万';
+    const pre=data.threshold_tiers.indexOf(t)===0?'<':'';
+    capTiers+='<span class="tag tag-cap">'+pre+up+' → '+t.desc+'</span>';
+  });
+  document.getElementById('rules').innerHTML=
+    '<b>主信号</b> <span class="tag tag-mode">'+p.buy_signal+'</span> '+
+    '<b>买入闸门</b> <span class="tag">'+gateText(p)+'</span> '+
+    '<b>买入档</b> '+tiers+
+    ' | <b>卖出信号</b> <span class="tag tag-sell">'+p.sell_signal+'% ≥'+fmtPct(p.sell_heavy)+'→卖20%</span>'+
+    '<span class="tag tag-sell">≥'+fmtPct(p.sell_extreme)+'→清仓</span>'+
+    ' <b>卖出闸门</b> <span class="tag tag-sell">'+sellGateText(p)+'</span>'+
+    '<br/><b>本金管理</b> '+capTiers+
+    '<br/><span style="color:#94a3b8">'+data.note+'</span>';
+}
+function renderSummary(){
+  const tb=document.querySelector('#summary tbody'); tb.innerHTML='';
+  const base=data.baseline.results;
+  data.results.forEach((r,i)=>{
+    const b=base[i];
+    const dX=r.xirr-b.xirr, dA=r.principal_annual-b.principal_annual, dF=r.principal_final-b.principal_final;
+    const cl=v=>v>0?'green':v<0?'red':'';
+    tb.innerHTML+='<tr><td class="l"><b>'+r.name+'</b></td><td class="l">'+r.start_date+' ~ '+r.end_date+'</td>'+
+      '<td class="green">'+fmtPct(r.xirr)+'</td><td class="green">'+fmtPct(r.principal_annual)+'</td>'+
+      '<td>¥'+r.total_invested.toLocaleString()+'</td><td>¥'+r.principal_final.toLocaleString()+'</td>'+
+      '<td>'+r.buys+'/'+r.sells+'</td>'+
+      '<td class="'+cl(dX)+'">'+(dX>0?'+':'')+(dX*100).toFixed(2)+'pp</td>'+
+      '<td class="'+cl(dA)+'">'+(dA>0?'+':'')+(dA*100).toFixed(2)+'pp</td>'+
+      '<td class="'+cl(dF)+'">'+(dF>0?'+':'')+'¥'+Math.round(dF).toLocaleString()+'</td></tr>';
+    tb.innerHTML+='<tr><td class="l" style="color:#94a3b8">'+b.name+' (基线: 纯封顶)</td><td class="l" style="color:#94a3b8">'+b.start_date+' ~ '+b.end_date+'</td>'+
+      '<td>'+fmtPct(b.xirr)+'</td><td>'+fmtPct(b.principal_annual)+'</td>'+
+      '<td>¥'+b.total_invested.toLocaleString()+'</td><td>¥'+b.principal_final.toLocaleString()+'</td>'+
+      '<td>'+b.buys+'/'+b.sells+'</td><td></td><td></td><td></td></tr>';
+  });
+}
+
+async function loadCurve(){
+  const r=await fetch('/api/wind-new/strategy-b-threshold/curve/'+cur); curve=await r.json();
+  renderCurve(); renderTrades();
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.id==='tab-'+cur));
+}
+
+function renderCurve(){
+  const d=curve.daily, m=curve.meta, dates=d.map(x=>x.date);
+  const bp=data.params;
+  if(!chartPct) chartPct=echarts.init(document.getElementById('chart-pct'));
+  if(!chartEq) chartEq=echarts.init(document.getElementById('chart-equity'));
+  if(!chartXirr) chartXirr=echarts.init(document.getElementById('chart-xirr'));
+  if(!chartDaily) chartDaily=echarts.init(document.getElementById('chart-daily'));
+
+  chartPct.setOption({
+    title:{text:m.name+' 估值百分位 + K线 (PE/PB/FED)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis',axisPointer:{type:'cross'},formatter:ps=>{let s='<b>'+ps[0].axisValue+'</b>';ps.forEach(p=>{if(p.value==null)return;s+='<br/>'+p.marker+p.seriesName+': '+(p.seriesName==='收盘价'?(p.value):(p.value*100).toFixed(0)+'%')});return s}},
+    legend:{data:['PE%','PB%','FED%','收盘价'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:55,right:60,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:[
+      {type:'value',min:0,max:1,axisLabel:{color:'#94a3b8',formatter:v=>(v*100).toFixed(0)+'%'},splitLine:{lineStyle:{color:'#334155'}}},
+      {type:'value',scale:true,axisLabel:{color:'#94a3b8'},splitLine:{show:false}}
+    ],
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}],
+    series:[
+      {name:'PE%',type:'line',data:d.map(x=>x.pe_pct),lineStyle:{color:'#60a5fa',width:1.4},itemStyle:{color:'#60a5fa'},symbol:'none',connectNulls:true},
+      {name:'PB%',type:'line',data:d.map(x=>x.pb_pct),lineStyle:{color:'#a78bfa',width:1.4},itemStyle:{color:'#a78bfa'},symbol:'none',connectNulls:true},
+      {name:'FED%',type:'line',data:d.map(x=>x.fed_pct),lineStyle:{color:'#34d399',width:1.4},itemStyle:{color:'#34d399'},symbol:'none',connectNulls:true,
+        markLine:{silent:true,symbol:'none',label:{color:'#94a3b8',fontSize:9},lineStyle:{color:'#64748b',type:'dashed'},data:[
+          {yAxis:bp.buy_floor,label:{formatter:'buy '+fmtPct(bp.buy_floor)}},
+          {yAxis:bp.buy_high,label:{formatter:'buy '+fmtPct(bp.buy_high)}},
+          {yAxis:bp.sell_heavy,label:{formatter:'sell '+fmtPct(bp.sell_heavy)}},
+          {yAxis:bp.sell_extreme,label:{formatter:'sell '+fmtPct(bp.sell_extreme)}}]}},
+      {name:'收盘价',type:'line',yAxisIndex:1,data:d.map(x=>x.price),lineStyle:{color:'#fbbf24',width:1.2},itemStyle:{color:'#fbbf24'},symbol:'none',connectNulls:true},
+    ]
+  });
+
+  let cum=[],eq=[],tot=[],princ=[],buyMk=[],sellMk=[];
+  d.forEach(v=>{cum.push(v.cum_invested);eq.push(v.equity);tot.push(v.total_value);
+    princ.push(v.principal!=null?v.principal:null);
+    buyMk.push(v.buy_amount>0?v.equity:null);sellMk.push(v.sell_amount>0?v.equity:null)});
+  chartEq.setOption({
+    title:{text:m.name+' 总投入/市值/总资产 + 本金曲线(元)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['总投入','市值','总资产(含现金)','本金曲线(30万基准)','买入','卖出'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:70,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v/10000).toFixed(0)+'万'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}],
+    series:[
+      {name:'总投入',type:'line',data:cum,lineStyle:{color:'#fb923c',width:2,type:'dashed'},itemStyle:{color:'#fb923c'},symbol:'none'},
+      {name:'市值',type:'line',data:eq,lineStyle:{color:'#c084fc',width:2},itemStyle:{color:'#c084fc'},symbol:'none'},
+      {name:'总资产(含现金)',type:'line',data:tot,lineStyle:{color:'#60a5fa',width:1.5},itemStyle:{color:'#60a5fa'},areaStyle:{color:'rgba(96,165,250,0.1)'},symbol:'none'},
+      {name:'本金曲线(30万基准)',type:'line',data:princ,lineStyle:{color:'#facc15',width:2.2},itemStyle:{color:'#facc15'},symbol:'none',connectNulls:true},
+      {name:'买入',type:'scatter',data:buyMk,symbolSize:7,itemStyle:{color:'#4ade80'},z:10},
+      {name:'卖出',type:'scatter',data:sellMk,symbolSize:7,itemStyle:{color:'#f87171'},z:10},
+    ]
+  });
+
+  chartXirr.setOption({
+    title:{text:m.name+' 收益率 (简单回报% / 年化XIRR% / 固定30万年化%)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['简单回报%','年化XIRR%','固定30万年化%'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:60,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}],
+    series:[
+      {name:'简单回报%',type:'line',data:d.map(x=>x.return_pct),lineStyle:{color:'#facc15',width:1.5},itemStyle:{color:'#facc15'},symbol:'none'},
+      {name:'年化XIRR%',type:'line',data:d.map(x=>x.xirr!=null?(x.xirr*100):null),lineStyle:{color:'#f97316',width:1.5},itemStyle:{color:'#f97316'},symbol:'none',connectNulls:true},
+      {name:'固定30万年化%',type:'line',data:d.map(x=>x.annualized!=null?(x.annualized*100):null),lineStyle:{color:'#34d399',width:2},itemStyle:{color:'#34d399'},symbol:'none',connectNulls:true,
+        markLine:{silent:true,symbol:'none',data:[{yAxis:0,lineStyle:{color:'#94a3b8',type:'dashed'}}]}},
+    ]
+  });
+
+  chartDaily.setOption({
+    title:{text:m.name+' 日收益曲线 (本金环比涨跌幅%)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['日收益%'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:60,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:40,end:100,height:16,bottom:0}],
+    series:[
+      {name:'日收益%',type:'line',data:d.map(x=>x.daily_return),lineStyle:{color:'#22d3ee',width:1.2},itemStyle:{color:'#22d3ee'},symbol:'none',connectNulls:true,
+        areaStyle:{color:'rgba(34,211,238,0.08)'},
+        markLine:{silent:true,symbol:'none',data:[{yAxis:0,lineStyle:{color:'#94a3b8',type:'dashed'}}]}},
+    ]
+  });
+
+  echarts.connect('wind-link');
+}
+
+function renderTrades(){
+  const t=curve.trades||[]; let b=0,s=0;
+  t.forEach(x=>{x.action==='buy'?b++:s++});
+  document.getElementById('trades-count').textContent=t.length;
+  document.getElementById('trades-summary').textContent='(买入'+b+' / 卖出'+s+')';
+  const el=document.getElementById('trades-table');
+  if(!t.length){el.innerHTML='<span style="color:#64748b">无交易</span>';return}
+  let h='<table><thead><tr><th class="l">日期</th><th class="l">操作</th><th>PE%</th><th>PB%</th><th>金额</th><th>份额</th><th>价格</th><th>累计投入</th><th class="l">触发</th></tr></thead><tbody>';
+  for(const x of t){
+    const act=x.action==='buy'?'买入':x.action==='sell'?'卖出':'清仓';
+    const cl=x.action==='buy'?'color:#4ade80':'color:#f87171';
+    h+='<tr><td class="l">'+x.date+'</td><td class="l" style="'+cl+';font-weight:600">'+act+'</td>'+
+      '<td>'+(x.pe_pct!=null?fmtPct(x.pe_pct):'—')+'</td><td>'+(x.pb_pct!=null?fmtPct(x.pb_pct):'—')+'</td>'+
+      '<td style="'+cl+'">¥'+Math.abs(x.amount).toLocaleString()+'</td><td>'+x.shares.toFixed(0)+'</td>'+
+      '<td>'+x.price.toFixed(2)+'</td><td>¥'+x.cum_invested.toLocaleString()+'</td>'+
+      '<td class="l" style="color:#94a3b8">'+x.reason+'</td></tr>';
+  }
+  h+='</tbody></table>'; el.innerHTML=h;
+}
+
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{cur=b.id.split('-')[1];loadCurve()}));
+load();
+</script>
+</body>
+</html>

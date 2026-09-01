@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三数据源 PE 曲线对比 — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:18px;font-weight:600}
+.container{max-width:1600px;margin:0 auto;padding:16px 24px}
+.tabs-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.btn-tab{padding:8px 16px;background:#1e293b;border:1px solid #334155;border-radius:6px;cursor:pointer;font-size:14px;color:#94a3b8}
+.btn-tab.active{background:#1d4ed8;color:#fff;border-color:#2563eb}
+.btn-tab:hover:not(.active){border-color:#475569}
+.note{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;line-height:1.8;color:#94a3b8}
+.note b{color:#e2e8f0}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:480px}
+.legend-note{display:flex;gap:16px;margin-bottom:10px;font-size:12px;color:#94a3b8}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <h1>三数据源 PE 曲线对比（akshare / Wind / 蛋卷 · 统一 5 年百分位窗口）</h1>
+</header>
+<div class="container">
+  <div class="note">
+    <b>说明:</b> 对三种数据源都有的 5 个指数，叠加绘制 PE 值曲线与 PE 百分位曲线（百分位统一 5 年滚动窗口）。
+    <br><b>口径差异:</b> akshare=加权/中位 TTM · Wind=pe_ttm_wind · 蛋卷=等权 TTM。
+    <br><b>频率:</b> 统一周频（三源均重采样到周日锚点，横轴日期对齐）。
+    <br><b>时间区间:</b> 已裁剪到三源共同区间 — PE 值曲线从 2016-08 起（蛋卷起点），PE 百分位曲线从 2021-08 起（蛋卷 5 年窗口起点）。
+  </div>
+
+  <div class="tabs-row" id="tabs"></div>
+  <div class="legend-note">
+    <span><span class="dot" style="background:#60a5fa"></span>akshare</span>
+    <span><span class="dot" style="background:#f59e0b"></span>Wind</span>
+    <span><span class="dot" style="background:#4ade80"></span>蛋卷</span>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box" id="chart-pe"></div>
+    <div class="chart-box" id="chart-pct"></div>
+  </div>
+</div>
+
+<script>
+let DATA = null;
+let ACTIVE = null;
+
+async function init() {
+  try {
+    const r = await fetch('/api/aks-pe-compare');
+    DATA = await r.json();
+    renderTabs();
+    if (DATA.indices.length > 0) {
+      showIndex(DATA.indices[0].code);
+    }
+  } catch(e) {
+    document.getElementById('tabs').innerHTML = '<p style="color:#f87171">加载失败: ' + e + '</p>';
+  }
+}
+
+function renderTabs() {
+  const tabs = DATA.indices.map(i => {
+    return '<div class="btn-tab" data-code="' + i.code + '" onclick="showIndex(\'' + i.code + '\')">' + i.name + '</div>';
+  }).join('');
+  document.getElementById('tabs').innerHTML = tabs;
+}
+
+function showIndex(code) {
+  ACTIVE = code;
+  const tabs = document.querySelectorAll('.btn-tab');
+  tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-code') === code));
+
+  const idx = DATA.indices.find(i => i.code === code);
+  if (!idx) return;
+
+  const srcNames = {akshare: 'akshare', wind: 'Wind', dj: '蛋卷'};
+  const srcColors = {akshare: '#60a5fa', wind: '#f59e0b', dj: '#4ade80'};
+
+  // PE 值曲线
+  const peSeries = [];
+  const peLegend = [];
+  for (const [sk, src] of Object.entries(idx.sources)) {
+    if (!src.pe || src.pe.length === 0) continue;
+    peSeries.push({
+      name: srcNames[sk], type: 'line', symbol: 'none',
+      data: src.pe,
+      lineStyle: { color: srcColors[sk], width: 1.5 },
+    });
+    peLegend.push(srcNames[sk]);
+  }
+
+  // PE 百分位曲线
+  const pctSeries = [];
+  for (const [sk, src] of Object.entries(idx.sources)) {
+    if (!src.pe_pct || src.pe_pct.length === 0) continue;
+    pctSeries.push({
+      name: srcNames[sk], type: 'line', symbol: 'none',
+      data: src.pe_pct.map(([d, v]) => [d, +(v*100).toFixed(1)]),
+      lineStyle: { color: srcColors[sk], width: 1.5 },
+    });
+  }
+
+  renderPE(idx, peSeries);
+  renderPct(idx, pctSeries);
+}
+
+function renderPE(idx, series) {
+  const chart = echarts.init(document.getElementById('chart-pe'));
+  chart.setOption({
+    title: { text: idx.name + ' — PE 值对比', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis' },
+    legend: { data: series.map(s => s.name), textStyle: { color: '#94a3b8' }, top: 30 },
+    grid: { left: 60, right: 20, top: 60, bottom: 50 },
+    xAxis: { type: 'time', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    yAxis: { type: 'value', name: 'PE', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 0, end: 100, height: 16, bottom: 4 }],
+    series: series,
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+function renderPct(idx, series) {
+  const chart = echarts.init(document.getElementById('chart-pct'));
+  chart.setOption({
+    title: { text: idx.name + ' — PE 百分位对比（5 年窗口）', left: 'center', textStyle: { color: '#e2e8f0', fontSize: 14 } },
+    tooltip: { trigger: 'axis' },
+    legend: { data: series.map(s => s.name), textStyle: { color: '#94a3b8' }, top: 30 },
+    grid: { left: 60, right: 20, top: 60, bottom: 50 },
+    xAxis: { type: 'time', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    yAxis: { type: 'value', name: '百分位 %', min: 0, max: 100, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+    dataZoom: [{ type: 'slider', start: 0, end: 100, height: 16, bottom: 4 }],
+    series: series,
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+init();
+</script>
+</body>
+</html>

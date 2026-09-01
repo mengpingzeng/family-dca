@@ -1,0 +1,6255 @@
+{
+  "000300": {
+    "name": "沪深300",
+    "params": {
+      "buy_floor": 0.08,
+      "buy_low": 0.15,
+      "buy_mid": 0.22,
+      "buy_high": 0.4,
+      "sell_heavy": 0.8,
+      "sell_extreme": 0.9,
+      "fed_gate": null,
+      "pb_veto": null,
+      "pb_sell": null,
+      "signal_mode": "FED_only"
+    },
+    "holds": {
+      "hold_3yr": {
+        "windows": 59,
+        "xirr_min": -23.59,
+        "xirr_max": 98.06,
+        "xirr_mean": 16.31,
+        "xirr_median": 6.9,
+        "xirr_std": 27.45,
+        "win_rate": 59.3,
+        "xirr_series": [
+          {
+            "start": "2016-04-08",
+            "end": "2019-04-08",
+            "xirr": 0.9806,
+            "total_invested": 23250,
+            "final_value": 29918,
+            "trades": 34
+          },
+          {
+            "start": "2014-01-08",
+            "end": "2017-01-08",
+            "xirr": 0.8919,
+            "total_invested": 48500,
+            "final_value": 31842,
+            "trades": 57
+          },
+          {
+            "start": "2013-10-08",
+            "end": "2016-10-08",
+            "xirr": 0.811,
+            "total_invested": 58750,
+            "final_value": 37008,
+            "trades": 71
+          },
+          {
+            "start": "2013-07-08",
+            "end": "2016-07-08",
+            "xirr": 0.7048,
+            "total_invested": 75250,
+            "final_value": 46602,
+            "trades": 84
+          },
+          {
+            "start": "2013-04-08",
+            "end": "2016-04-08",
+            "xirr": 0.642,
+            "total_invested": 88250,
+            "final_value": 52863,
+            "trades": 97
+          },
+          {
+            "start": "2013-01-08",
+            "end": "2016-01-08",
+            "xirr": 0.6407,
+            "total_invested": 92000,
+            "final_value": 54660,
+            "trades": 109
+          },
+          {
+            "start": "2012-10-08",
+            "end": "2015-10-08",
+            "xirr": 0.5285,
+            "total_invested": 109500,
+            "final_value": 64255,
+            "trades": 120
+          },
+          {
+            "start": "2012-07-08",
+            "end": "2015-07-08",
+            "xirr": 0.4657,
+            "total_invested": 127500,
+            "final_value": 76228,
+            "trades": 131
+          },
+          {
+            "start": "2018-07-08",
+            "end": "2021-07-08",
+            "xirr": 0.3943,
+            "total_invested": 49750,
+            "final_value": 19278,
+            "trades": 95
+          },
+          {
+            "start": "2018-10-08",
+            "end": "2021-10-08",
+            "xirr": 0.3918,
+            "total_invested": 46750,
+            "final_value": 17603,
+            "trades": 84
+          },
+          {
+            "start": "2016-07-08",
+            "end": "2019-07-08",
+            "xirr": 0.3811,
+            "total_invested": 25000,
+            "final_value": 30160,
+            "trades": 41
+          },
+          {
+            "start": "2019-01-08",
+            "end": "2022-01-08",
+            "xirr": 0.3774,
+            "total_invested": 35250,
+            "final_value": 10565,
+            "trades": 77
+          },
+          {
+            "start": "2018-04-08",
+            "end": "2021-04-08",
+            "xirr": 0.3674,
+            "total_invested": 50250,
+            "final_value": 19221,
+            "trades": 95
+          },
+          {
+            "start": "2017-07-08",
+            "end": "2020-07-08",
+            "xirr": 0.3129,
+            "total_invested": 50250,
+            "final_value": 54005,
+            "trades": 88
+          },
+          {
+            "start": "2012-04-08",
+            "end": "2015-04-08",
+            "xirr": 0.3081,
+            "total_invested": 144500,
+            "final_value": 114496,
+            "trades": 141
+          },
+          {
+            "start": "2019-07-08",
+            "end": "2022-07-08",
+            "xirr": 0.3033,
+            "total_invested": 49750,
+            "final_value": 28740,
+            "trades": 86
+          },
+          {
+            "start": "2018-01-08",
+            "end": "2021-01-08",
+            "xirr": 0.3012,
+            "total_invested": 50250,
+            "final_value": 26049,
+            "trades": 92
+          },
+          {
+            "start": "2012-01-08",
+            "end": "2015-01-08",
+            "xirr": 0.2681,
+            "total_invested": 160500,
+            "final_value": 200711,
+            "trades": 151
+          },
+          {
+            "start": "2017-01-08",
+            "end": "2020-01-08",
+            "xirr": 0.2667,
+            "total_invested": 32750,
+            "final_value": 40541,
+            "trades": 66
+          },
+          {
+            "start": "2019-04-08",
+            "end": "2022-04-08",
+            "xirr": 0.2666,
+            "total_invested": 36500,
+            "final_value": 11748,
+            "trades": 80
+          },
+          {
+            "start": "2017-10-08",
+            "end": "2020-10-08",
+            "xirr": 0.2642,
+            "total_invested": 50250,
+            "final_value": 33935,
+            "trades": 90
+          },
+          {
+            "start": "2016-10-08",
+            "end": "2019-10-08",
+            "xirr": 0.2265,
+            "total_invested": 29000,
+            "final_value": 33728,
+            "trades": 55
+          },
+          {
+            "start": "2023-07-08",
+            "end": "2026-07-08",
+            "xirr": 0.21,
+            "total_invested": 60750,
+            "final_value": 7655,
+            "trades": 82
+          },
+          {
+            "start": "2023-04-08",
+            "end": "2026-04-08",
+            "xirr": 0.1699,
+            "total_invested": 68500,
+            "final_value": 7573,
+            "trades": 94
+          },
+          {
+            "start": "2023-01-08",
+            "end": "2026-01-08",
+            "xirr": 0.1244,
+            "total_invested": 73750,
+            "final_value": 7621,
+            "trades": 103
+          },
+          {
+            "start": "2017-04-08",
+            "end": "2020-04-08",
+            "xirr": 0.1086,
+            "total_invested": 44000,
+            "final_value": 48187,
+            "trades": 77
+          },
+          {
+            "start": "2020-01-08",
+            "end": "2023-01-08",
+            "xirr": 0.1077,
+            "total_invested": 75000,
+            "final_value": 58277,
+            "trades": 86
+          },
+          {
+            "start": "2021-10-08",
+            "end": "2024-10-08",
+            "xirr": 0.0934,
+            "total_invested": 128750,
+            "final_value": 121987,
+            "trades": 142
+          },
+          {
+            "start": "2019-10-08",
+            "end": "2022-10-08",
+            "xirr": 0.0907,
+            "total_invested": 60500,
+            "final_value": 37926,
+            "trades": 85
+          },
+          {
+            "start": "2022-10-08",
+            "end": "2025-10-08",
+            "xirr": 0.069,
+            "total_invested": 92250,
+            "final_value": 9740,
+            "trades": 114
+          },
+          {
+            "start": "2020-04-08",
+            "end": "2023-04-08",
+            "xirr": 0.0685,
+            "total_invested": 70500,
+            "final_value": 64526,
+            "trades": 88
+          },
+          {
+            "start": "2022-07-08",
+            "end": "2025-07-08",
+            "xirr": 0.0404,
+            "total_invested": 107000,
+            "final_value": 9440,
+            "trades": 127
+          },
+          {
+            "start": "2011-10-08",
+            "end": "2014-10-08",
+            "xirr": 0.0278,
+            "total_invested": 175750,
+            "final_value": 183713,
+            "trades": 156
+          },
+          {
+            "start": "2022-04-08",
+            "end": "2025-04-08",
+            "xirr": 0.0187,
+            "total_invested": 122250,
+            "final_value": 20168,
+            "trades": 136
+          },
+          {
+            "start": "2022-01-08",
+            "end": "2025-01-08",
+            "xirr": 0.0176,
+            "total_invested": 127500,
+            "final_value": 42197,
+            "trades": 141
+          },
+          {
+            "start": "2014-04-08",
+            "end": "2017-04-08",
+            "xirr": 0.0,
+            "total_invested": 30000,
+            "final_value": 19640,
+            "trades": 46
+          },
+          {
+            "start": "2014-07-08",
+            "end": "2017-07-08",
+            "xirr": 0.0,
+            "total_invested": 12000,
+            "final_value": 7049,
+            "trades": 35
+          },
+          {
+            "start": "2014-10-08",
+            "end": "2017-10-08",
+            "xirr": 0.0,
+            "total_invested": 4500,
+            "final_value": 2234,
+            "trades": 24
+          },
+          {
+            "start": "2015-01-08",
+            "end": "2018-01-08",
+            "xirr": 0.0,
+            "total_invested": 0,
+            "final_value": 0,
+            "trades": 0
+          },
+          {
+            "start": "2015-04-08",
+            "end": "2018-04-08",
+            "xirr": 0.0,
+            "total_invested": 0,
+            "final_value": 0,
+            "trades": 0
+          },
+          {
+            "start": "2015-07-08",
+            "end": "2018-07-08",
+            "xirr": 0.0,
+            "total_invested": 500,
+            "final_value": 476,
+            "trades": 2
+          },
+          {
+            "start": "2015-10-08",
+            "end": "2018-10-08",
+            "xirr": -0.0107,
+            "total_invested": 4000,
+            "final_value": 3994,
+            "trades": 15
+          },
+          {
+            "start": "2010-01-08",
+            "end": "2013-01-08",
+            "xirr": -0.0205,
+            "total_invested": 136000,
+            "final_value": 132948,
+            "trades": 152
+          },
+          {
+            "start": "2010-10-08",
+            "end": "2013-10-08",
+            "xirr": -0.0314,
+            "total_invested": 151750,
+            "final_value": 145476,
+            "trades": 153
+          },
+          {
+            "start": "2010-04-08",
+            "end": "2013-04-08",
+            "xirr": -0.0425,
+            "total_invested": 137250,
+            "final_value": 129918,
+            "trades": 153
+          },
+          {
+            "start": "2020-07-08",
+            "end": "2023-07-08",
+            "xirr": -0.0565,
+            "total_invested": 70500,
+            "final_value": 67271,
+            "trades": 80
+          },
+          {
+            "start": "2011-07-08",
+            "end": "2014-07-08",
+            "xirr": -0.0609,
+            "total_invested": 184000,
+            "final_value": 167480,
+            "trades": 156
+          },
+          {
+            "start": "2021-04-08",
+            "end": "2024-04-08",
+            "xirr": -0.0635,
+            "total_invested": 115000,
+            "final_value": 107062,
+            "trades": 118
+          },
+          {
+            "start": "2011-01-08",
+            "end": "2014-01-08",
+            "xirr": -0.0704,
+            "total_invested": 159250,
+            "final_value": 143543,
+            "trades": 153
+          },
+          {
+            "start": "2011-04-08",
+            "end": "2014-04-08",
+            "xirr": -0.0741,
+            "total_invested": 173750,
+            "final_value": 155135,
+            "trades": 154
+          },
+          {
+            "start": "2020-10-08",
+            "end": "2023-10-08",
+            "xirr": -0.0768,
+            "total_invested": 82500,
+            "final_value": 76809,
+            "trades": 92
+          },
+          {
+            "start": "2021-07-08",
+            "end": "2024-07-08",
+            "xirr": -0.0794,
+            "total_invested": 118500,
+            "final_value": 106435,
+            "trades": 131
+          },
+          {
+            "start": "2009-04-08",
+            "end": "2012-04-08",
+            "xirr": -0.1051,
+            "total_invested": 88250,
+            "final_value": 80108,
+            "trades": 132
+          },
+          {
+            "start": "2010-07-08",
+            "end": "2013-07-08",
+            "xirr": -0.1109,
+            "total_invested": 144750,
+            "final_value": 124480,
+            "trades": 153
+          },
+          {
+            "start": "2009-07-08",
+            "end": "2012-07-08",
+            "xirr": -0.1177,
+            "total_invested": 103750,
+            "final_value": 92476,
+            "trades": 139
+          },
+          {
+            "start": "2009-10-08",
+            "end": "2012-10-08",
+            "xirr": -0.14,
+            "total_invested": 121500,
+            "final_value": 104989,
+            "trades": 145
+          },
+          {
+            "start": "2021-01-08",
+            "end": "2024-01-08",
+            "xirr": -0.1505,
+            "total_invested": 102000,
+            "final_value": 87371,
+            "trades": 106
+          },
+          {
+            "start": "2009-01-08",
+            "end": "2012-01-08",
+            "xirr": -0.1726,
+            "total_invested": 80500,
+            "final_value": 67096,
+            "trades": 132
+          },
+          {
+            "start": "2016-01-08",
+            "end": "2019-01-08",
+            "xirr": -0.2359,
+            "total_invested": 18250,
+            "final_value": 17497,
+            "trades": 28
+          }
+        ]
+      },
+      "hold_5yr": {
+        "windows": 51,
+        "xirr_min": -9.34,
+        "xirr_max": 87.88,
+        "xirr_mean": 27.45,
+        "xirr_median": 26.22,
+        "xirr_std": 24.91,
+        "win_rate": 86.3,
+        "xirr_series": [
+          {
+            "start": "2014-07-08",
+            "end": "2019-07-08",
+            "xirr": 0.8788,
+            "total_invested": 29250,
+            "final_value": 17251,
+            "trades": 80
+          },
+          {
+            "start": "2014-04-08",
+            "end": "2019-04-08",
+            "xirr": 0.8343,
+            "total_invested": 46750,
+            "final_value": 36414,
+            "trades": 87
+          },
+          {
+            "start": "2014-10-08",
+            "end": "2019-10-08",
+            "xirr": 0.8297,
+            "total_invested": 20500,
+            "final_value": 13745,
+            "trades": 78
+          },
+          {
+            "start": "2014-01-08",
+            "end": "2019-01-08",
+            "xirr": 0.749,
+            "total_invested": 63750,
+            "final_value": 51850,
+            "trades": 95
+          },
+          {
+            "start": "2013-10-08",
+            "end": "2018-10-08",
+            "xirr": 0.6784,
+            "total_invested": 74750,
+            "final_value": 64560,
+            "trades": 95
+          },
+          {
+            "start": "2013-07-08",
+            "end": "2018-07-08",
+            "xirr": 0.6162,
+            "total_invested": 92500,
+            "final_value": 80034,
+            "trades": 105
+          },
+          {
+            "start": "2013-04-08",
+            "end": "2018-04-08",
+            "xirr": 0.5641,
+            "total_invested": 109500,
+            "final_value": 92177,
+            "trades": 118
+          },
+          {
+            "start": "2013-01-08",
+            "end": "2018-01-08",
+            "xirr": 0.5452,
+            "total_invested": 117000,
+            "final_value": 96657,
+            "trades": 128
+          },
+          {
+            "start": "2012-10-08",
+            "end": "2017-10-08",
+            "xirr": 0.5041,
+            "total_invested": 136000,
+            "final_value": 112290,
+            "trades": 139
+          },
+          {
+            "start": "2012-07-08",
+            "end": "2017-07-08",
+            "xirr": 0.4705,
+            "total_invested": 154000,
+            "final_value": 126271,
+            "trades": 149
+          },
+          {
+            "start": "2016-07-08",
+            "end": "2021-07-08",
+            "xirr": 0.4406,
+            "total_invested": 29500,
+            "final_value": 9914,
+            "trades": 78
+          },
+          {
+            "start": "2012-04-08",
+            "end": "2017-04-08",
+            "xirr": 0.4344,
+            "total_invested": 172500,
+            "final_value": 137274,
+            "trades": 159
+          },
+          {
+            "start": "2012-01-08",
+            "end": "2017-01-08",
+            "xirr": 0.4037,
+            "total_invested": 190500,
+            "final_value": 148064,
+            "trades": 168
+          },
+          {
+            "start": "2016-10-08",
+            "end": "2021-10-08",
+            "xirr": 0.3985,
+            "total_invested": 30750,
+            "final_value": 9827,
+            "trades": 83
+          },
+          {
+            "start": "2011-10-08",
+            "end": "2016-10-08",
+            "xirr": 0.3621,
+            "total_invested": 210000,
+            "final_value": 158330,
+            "trades": 177
+          },
+          {
+            "start": "2016-04-08",
+            "end": "2021-04-08",
+            "xirr": 0.359,
+            "total_invested": 29500,
+            "final_value": 9775,
+            "trades": 74
+          },
+          {
+            "start": "2015-07-08",
+            "end": "2020-07-08",
+            "xirr": 0.349,
+            "total_invested": 30750,
+            "final_value": 30729,
+            "trades": 92
+          },
+          {
+            "start": "2017-01-08",
+            "end": "2022-01-08",
+            "xirr": 0.346,
+            "total_invested": 32750,
+            "final_value": 9752,
+            "trades": 90
+          },
+          {
+            "start": "2016-01-08",
+            "end": "2021-01-08",
+            "xirr": 0.3257,
+            "total_invested": 30750,
+            "final_value": 14822,
+            "trades": 96
+          },
+          {
+            "start": "2011-07-08",
+            "end": "2016-07-08",
+            "xirr": 0.3223,
+            "total_invested": 227000,
+            "final_value": 164400,
+            "trades": 188
+          },
+          {
+            "start": "2011-01-08",
+            "end": "2016-01-08",
+            "xirr": 0.3147,
+            "total_invested": 243000,
+            "final_value": 173158,
+            "trades": 208
+          },
+          {
+            "start": "2011-04-08",
+            "end": "2016-04-08",
+            "xirr": 0.3082,
+            "total_invested": 240750,
+            "final_value": 168592,
+            "trades": 201
+          },
+          {
+            "start": "2010-10-08",
+            "end": "2015-10-08",
+            "xirr": 0.3038,
+            "total_invested": 243250,
+            "final_value": 169385,
+            "trades": 208
+          },
+          {
+            "start": "2010-07-08",
+            "end": "2015-07-08",
+            "xirr": 0.295,
+            "total_invested": 243250,
+            "final_value": 175981,
+            "trades": 207
+          },
+          {
+            "start": "2015-10-08",
+            "end": "2020-10-08",
+            "xirr": 0.2829,
+            "total_invested": 30750,
+            "final_value": 19309,
+            "trades": 94
+          },
+          {
+            "start": "2017-07-08",
+            "end": "2022-07-08",
+            "xirr": 0.2622,
+            "total_invested": 53000,
+            "final_value": 27404,
+            "trades": 115
+          },
+          {
+            "start": "2015-01-08",
+            "end": "2020-01-08",
+            "xirr": 0.2617,
+            "total_invested": 15000,
+            "final_value": 16721,
+            "trades": 70
+          },
+          {
+            "start": "2010-04-08",
+            "end": "2015-04-08",
+            "xirr": 0.2611,
+            "total_invested": 243250,
+            "final_value": 341077,
+            "trades": 204
+          },
+          {
+            "start": "2017-04-08",
+            "end": "2022-04-08",
+            "xirr": 0.2446,
+            "total_invested": 39000,
+            "final_value": 11317,
+            "trades": 102
+          },
+          {
+            "start": "2010-01-08",
+            "end": "2015-01-08",
+            "xirr": 0.2102,
+            "total_invested": 243250,
+            "final_value": 363813,
+            "trades": 203
+          },
+          {
+            "start": "2018-01-08",
+            "end": "2023-01-08",
+            "xirr": 0.156,
+            "total_invested": 87000,
+            "final_value": 58811,
+            "trades": 140
+          },
+          {
+            "start": "2018-04-08",
+            "end": "2023-04-08",
+            "xirr": 0.1518,
+            "total_invested": 95000,
+            "final_value": 68784,
+            "trades": 152
+          },
+          {
+            "start": "2017-10-08",
+            "end": "2022-10-08",
+            "xirr": 0.1491,
+            "total_invested": 67500,
+            "final_value": 37118,
+            "trades": 127
+          },
+          {
+            "start": "2019-10-08",
+            "end": "2024-10-08",
+            "xirr": 0.1464,
+            "total_invested": 166000,
+            "final_value": 177427,
+            "trades": 189
+          },
+          {
+            "start": "2021-07-08",
+            "end": "2026-07-08",
+            "xirr": 0.1165,
+            "total_invested": 178250,
+            "final_value": 40476,
+            "trades": 202
+          },
+          {
+            "start": "2015-04-08",
+            "end": "2020-04-08",
+            "xirr": 0.1047,
+            "total_invested": 25250,
+            "final_value": 25497,
+            "trades": 81
+          },
+          {
+            "start": "2020-10-08",
+            "end": "2025-10-08",
+            "xirr": 0.0997,
+            "total_invested": 178250,
+            "final_value": 175255,
+            "trades": 194
+          },
+          {
+            "start": "2021-01-08",
+            "end": "2026-01-08",
+            "xirr": 0.0979,
+            "total_invested": 178250,
+            "final_value": 73817,
+            "trades": 198
+          },
+          {
+            "start": "2021-04-08",
+            "end": "2026-04-08",
+            "xirr": 0.0944,
+            "total_invested": 178250,
+            "final_value": 38383,
+            "trades": 201
+          },
+          {
+            "start": "2018-07-08",
+            "end": "2023-07-08",
+            "xirr": 0.072,
+            "total_invested": 104750,
+            "final_value": 73902,
+            "trades": 165
+          },
+          {
+            "start": "2020-07-08",
+            "end": "2025-07-08",
+            "xirr": 0.0285,
+            "total_invested": 177500,
+            "final_value": 186897,
+            "trades": 190
+          },
+          {
+            "start": "2018-10-08",
+            "end": "2023-10-08",
+            "xirr": 0.027,
+            "total_invested": 119000,
+            "final_value": 86066,
+            "trades": 174
+          },
+          {
+            "start": "2020-01-08",
+            "end": "2025-01-08",
+            "xirr": 0.0199,
+            "total_invested": 171000,
+            "final_value": 157381,
+            "trades": 196
+          },
+          {
+            "start": "2009-10-08",
+            "end": "2014-10-08",
+            "xirr": 0.005,
+            "total_invested": 236500,
+            "final_value": 238643,
+            "trades": 195
+          },
+          {
+            "start": "2020-04-08",
+            "end": "2025-04-08",
+            "xirr": -0.0205,
+            "total_invested": 173500,
+            "final_value": 159716,
+            "trades": 199
+          },
+          {
+            "start": "2019-04-08",
+            "end": "2024-04-08",
+            "xirr": -0.0268,
+            "total_invested": 149500,
+            "final_value": 120358,
+            "trades": 181
+          },
+          {
+            "start": "2019-07-08",
+            "end": "2024-07-08",
+            "xirr": -0.0535,
+            "total_invested": 155000,
+            "final_value": 122552,
+            "trades": 188
+          },
+          {
+            "start": "2009-07-08",
+            "end": "2014-07-08",
+            "xirr": -0.0707,
+            "total_invested": 226000,
+            "final_value": 201008,
+            "trades": 182
+          },
+          {
+            "start": "2009-01-08",
+            "end": "2014-01-08",
+            "xirr": -0.0777,
+            "total_invested": 188000,
+            "final_value": 167991,
+            "trades": 156
+          },
+          {
+            "start": "2009-04-08",
+            "end": "2014-04-08",
+            "xirr": -0.0817,
+            "total_invested": 207000,
+            "final_value": 182343,
+            "trades": 169
+          },
+          {
+            "start": "2019-01-08",
+            "end": "2024-01-08",
+            "xirr": -0.0934,
+            "total_invested": 135500,
+            "final_value": 96685,
+            "trades": 175
+          }
+        ]
+      },
+      "hold_10yr": {
+        "windows": 31,
+        "xirr_min": -2.55,
+        "xirr_max": 20.94,
+        "xirr_mean": 12.37,
+        "xirr_median": 12.57,
+        "xirr_std": 5.45,
+        "win_rate": 96.8,
+        "xirr_series": [
+          {
+            "start": "2011-07-08",
+            "end": "2021-07-08",
+            "xirr": 0.2094,
+            "total_invested": 26500,
+            "final_value": 12516,
+            "trades": 105
+          },
+          {
+            "start": "2011-10-08",
+            "end": "2021-10-08",
+            "xirr": 0.2049,
+            "total_invested": 26500,
+            "final_value": 12426,
+            "trades": 105
+          },
+          {
+            "start": "2016-07-08",
+            "end": "2026-07-08",
+            "xirr": 0.2034,
+            "total_invested": 159500,
+            "final_value": 42570,
+            "trades": 274
+          },
+          {
+            "start": "2012-01-08",
+            "end": "2022-01-08",
+            "xirr": 0.2014,
+            "total_invested": 26500,
+            "final_value": 12423,
+            "trades": 105
+          },
+          {
+            "start": "2012-04-08",
+            "end": "2022-04-08",
+            "xirr": 0.1887,
+            "total_invested": 27750,
+            "final_value": 12102,
+            "trades": 110
+          },
+          {
+            "start": "2011-04-08",
+            "end": "2021-04-08",
+            "xirr": 0.1822,
+            "total_invested": 26500,
+            "final_value": 12422,
+            "trades": 101
+          },
+          {
+            "start": "2016-04-08",
+            "end": "2026-04-08",
+            "xirr": 0.1734,
+            "total_invested": 162750,
+            "final_value": 42498,
+            "trades": 284
+          },
+          {
+            "start": "2012-07-08",
+            "end": "2022-07-08",
+            "xirr": 0.1692,
+            "total_invested": 31000,
+            "final_value": 12690,
+            "trades": 121
+          },
+          {
+            "start": "2014-10-08",
+            "end": "2024-10-08",
+            "xirr": 0.1595,
+            "total_invested": 117000,
+            "final_value": 114485,
+            "trades": 235
+          },
+          {
+            "start": "2011-01-08",
+            "end": "2021-01-08",
+            "xirr": 0.1495,
+            "total_invested": 26500,
+            "final_value": 14580,
+            "trades": 99
+          },
+          {
+            "start": "2009-04-08",
+            "end": "2019-04-08",
+            "xirr": 0.1427,
+            "total_invested": 21000,
+            "final_value": 27028,
+            "trades": 74
+          },
+          {
+            "start": "2010-07-08",
+            "end": "2020-07-08",
+            "xirr": 0.1394,
+            "total_invested": 26500,
+            "final_value": 30228,
+            "trades": 95
+          },
+          {
+            "start": "2015-10-08",
+            "end": "2025-10-08",
+            "xirr": 0.1384,
+            "total_invested": 165500,
+            "final_value": 113335,
+            "trades": 285
+          },
+          {
+            "start": "2016-01-08",
+            "end": "2026-01-08",
+            "xirr": 0.1358,
+            "total_invested": 166500,
+            "final_value": 48370,
+            "trades": 293
+          },
+          {
+            "start": "2010-10-08",
+            "end": "2020-10-08",
+            "xirr": 0.1301,
+            "total_invested": 26500,
+            "final_value": 18994,
+            "trades": 97
+          },
+          {
+            "start": "2012-10-08",
+            "end": "2022-10-08",
+            "xirr": 0.1257,
+            "total_invested": 35750,
+            "final_value": 11390,
+            "trades": 133
+          },
+          {
+            "start": "2013-04-08",
+            "end": "2023-04-08",
+            "xirr": 0.1255,
+            "total_invested": 50000,
+            "final_value": 26916,
+            "trades": 158
+          },
+          {
+            "start": "2013-01-08",
+            "end": "2023-01-08",
+            "xirr": 0.1253,
+            "total_invested": 46750,
+            "final_value": 22900,
+            "trades": 146
+          },
+          {
+            "start": "2013-07-08",
+            "end": "2023-07-08",
+            "xirr": 0.1079,
+            "total_invested": 54750,
+            "final_value": 29813,
+            "trades": 171
+          },
+          {
+            "start": "2010-01-08",
+            "end": "2020-01-08",
+            "xirr": 0.1067,
+            "total_invested": 22000,
+            "final_value": 28433,
+            "trades": 78
+          },
+          {
+            "start": "2009-07-08",
+            "end": "2019-07-08",
+            "xirr": 0.098,
+            "total_invested": 21250,
+            "final_value": 25837,
+            "trades": 75
+          },
+          {
+            "start": "2013-10-08",
+            "end": "2023-10-08",
+            "xirr": 0.0949,
+            "total_invested": 62000,
+            "final_value": 35904,
+            "trades": 183
+          },
+          {
+            "start": "2015-07-08",
+            "end": "2025-07-08",
+            "xirr": 0.0882,
+            "total_invested": 163000,
+            "final_value": 149176,
+            "trades": 275
+          },
+          {
+            "start": "2015-01-08",
+            "end": "2025-01-08",
+            "xirr": 0.0844,
+            "total_invested": 130500,
+            "final_value": 110300,
+            "trades": 249
+          },
+          {
+            "start": "2009-10-08",
+            "end": "2019-10-08",
+            "xirr": 0.0809,
+            "total_invested": 21750,
+            "final_value": 25980,
+            "trades": 77
+          },
+          {
+            "start": "2014-04-08",
+            "end": "2024-04-08",
+            "xirr": 0.0767,
+            "total_invested": 91500,
+            "final_value": 64839,
+            "trades": 209
+          },
+          {
+            "start": "2010-04-08",
+            "end": "2020-04-08",
+            "xirr": 0.0616,
+            "total_invested": 24750,
+            "final_value": 28689,
+            "trades": 87
+          },
+          {
+            "start": "2014-01-08",
+            "end": "2024-01-08",
+            "xirr": 0.0549,
+            "total_invested": 77500,
+            "final_value": 46956,
+            "trades": 197
+          },
+          {
+            "start": "2014-07-08",
+            "end": "2024-07-08",
+            "xirr": 0.0519,
+            "total_invested": 101500,
+            "final_value": 72107,
+            "trades": 222
+          },
+          {
+            "start": "2015-04-08",
+            "end": "2025-04-08",
+            "xirr": 0.0481,
+            "total_invested": 146500,
+            "final_value": 119880,
+            "trades": 262
+          },
+          {
+            "start": "2009-01-08",
+            "end": "2019-01-08",
+            "xirr": -0.0255,
+            "total_invested": 19500,
+            "final_value": 18686,
+            "trades": 69
+          }
+        ]
+      }
+    }
+  },
+  "000016": {
+    "name": "上证50",
+    "params": {
+      "buy_floor": 0.08,
+      "buy_low": 0.15,
+      "buy_mid": 0.22,
+      "buy_high": 0.4,
+      "sell_heavy": 0.8,
+      "sell_extreme": 0.9,
+      "fed_gate": null,
+      "pb_veto": null,
+      "pb_sell": null,
+      "signal_mode": "FED_only"
+    },
+    "holds": {
+      "hold_3yr": {
+        "windows": 59,
+        "xirr_min": -15.71,
+        "xirr_max": 99.21,
+        "xirr_mean": 18.82,
+        "xirr_median": 16.77,
+        "xirr_std": 26.6,
+        "win_rate": 67.8,
+        "xirr_series": [
+          {
+            "start": "2014-01-08",
+            "end": "2017-01-08",
+            "xirr": 0.9921,
+            "total_invested": 60750,
+            "final_value": 39453,
+            "trades": 64
+          },
+          {
+            "start": "2013-10-08",
+            "end": "2016-10-08",
+            "xirr": 0.845,
+            "total_invested": 76250,
+            "final_value": 47229,
+            "trades": 76
+          },
+          {
+            "start": "2016-04-08",
+            "end": "2019-04-08",
+            "xirr": 0.8271,
+            "total_invested": 15500,
+            "final_value": 19094,
+            "trades": 35
+          },
+          {
+            "start": "2013-07-08",
+            "end": "2016-07-08",
+            "xirr": 0.7385,
+            "total_invested": 94250,
+            "final_value": 57496,
+            "trades": 89
+          },
+          {
+            "start": "2013-01-08",
+            "end": "2016-01-08",
+            "xirr": 0.6801,
+            "total_invested": 109750,
+            "final_value": 64404,
+            "trades": 107
+          },
+          {
+            "start": "2013-04-08",
+            "end": "2016-04-08",
+            "xirr": 0.6678,
+            "total_invested": 108250,
+            "final_value": 63291,
+            "trades": 102
+          },
+          {
+            "start": "2012-10-08",
+            "end": "2015-10-08",
+            "xirr": 0.5804,
+            "total_invested": 125250,
+            "final_value": 72134,
+            "trades": 119
+          },
+          {
+            "start": "2012-07-08",
+            "end": "2015-07-08",
+            "xirr": 0.5165,
+            "total_invested": 143250,
+            "final_value": 85828,
+            "trades": 130
+          },
+          {
+            "start": "2016-07-08",
+            "end": "2019-07-08",
+            "xirr": 0.4031,
+            "total_invested": 17500,
+            "final_value": 21001,
+            "trades": 43
+          },
+          {
+            "start": "2015-04-08",
+            "end": "2018-04-08",
+            "xirr": 0.352,
+            "total_invested": 1250,
+            "final_value": 293,
+            "trades": 22
+          },
+          {
+            "start": "2015-01-08",
+            "end": "2018-01-08",
+            "xirr": 0.3518,
+            "total_invested": 1250,
+            "final_value": 295,
+            "trades": 20
+          },
+          {
+            "start": "2012-04-08",
+            "end": "2015-04-08",
+            "xirr": 0.3348,
+            "total_invested": 158750,
+            "final_value": 107295,
+            "trades": 140
+          },
+          {
+            "start": "2012-01-08",
+            "end": "2015-01-08",
+            "xirr": 0.334,
+            "total_invested": 171250,
+            "final_value": 225057,
+            "trades": 149
+          },
+          {
+            "start": "2018-07-08",
+            "end": "2021-07-08",
+            "xirr": 0.3187,
+            "total_invested": 56000,
+            "final_value": 13675,
+            "trades": 101
+          },
+          {
+            "start": "2018-10-08",
+            "end": "2021-10-08",
+            "xirr": 0.3132,
+            "total_invested": 53750,
+            "final_value": 12571,
+            "trades": 92
+          },
+          {
+            "start": "2019-01-08",
+            "end": "2022-01-08",
+            "xirr": 0.308,
+            "total_invested": 47250,
+            "final_value": 9891,
+            "trades": 79
+          },
+          {
+            "start": "2017-07-08",
+            "end": "2020-07-08",
+            "xirr": 0.2958,
+            "total_invested": 56500,
+            "final_value": 56388,
+            "trades": 93
+          },
+          {
+            "start": "2019-04-08",
+            "end": "2022-04-08",
+            "xirr": 0.2691,
+            "total_invested": 42500,
+            "final_value": 7231,
+            "trades": 73
+          },
+          {
+            "start": "2018-04-08",
+            "end": "2021-04-08",
+            "xirr": 0.2669,
+            "total_invested": 56500,
+            "final_value": 13991,
+            "trades": 100
+          },
+          {
+            "start": "2018-01-08",
+            "end": "2021-01-08",
+            "xirr": 0.2539,
+            "total_invested": 56500,
+            "final_value": 26087,
+            "trades": 97
+          },
+          {
+            "start": "2017-01-08",
+            "end": "2020-01-08",
+            "xirr": 0.233,
+            "total_invested": 30750,
+            "final_value": 35672,
+            "trades": 70
+          },
+          {
+            "start": "2016-10-08",
+            "end": "2019-10-08",
+            "xirr": 0.2264,
+            "total_invested": 24000,
+            "final_value": 27192,
+            "trades": 56
+          },
+          {
+            "start": "2019-07-08",
+            "end": "2022-07-08",
+            "xirr": 0.2242,
+            "total_invested": 48250,
+            "final_value": 12658,
+            "trades": 77
+          },
+          {
+            "start": "2020-01-08",
+            "end": "2023-01-08",
+            "xirr": 0.2182,
+            "total_invested": 60250,
+            "final_value": 36783,
+            "trades": 75
+          },
+          {
+            "start": "2015-10-08",
+            "end": "2018-10-08",
+            "xirr": 0.216,
+            "total_invested": 4000,
+            "final_value": 2887,
+            "trades": 33
+          },
+          {
+            "start": "2017-10-08",
+            "end": "2020-10-08",
+            "xirr": 0.2143,
+            "total_invested": 56500,
+            "final_value": 34747,
+            "trades": 95
+          },
+          {
+            "start": "2023-07-08",
+            "end": "2026-07-08",
+            "xirr": 0.2142,
+            "total_invested": 49000,
+            "final_value": 6054,
+            "trades": 76
+          },
+          {
+            "start": "2015-07-08",
+            "end": "2018-07-08",
+            "xirr": 0.1976,
+            "total_invested": 1750,
+            "final_value": 512,
+            "trades": 24
+          },
+          {
+            "start": "2019-10-08",
+            "end": "2022-10-08",
+            "xirr": 0.1823,
+            "total_invested": 50750,
+            "final_value": 19017,
+            "trades": 76
+          },
+          {
+            "start": "2023-04-08",
+            "end": "2026-04-08",
+            "xirr": 0.1677,
+            "total_invested": 55250,
+            "final_value": 6157,
+            "trades": 87
+          },
+          {
+            "start": "2023-01-08",
+            "end": "2026-01-08",
+            "xirr": 0.1076,
+            "total_invested": 59250,
+            "final_value": 7799,
+            "trades": 95
+          },
+          {
+            "start": "2021-10-08",
+            "end": "2024-10-08",
+            "xirr": 0.1034,
+            "total_invested": 89500,
+            "final_value": 70890,
+            "trades": 120
+          },
+          {
+            "start": "2020-04-08",
+            "end": "2023-04-08",
+            "xirr": 0.0999,
+            "total_invested": 50000,
+            "final_value": 39240,
+            "trades": 75
+          },
+          {
+            "start": "2022-10-08",
+            "end": "2025-10-08",
+            "xirr": 0.0738,
+            "total_invested": 75750,
+            "final_value": 11178,
+            "trades": 107
+          },
+          {
+            "start": "2022-07-08",
+            "end": "2025-07-08",
+            "xirr": 0.0512,
+            "total_invested": 84500,
+            "final_value": 11091,
+            "trades": 119
+          },
+          {
+            "start": "2022-01-08",
+            "end": "2025-01-08",
+            "xirr": 0.0341,
+            "total_invested": 90250,
+            "final_value": 23128,
+            "trades": 127
+          },
+          {
+            "start": "2022-04-08",
+            "end": "2025-04-08",
+            "xirr": 0.0328,
+            "total_invested": 91250,
+            "final_value": 12727,
+            "trades": 129
+          },
+          {
+            "start": "2017-04-08",
+            "end": "2020-04-08",
+            "xirr": 0.0319,
+            "total_invested": 46250,
+            "final_value": 47219,
+            "trades": 82
+          },
+          {
+            "start": "2010-01-08",
+            "end": "2013-01-08",
+            "xirr": 0.0293,
+            "total_invested": 161250,
+            "final_value": 167516,
+            "trades": 155
+          },
+          {
+            "start": "2011-10-08",
+            "end": "2014-10-08",
+            "xirr": 0.0024,
+            "total_invested": 181750,
+            "final_value": 182397,
+            "trades": 154
+          },
+          {
+            "start": "2014-04-08",
+            "end": "2017-04-08",
+            "xirr": 0.0,
+            "total_invested": 41250,
+            "final_value": 25779,
+            "trades": 55
+          },
+          {
+            "start": "2014-07-08",
+            "end": "2017-07-08",
+            "xirr": 0.0,
+            "total_invested": 22750,
+            "final_value": 12941,
+            "trades": 45
+          },
+          {
+            "start": "2014-10-08",
+            "end": "2017-10-08",
+            "xirr": 0.0,
+            "total_invested": 11250,
+            "final_value": 5684,
+            "trades": 34
+          },
+          {
+            "start": "2010-04-08",
+            "end": "2013-04-08",
+            "xirr": -0.0175,
+            "total_invested": 161250,
+            "final_value": 157055,
+            "trades": 153
+          },
+          {
+            "start": "2016-01-08",
+            "end": "2019-01-08",
+            "xirr": -0.0215,
+            "total_invested": 12000,
+            "final_value": 10443,
+            "trades": 47
+          },
+          {
+            "start": "2021-04-08",
+            "end": "2024-04-08",
+            "xirr": -0.0408,
+            "total_invested": 81000,
+            "final_value": 77893,
+            "trades": 104
+          },
+          {
+            "start": "2010-10-08",
+            "end": "2013-10-08",
+            "xirr": -0.0452,
+            "total_invested": 168250,
+            "final_value": 157278,
+            "trades": 153
+          },
+          {
+            "start": "2020-10-08",
+            "end": "2023-10-08",
+            "xirr": -0.0454,
+            "total_invested": 53000,
+            "final_value": 51105,
+            "trades": 78
+          },
+          {
+            "start": "2021-07-08",
+            "end": "2024-07-08",
+            "xirr": -0.0471,
+            "total_invested": 82250,
+            "final_value": 77732,
+            "trades": 109
+          },
+          {
+            "start": "2011-07-08",
+            "end": "2014-07-08",
+            "xirr": -0.0638,
+            "total_invested": 188250,
+            "final_value": 171053,
+            "trades": 154
+          },
+          {
+            "start": "2011-04-08",
+            "end": "2014-04-08",
+            "xirr": -0.0804,
+            "total_invested": 184000,
+            "final_value": 162664,
+            "trades": 154
+          },
+          {
+            "start": "2020-07-08",
+            "end": "2023-07-08",
+            "xirr": -0.0816,
+            "total_invested": 44500,
+            "final_value": 41993,
+            "trades": 66
+          },
+          {
+            "start": "2009-04-08",
+            "end": "2012-04-08",
+            "xirr": -0.0856,
+            "total_invested": 119750,
+            "final_value": 109041,
+            "trades": 146
+          },
+          {
+            "start": "2011-01-08",
+            "end": "2014-01-08",
+            "xirr": -0.0856,
+            "total_invested": 173750,
+            "final_value": 152467,
+            "trades": 153
+          },
+          {
+            "start": "2009-07-08",
+            "end": "2012-07-08",
+            "xirr": -0.0921,
+            "total_invested": 132750,
+            "final_value": 119181,
+            "trades": 149
+          },
+          {
+            "start": "2010-07-08",
+            "end": "2013-07-08",
+            "xirr": -0.1031,
+            "total_invested": 165750,
+            "final_value": 141120,
+            "trades": 153
+          },
+          {
+            "start": "2009-10-08",
+            "end": "2012-10-08",
+            "xirr": -0.1069,
+            "total_invested": 150250,
+            "final_value": 131514,
+            "trades": 154
+          },
+          {
+            "start": "2021-01-08",
+            "end": "2024-01-08",
+            "xirr": -0.1342,
+            "total_invested": 68000,
+            "final_value": 60322,
+            "trades": 92
+          },
+          {
+            "start": "2009-01-08",
+            "end": "2012-01-08",
+            "xirr": -0.1571,
+            "total_invested": 114500,
+            "final_value": 96486,
+            "trades": 146
+          }
+        ]
+      },
+      "hold_5yr": {
+        "windows": 51,
+        "xirr_min": -9.16,
+        "xirr_max": 65.56,
+        "xirr_mean": 22.59,
+        "xirr_median": 23.01,
+        "xirr_std": 19.15,
+        "win_rate": 88.2,
+        "xirr_series": [
+          {
+            "start": "2014-04-08",
+            "end": "2019-04-08",
+            "xirr": 0.6556,
+            "total_invested": 61000,
+            "final_value": 41766,
+            "trades": 103
+          },
+          {
+            "start": "2014-07-08",
+            "end": "2019-07-08",
+            "xirr": 0.6506,
+            "total_invested": 43000,
+            "final_value": 23958,
+            "trades": 96
+          },
+          {
+            "start": "2014-01-08",
+            "end": "2019-01-08",
+            "xirr": 0.6226,
+            "total_invested": 78750,
+            "final_value": 58053,
+            "trades": 110
+          },
+          {
+            "start": "2013-10-08",
+            "end": "2018-10-08",
+            "xirr": 0.5686,
+            "total_invested": 95500,
+            "final_value": 73164,
+            "trades": 114
+          },
+          {
+            "start": "2013-07-08",
+            "end": "2018-07-08",
+            "xirr": 0.5273,
+            "total_invested": 115000,
+            "final_value": 87930,
+            "trades": 127
+          },
+          {
+            "start": "2014-10-08",
+            "end": "2019-10-08",
+            "xirr": 0.4887,
+            "total_invested": 30250,
+            "final_value": 11171,
+            "trades": 94
+          },
+          {
+            "start": "2013-04-08",
+            "end": "2018-04-08",
+            "xirr": 0.4876,
+            "total_invested": 132500,
+            "final_value": 98701,
+            "trades": 140
+          },
+          {
+            "start": "2013-01-08",
+            "end": "2018-01-08",
+            "xirr": 0.4732,
+            "total_invested": 139250,
+            "final_value": 101974,
+            "trades": 150
+          },
+          {
+            "start": "2012-10-08",
+            "end": "2017-10-08",
+            "xirr": 0.4358,
+            "total_invested": 157250,
+            "final_value": 113748,
+            "trades": 161
+          },
+          {
+            "start": "2012-07-08",
+            "end": "2017-07-08",
+            "xirr": 0.407,
+            "total_invested": 175250,
+            "final_value": 125639,
+            "trades": 172
+          },
+          {
+            "start": "2012-04-08",
+            "end": "2017-04-08",
+            "xirr": 0.3728,
+            "total_invested": 192750,
+            "final_value": 133957,
+            "trades": 183
+          },
+          {
+            "start": "2016-07-08",
+            "end": "2021-07-08",
+            "xirr": 0.3481,
+            "total_invested": 33500,
+            "final_value": 7410,
+            "trades": 92
+          },
+          {
+            "start": "2012-01-08",
+            "end": "2017-01-08",
+            "xirr": 0.3293,
+            "total_invested": 209250,
+            "final_value": 141800,
+            "trades": 192
+          },
+          {
+            "start": "2016-10-08",
+            "end": "2021-10-08",
+            "xirr": 0.3287,
+            "total_invested": 33250,
+            "final_value": 7189,
+            "trades": 77
+          },
+          {
+            "start": "2017-01-08",
+            "end": "2022-01-08",
+            "xirr": 0.3015,
+            "total_invested": 34000,
+            "final_value": 7200,
+            "trades": 80
+          },
+          {
+            "start": "2010-07-08",
+            "end": "2015-07-08",
+            "xirr": 0.2679,
+            "total_invested": 264750,
+            "final_value": 186509,
+            "trades": 207
+          },
+          {
+            "start": "2010-04-08",
+            "end": "2015-04-08",
+            "xirr": 0.2572,
+            "total_invested": 264750,
+            "final_value": 366615,
+            "trades": 204
+          },
+          {
+            "start": "2011-10-08",
+            "end": "2016-10-08",
+            "xirr": 0.252,
+            "total_invested": 228750,
+            "final_value": 144956,
+            "trades": 202
+          },
+          {
+            "start": "2016-01-08",
+            "end": "2021-01-08",
+            "xirr": 0.249,
+            "total_invested": 40500,
+            "final_value": 15243,
+            "trades": 111
+          },
+          {
+            "start": "2015-07-08",
+            "end": "2020-07-08",
+            "xirr": 0.2473,
+            "total_invested": 42250,
+            "final_value": 33034,
+            "trades": 114
+          },
+          {
+            "start": "2016-04-08",
+            "end": "2021-04-08",
+            "xirr": 0.2459,
+            "total_invested": 36750,
+            "final_value": 8042,
+            "trades": 101
+          },
+          {
+            "start": "2010-01-08",
+            "end": "2015-01-08",
+            "xirr": 0.2386,
+            "total_invested": 264750,
+            "final_value": 417327,
+            "trades": 203
+          },
+          {
+            "start": "2010-10-08",
+            "end": "2015-10-08",
+            "xirr": 0.2371,
+            "total_invested": 266500,
+            "final_value": 165230,
+            "trades": 214
+          },
+          {
+            "start": "2011-07-08",
+            "end": "2016-07-08",
+            "xirr": 0.2363,
+            "total_invested": 247750,
+            "final_value": 152712,
+            "trades": 213
+          },
+          {
+            "start": "2017-04-08",
+            "end": "2022-04-08",
+            "xirr": 0.2349,
+            "total_invested": 36250,
+            "final_value": 6791,
+            "trades": 88
+          },
+          {
+            "start": "2011-01-08",
+            "end": "2016-01-08",
+            "xirr": 0.2301,
+            "total_invested": 265750,
+            "final_value": 164688,
+            "trades": 214
+          },
+          {
+            "start": "2011-04-08",
+            "end": "2016-04-08",
+            "xirr": 0.2255,
+            "total_invested": 260250,
+            "final_value": 155814,
+            "trades": 214
+          },
+          {
+            "start": "2017-07-08",
+            "end": "2022-07-08",
+            "xirr": 0.2166,
+            "total_invested": 45250,
+            "final_value": 15563,
+            "trades": 99
+          },
+          {
+            "start": "2015-10-08",
+            "end": "2020-10-08",
+            "xirr": 0.215,
+            "total_invested": 40750,
+            "final_value": 20310,
+            "trades": 110
+          },
+          {
+            "start": "2015-01-08",
+            "end": "2020-01-08",
+            "xirr": 0.1717,
+            "total_invested": 21500,
+            "final_value": 14558,
+            "trades": 92
+          },
+          {
+            "start": "2018-01-08",
+            "end": "2023-01-08",
+            "xirr": 0.1609,
+            "total_invested": 73000,
+            "final_value": 42777,
+            "trades": 124
+          },
+          {
+            "start": "2019-10-08",
+            "end": "2024-10-08",
+            "xirr": 0.1562,
+            "total_invested": 123000,
+            "final_value": 96604,
+            "trades": 179
+          },
+          {
+            "start": "2017-10-08",
+            "end": "2022-10-08",
+            "xirr": 0.1483,
+            "total_invested": 55500,
+            "final_value": 23378,
+            "trades": 111
+          },
+          {
+            "start": "2018-04-08",
+            "end": "2023-04-08",
+            "xirr": 0.1242,
+            "total_invested": 79000,
+            "final_value": 48122,
+            "trades": 136
+          },
+          {
+            "start": "2021-07-08",
+            "end": "2026-07-08",
+            "xirr": 0.1209,
+            "total_invested": 122000,
+            "final_value": 19111,
+            "trades": 185
+          },
+          {
+            "start": "2021-04-08",
+            "end": "2026-04-08",
+            "xirr": 0.1006,
+            "total_invested": 122000,
+            "final_value": 18790,
+            "trades": 182
+          },
+          {
+            "start": "2021-01-08",
+            "end": "2026-01-08",
+            "xirr": 0.0855,
+            "total_invested": 122000,
+            "final_value": 26489,
+            "trades": 179
+          },
+          {
+            "start": "2020-10-08",
+            "end": "2025-10-08",
+            "xirr": 0.0829,
+            "total_invested": 122000,
+            "final_value": 61523,
+            "trades": 175
+          },
+          {
+            "start": "2015-04-08",
+            "end": "2020-04-08",
+            "xirr": 0.0809,
+            "total_invested": 34000,
+            "final_value": 25443,
+            "trades": 104
+          },
+          {
+            "start": "2020-01-08",
+            "end": "2025-01-08",
+            "xirr": 0.0619,
+            "total_invested": 125750,
+            "final_value": 88570,
+            "trades": 179
+          },
+          {
+            "start": "2020-07-08",
+            "end": "2025-07-08",
+            "xirr": 0.0567,
+            "total_invested": 122000,
+            "final_value": 109976,
+            "trades": 172
+          },
+          {
+            "start": "2018-10-08",
+            "end": "2023-10-08",
+            "xirr": 0.0549,
+            "total_invested": 92750,
+            "final_value": 59292,
+            "trades": 161
+          },
+          {
+            "start": "2018-07-08",
+            "end": "2023-07-08",
+            "xirr": 0.054,
+            "total_invested": 84750,
+            "final_value": 50561,
+            "trades": 149
+          },
+          {
+            "start": "2020-04-08",
+            "end": "2025-04-08",
+            "xirr": 0.0312,
+            "total_invested": 125000,
+            "final_value": 95814,
+            "trades": 181
+          },
+          {
+            "start": "2019-04-08",
+            "end": "2024-04-08",
+            "xirr": 0.0052,
+            "total_invested": 115250,
+            "final_value": 84844,
+            "trades": 171
+          },
+          {
+            "start": "2019-07-08",
+            "end": "2024-07-08",
+            "xirr": -0.0117,
+            "total_invested": 117500,
+            "final_value": 86892,
+            "trades": 178
+          },
+          {
+            "start": "2009-10-08",
+            "end": "2014-10-08",
+            "xirr": -0.0184,
+            "total_invested": 254500,
+            "final_value": 246128,
+            "trades": 195
+          },
+          {
+            "start": "2019-01-08",
+            "end": "2024-01-08",
+            "xirr": -0.0481,
+            "total_invested": 104500,
+            "final_value": 66982,
+            "trades": 166
+          },
+          {
+            "start": "2009-07-08",
+            "end": "2014-07-08",
+            "xirr": -0.0726,
+            "total_invested": 239000,
+            "final_value": 211288,
+            "trades": 182
+          },
+          {
+            "start": "2009-04-08",
+            "end": "2014-04-08",
+            "xirr": -0.086,
+            "total_invested": 219500,
+            "final_value": 191432,
+            "trades": 169
+          },
+          {
+            "start": "2009-01-08",
+            "end": "2014-01-08",
+            "xirr": -0.0916,
+            "total_invested": 200000,
+            "final_value": 174496,
+            "trades": 156
+          }
+        ]
+      },
+      "hold_10yr": {
+        "windows": 31,
+        "xirr_min": 2.71,
+        "xirr_max": 19.37,
+        "xirr_mean": 13.41,
+        "xirr_median": 13.09,
+        "xirr_std": 3.79,
+        "win_rate": 100.0,
+        "xirr_series": [
+          {
+            "start": "2012-01-08",
+            "end": "2022-01-08",
+            "xirr": 0.1937,
+            "total_invested": 53750,
+            "final_value": 22243,
+            "trades": 145
+          },
+          {
+            "start": "2011-07-08",
+            "end": "2021-07-08",
+            "xirr": 0.191,
+            "total_invested": 53750,
+            "final_value": 22434,
+            "trades": 142
+          },
+          {
+            "start": "2011-10-08",
+            "end": "2021-10-08",
+            "xirr": 0.1906,
+            "total_invested": 53750,
+            "final_value": 22109,
+            "trades": 143
+          },
+          {
+            "start": "2012-04-08",
+            "end": "2022-04-08",
+            "xirr": 0.1893,
+            "total_invested": 54000,
+            "final_value": 22042,
+            "trades": 146
+          },
+          {
+            "start": "2012-07-08",
+            "end": "2022-07-08",
+            "xirr": 0.1816,
+            "total_invested": 56000,
+            "final_value": 22408,
+            "trades": 154
+          },
+          {
+            "start": "2016-07-08",
+            "end": "2026-07-08",
+            "xirr": 0.1754,
+            "total_invested": 122750,
+            "final_value": 25084,
+            "trades": 290
+          },
+          {
+            "start": "2012-10-08",
+            "end": "2022-10-08",
+            "xirr": 0.1689,
+            "total_invested": 58750,
+            "final_value": 21678,
+            "trades": 164
+          },
+          {
+            "start": "2011-04-08",
+            "end": "2021-04-08",
+            "xirr": 0.1679,
+            "total_invested": 53750,
+            "final_value": 22738,
+            "trades": 139
+          },
+          {
+            "start": "2016-04-08",
+            "end": "2026-04-08",
+            "xirr": 0.1609,
+            "total_invested": 129750,
+            "final_value": 28963,
+            "trades": 300
+          },
+          {
+            "start": "2016-01-08",
+            "end": "2026-01-08",
+            "xirr": 0.1523,
+            "total_invested": 138750,
+            "final_value": 35825,
+            "trades": 310
+          },
+          {
+            "start": "2009-04-08",
+            "end": "2019-04-08",
+            "xirr": 0.1495,
+            "total_invested": 37000,
+            "final_value": 49595,
+            "trades": 88
+          },
+          {
+            "start": "2013-01-08",
+            "end": "2023-01-08",
+            "xirr": 0.1441,
+            "total_invested": 66750,
+            "final_value": 22621,
+            "trades": 177
+          },
+          {
+            "start": "2010-07-08",
+            "end": "2020-07-08",
+            "xirr": 0.1425,
+            "total_invested": 53750,
+            "final_value": 61204,
+            "trades": 133
+          },
+          {
+            "start": "2011-01-08",
+            "end": "2021-01-08",
+            "xirr": 0.1411,
+            "total_invested": 53750,
+            "final_value": 28316,
+            "trades": 137
+          },
+          {
+            "start": "2014-10-08",
+            "end": "2024-10-08",
+            "xirr": 0.1345,
+            "total_invested": 106500,
+            "final_value": 54572,
+            "trades": 264
+          },
+          {
+            "start": "2013-04-08",
+            "end": "2023-04-08",
+            "xirr": 0.1309,
+            "total_invested": 69750,
+            "final_value": 22361,
+            "trades": 189
+          },
+          {
+            "start": "2009-07-08",
+            "end": "2019-07-08",
+            "xirr": 0.1289,
+            "total_invested": 38750,
+            "final_value": 50909,
+            "trades": 95
+          },
+          {
+            "start": "2010-10-08",
+            "end": "2020-10-08",
+            "xirr": 0.1246,
+            "total_invested": 53750,
+            "final_value": 37715,
+            "trades": 135
+          },
+          {
+            "start": "2010-01-08",
+            "end": "2020-01-08",
+            "xirr": 0.1203,
+            "total_invested": 43000,
+            "final_value": 57336,
+            "trades": 112
+          },
+          {
+            "start": "2015-10-08",
+            "end": "2025-10-08",
+            "xirr": 0.1177,
+            "total_invested": 138750,
+            "final_value": 37161,
+            "trades": 306
+          },
+          {
+            "start": "2013-07-08",
+            "end": "2023-07-08",
+            "xirr": 0.1136,
+            "total_invested": 72750,
+            "final_value": 21012,
+            "trades": 201
+          },
+          {
+            "start": "2015-07-08",
+            "end": "2025-07-08",
+            "xirr": 0.1113,
+            "total_invested": 138500,
+            "final_value": 52896,
+            "trades": 303
+          },
+          {
+            "start": "2013-10-08",
+            "end": "2023-10-08",
+            "xirr": 0.1109,
+            "total_invested": 76250,
+            "final_value": 24308,
+            "trades": 213
+          },
+          {
+            "start": "2015-01-08",
+            "end": "2025-01-08",
+            "xirr": 0.1109,
+            "total_invested": 114750,
+            "final_value": 54898,
+            "trades": 276
+          },
+          {
+            "start": "2009-10-08",
+            "end": "2019-10-08",
+            "xirr": 0.1086,
+            "total_invested": 41500,
+            "final_value": 52865,
+            "trades": 106
+          },
+          {
+            "start": "2014-04-08",
+            "end": "2024-04-08",
+            "xirr": 0.1037,
+            "total_invested": 94000,
+            "final_value": 41688,
+            "trades": 239
+          },
+          {
+            "start": "2015-04-08",
+            "end": "2025-04-08",
+            "xirr": 0.1018,
+            "total_invested": 130000,
+            "final_value": 68304,
+            "trades": 289
+          },
+          {
+            "start": "2014-01-08",
+            "end": "2024-01-08",
+            "xirr": 0.0982,
+            "total_invested": 85000,
+            "final_value": 30280,
+            "trades": 227
+          },
+          {
+            "start": "2014-07-08",
+            "end": "2024-07-08",
+            "xirr": 0.0975,
+            "total_invested": 97250,
+            "final_value": 44106,
+            "trades": 252
+          },
+          {
+            "start": "2010-04-08",
+            "end": "2020-04-08",
+            "xirr": 0.0674,
+            "total_invested": 50000,
+            "final_value": 58432,
+            "trades": 123
+          },
+          {
+            "start": "2009-01-08",
+            "end": "2019-01-08",
+            "xirr": 0.0271,
+            "total_invested": 33250,
+            "final_value": 35057,
+            "trades": 78
+          }
+        ]
+      }
+    }
+  },
+  "000905": {
+    "name": "中证500",
+    "params": {
+      "buy_floor": 0.08,
+      "buy_low": 0.15,
+      "buy_mid": 0.22,
+      "buy_high": 0.4,
+      "sell_heavy": 0.8,
+      "sell_extreme": 0.9,
+      "fed_gate": null,
+      "pb_veto": null,
+      "pb_sell": null,
+      "signal_mode": "FED_only"
+    },
+    "holds": {
+      "hold_3yr": {
+        "windows": 55,
+        "xirr_min": -20.63,
+        "xirr_max": 54.15,
+        "xirr_mean": 9.96,
+        "xirr_median": 7.56,
+        "xirr_std": 16.8,
+        "win_rate": 69.1,
+        "xirr_series": [
+          {
+            "start": "2013-01-07",
+            "end": "2016-01-07",
+            "xirr": 0.5415,
+            "total_invested": 10250,
+            "final_value": 6914,
+            "trades": 41
+          },
+          {
+            "start": "2012-10-07",
+            "end": "2015-10-07",
+            "xirr": 0.5051,
+            "total_invested": 27250,
+            "final_value": 20883,
+            "trades": 51
+          },
+          {
+            "start": "2012-07-07",
+            "end": "2015-07-07",
+            "xirr": 0.4537,
+            "total_invested": 41750,
+            "final_value": 31849,
+            "trades": 61
+          },
+          {
+            "start": "2013-04-07",
+            "end": "2016-04-07",
+            "xirr": 0.413,
+            "total_invested": 14000,
+            "final_value": 8217,
+            "trades": 38
+          },
+          {
+            "start": "2013-07-07",
+            "end": "2016-07-07",
+            "xirr": 0.4066,
+            "total_invested": 15500,
+            "final_value": 14046,
+            "trades": 41
+          },
+          {
+            "start": "2023-07-07",
+            "end": "2026-07-07",
+            "xirr": 0.3889,
+            "total_invested": 76250,
+            "final_value": 15886,
+            "trades": 92
+          },
+          {
+            "start": "2023-04-07",
+            "end": "2026-04-07",
+            "xirr": 0.3409,
+            "total_invested": 78500,
+            "final_value": 15153,
+            "trades": 98
+          },
+          {
+            "start": "2023-01-07",
+            "end": "2026-01-07",
+            "xirr": 0.2892,
+            "total_invested": 79250,
+            "final_value": 15116,
+            "trades": 99
+          },
+          {
+            "start": "2012-04-07",
+            "end": "2015-04-07",
+            "xirr": 0.269,
+            "total_invested": 55750,
+            "final_value": 48757,
+            "trades": 70
+          },
+          {
+            "start": "2018-10-07",
+            "end": "2021-10-07",
+            "xirr": 0.2211,
+            "total_invested": 70500,
+            "final_value": 45822,
+            "trades": 102
+          },
+          {
+            "start": "2019-01-07",
+            "end": "2022-01-07",
+            "xirr": 0.2159,
+            "total_invested": 59000,
+            "final_value": 42000,
+            "trades": 103
+          },
+          {
+            "start": "2018-07-07",
+            "end": "2021-07-07",
+            "xirr": 0.1914,
+            "total_invested": 82750,
+            "final_value": 47970,
+            "trades": 102
+          },
+          {
+            "start": "2022-10-07",
+            "end": "2025-10-07",
+            "xirr": 0.1825,
+            "total_invested": 87000,
+            "final_value": 21519,
+            "trades": 108
+          },
+          {
+            "start": "2012-01-07",
+            "end": "2015-01-07",
+            "xirr": 0.1706,
+            "total_invested": 72750,
+            "final_value": 44520,
+            "trades": 82
+          },
+          {
+            "start": "2017-07-07",
+            "end": "2020-07-07",
+            "xirr": 0.1627,
+            "total_invested": 109250,
+            "final_value": 111596,
+            "trades": 129
+          },
+          {
+            "start": "2013-10-07",
+            "end": "2016-10-07",
+            "xirr": 0.1607,
+            "total_invested": 22250,
+            "final_value": 23173,
+            "trades": 40
+          },
+          {
+            "start": "2018-01-07",
+            "end": "2021-01-07",
+            "xirr": 0.1573,
+            "total_invested": 107000,
+            "final_value": 71961,
+            "trades": 122
+          },
+          {
+            "start": "2018-04-07",
+            "end": "2021-04-07",
+            "xirr": 0.154,
+            "total_invested": 100000,
+            "final_value": 52942,
+            "trades": 110
+          },
+          {
+            "start": "2017-10-07",
+            "end": "2020-10-07",
+            "xirr": 0.152,
+            "total_invested": 108750,
+            "final_value": 69779,
+            "trades": 129
+          },
+          {
+            "start": "2011-10-07",
+            "end": "2014-10-07",
+            "xirr": 0.1346,
+            "total_invested": 87250,
+            "final_value": 63937,
+            "trades": 94
+          },
+          {
+            "start": "2019-07-07",
+            "end": "2022-07-07",
+            "xirr": 0.1229,
+            "total_invested": 71750,
+            "final_value": 59276,
+            "trades": 103
+          },
+          {
+            "start": "2019-04-07",
+            "end": "2022-04-07",
+            "xirr": 0.1195,
+            "total_invested": 60250,
+            "final_value": 42721,
+            "trades": 103
+          },
+          {
+            "start": "2016-04-07",
+            "end": "2019-04-07",
+            "xirr": 0.1033,
+            "total_invested": 104000,
+            "final_value": 116358,
+            "trades": 118
+          },
+          {
+            "start": "2014-04-07",
+            "end": "2017-04-07",
+            "xirr": 0.0988,
+            "total_invested": 31250,
+            "final_value": 33260,
+            "trades": 51
+          },
+          {
+            "start": "2014-01-07",
+            "end": "2017-01-07",
+            "xirr": 0.0969,
+            "total_invested": 31000,
+            "final_value": 32213,
+            "trades": 50
+          },
+          {
+            "start": "2010-10-07",
+            "end": "2013-10-07",
+            "xirr": 0.0864,
+            "total_invested": 91250,
+            "final_value": 101514,
+            "trades": 104
+          },
+          {
+            "start": "2022-07-07",
+            "end": "2025-07-07",
+            "xirr": 0.083,
+            "total_invested": 101500,
+            "final_value": 26108,
+            "trades": 120
+          },
+          {
+            "start": "2017-01-07",
+            "end": "2020-01-07",
+            "xirr": 0.0756,
+            "total_invested": 103000,
+            "final_value": 112365,
+            "trades": 123
+          },
+          {
+            "start": "2011-07-07",
+            "end": "2014-07-07",
+            "xirr": 0.0738,
+            "total_invested": 90000,
+            "final_value": 67136,
+            "trades": 101
+          },
+          {
+            "start": "2011-04-07",
+            "end": "2014-04-07",
+            "xirr": 0.0696,
+            "total_invested": 91250,
+            "final_value": 102958,
+            "trades": 104
+          },
+          {
+            "start": "2014-10-07",
+            "end": "2017-10-07",
+            "xirr": 0.0657,
+            "total_invested": 34000,
+            "final_value": 36342,
+            "trades": 62
+          },
+          {
+            "start": "2011-01-07",
+            "end": "2014-01-07",
+            "xirr": 0.0468,
+            "total_invested": 91250,
+            "final_value": 97959,
+            "trades": 104
+          },
+          {
+            "start": "2022-04-07",
+            "end": "2025-04-07",
+            "xirr": 0.0461,
+            "total_invested": 116000,
+            "final_value": 30718,
+            "trades": 127
+          },
+          {
+            "start": "2015-01-07",
+            "end": "2018-01-07",
+            "xirr": 0.0354,
+            "total_invested": 35750,
+            "final_value": 37257,
+            "trades": 69
+          },
+          {
+            "start": "2017-04-07",
+            "end": "2020-04-07",
+            "xirr": 0.0297,
+            "total_invested": 109750,
+            "final_value": 114159,
+            "trades": 134
+          },
+          {
+            "start": "2020-04-07",
+            "end": "2023-04-07",
+            "xirr": 0.0212,
+            "total_invested": 71250,
+            "final_value": 70688,
+            "trades": 91
+          },
+          {
+            "start": "2022-01-07",
+            "end": "2025-01-07",
+            "xirr": 0.0155,
+            "total_invested": 120750,
+            "final_value": 56152,
+            "trades": 130
+          },
+          {
+            "start": "2014-07-07",
+            "end": "2017-07-07",
+            "xirr": 0.012,
+            "total_invested": 33500,
+            "final_value": 33681,
+            "trades": 60
+          },
+          {
+            "start": "2015-04-07",
+            "end": "2018-04-07",
+            "xirr": -0.0005,
+            "total_invested": 42750,
+            "final_value": 42535,
+            "trades": 82
+          },
+          {
+            "start": "2016-10-07",
+            "end": "2019-10-07",
+            "xirr": -0.013,
+            "total_invested": 105250,
+            "final_value": 103694,
+            "trades": 118
+          },
+          {
+            "start": "2010-04-07",
+            "end": "2013-04-07",
+            "xirr": -0.0153,
+            "total_invested": 89250,
+            "final_value": 87926,
+            "trades": 108
+          },
+          {
+            "start": "2010-07-07",
+            "end": "2013-07-07",
+            "xirr": -0.018,
+            "total_invested": 90750,
+            "final_value": 88935,
+            "trades": 108
+          },
+          {
+            "start": "2021-10-07",
+            "end": "2024-10-07",
+            "xirr": -0.0239,
+            "total_invested": 125500,
+            "final_value": 121301,
+            "trades": 138
+          },
+          {
+            "start": "2016-07-07",
+            "end": "2019-07-07",
+            "xirr": -0.0282,
+            "total_invested": 104750,
+            "final_value": 101303,
+            "trades": 118
+          },
+          {
+            "start": "2020-01-07",
+            "end": "2023-01-07",
+            "xirr": -0.032,
+            "total_invested": 76750,
+            "final_value": 68328,
+            "trades": 100
+          },
+          {
+            "start": "2020-07-07",
+            "end": "2023-07-07",
+            "xirr": -0.0492,
+            "total_invested": 71000,
+            "final_value": 66960,
+            "trades": 93
+          },
+          {
+            "start": "2019-10-07",
+            "end": "2022-10-07",
+            "xirr": -0.0612,
+            "total_invested": 75250,
+            "final_value": 60996,
+            "trades": 102
+          },
+          {
+            "start": "2020-10-07",
+            "end": "2023-10-07",
+            "xirr": -0.0758,
+            "total_invested": 75000,
+            "final_value": 67629,
+            "trades": 105
+          },
+          {
+            "start": "2021-04-07",
+            "end": "2024-04-07",
+            "xirr": -0.0767,
+            "total_invested": 101000,
+            "final_value": 90437,
+            "trades": 130
+          },
+          {
+            "start": "2010-01-07",
+            "end": "2013-01-07",
+            "xirr": -0.0862,
+            "total_invested": 86500,
+            "final_value": 80850,
+            "trades": 97
+          },
+          {
+            "start": "2021-01-07",
+            "end": "2024-01-07",
+            "xirr": -0.0999,
+            "total_invested": 83000,
+            "final_value": 71418,
+            "trades": 118
+          },
+          {
+            "start": "2021-07-07",
+            "end": "2024-07-07",
+            "xirr": -0.1319,
+            "total_invested": 113500,
+            "final_value": 92979,
+            "trades": 139
+          },
+          {
+            "start": "2015-07-07",
+            "end": "2018-07-07",
+            "xirr": -0.1543,
+            "total_invested": 61250,
+            "final_value": 50973,
+            "trades": 95
+          },
+          {
+            "start": "2015-10-07",
+            "end": "2018-10-07",
+            "xirr": -0.1599,
+            "total_invested": 80250,
+            "final_value": 67031,
+            "trades": 105
+          },
+          {
+            "start": "2016-01-07",
+            "end": "2019-01-07",
+            "xirr": -0.2063,
+            "total_invested": 101250,
+            "final_value": 80036,
+            "trades": 119
+          }
+        ]
+      },
+      "hold_5yr": {
+        "windows": 47,
+        "xirr_min": -31.13,
+        "xirr_max": 58.89,
+        "xirr_mean": 18.51,
+        "xirr_median": 11.54,
+        "xirr_std": 23.26,
+        "win_rate": 83.0,
+        "xirr_series": [
+          {
+            "start": "2013-01-07",
+            "end": "2018-01-07",
+            "xirr": 0.5889,
+            "total_invested": 15750,
+            "final_value": 15325,
+            "trades": 74
+          },
+          {
+            "start": "2012-10-07",
+            "end": "2017-10-07",
+            "xirr": 0.5705,
+            "total_invested": 26750,
+            "final_value": 34417,
+            "trades": 82
+          },
+          {
+            "start": "2013-04-07",
+            "end": "2018-04-07",
+            "xirr": 0.5585,
+            "total_invested": 18000,
+            "final_value": 11302,
+            "trades": 75
+          },
+          {
+            "start": "2012-07-07",
+            "end": "2017-07-07",
+            "xirr": 0.5346,
+            "total_invested": 38250,
+            "final_value": 49865,
+            "trades": 94
+          },
+          {
+            "start": "2011-01-07",
+            "end": "2016-01-07",
+            "xirr": 0.5187,
+            "total_invested": 58750,
+            "final_value": 74935,
+            "trades": 101
+          },
+          {
+            "start": "2012-04-07",
+            "end": "2017-04-07",
+            "xirr": 0.5082,
+            "total_invested": 46750,
+            "final_value": 59310,
+            "trades": 107
+          },
+          {
+            "start": "2011-04-07",
+            "end": "2016-04-07",
+            "xirr": 0.5053,
+            "total_invested": 60250,
+            "final_value": 74613,
+            "trades": 109
+          },
+          {
+            "start": "2010-10-07",
+            "end": "2015-10-07",
+            "xirr": 0.5047,
+            "total_invested": 58750,
+            "final_value": 72331,
+            "trades": 97
+          },
+          {
+            "start": "2010-07-07",
+            "end": "2015-07-07",
+            "xirr": 0.5038,
+            "total_invested": 58500,
+            "final_value": 73431,
+            "trades": 95
+          },
+          {
+            "start": "2011-07-07",
+            "end": "2016-07-07",
+            "xirr": 0.4965,
+            "total_invested": 60250,
+            "final_value": 74800,
+            "trades": 112
+          },
+          {
+            "start": "2011-10-07",
+            "end": "2016-10-07",
+            "xirr": 0.4871,
+            "total_invested": 60250,
+            "final_value": 75141,
+            "trades": 114
+          },
+          {
+            "start": "2012-01-07",
+            "end": "2017-01-07",
+            "xirr": 0.4773,
+            "total_invested": 60250,
+            "final_value": 75554,
+            "trades": 118
+          },
+          {
+            "start": "2014-04-07",
+            "end": "2019-04-07",
+            "xirr": 0.4059,
+            "total_invested": 81500,
+            "final_value": 92528,
+            "trades": 105
+          },
+          {
+            "start": "2013-07-07",
+            "end": "2018-07-07",
+            "xirr": 0.3667,
+            "total_invested": 31750,
+            "final_value": 22045,
+            "trades": 75
+          },
+          {
+            "start": "2010-04-07",
+            "end": "2015-04-07",
+            "xirr": 0.3576,
+            "total_invested": 58500,
+            "final_value": 107029,
+            "trades": 91
+          },
+          {
+            "start": "2010-01-07",
+            "end": "2015-01-07",
+            "xirr": 0.2309,
+            "total_invested": 58500,
+            "final_value": 94709,
+            "trades": 90
+          },
+          {
+            "start": "2015-07-07",
+            "end": "2020-07-07",
+            "xirr": 0.1896,
+            "total_invested": 136750,
+            "final_value": 172061,
+            "trades": 157
+          },
+          {
+            "start": "2016-01-07",
+            "end": "2021-01-07",
+            "xirr": 0.1509,
+            "total_invested": 138250,
+            "final_value": 177356,
+            "trades": 159
+          },
+          {
+            "start": "2015-10-07",
+            "end": "2020-10-07",
+            "xirr": 0.1469,
+            "total_invested": 137250,
+            "final_value": 168778,
+            "trades": 155
+          },
+          {
+            "start": "2016-10-07",
+            "end": "2021-10-07",
+            "xirr": 0.139,
+            "total_invested": 153500,
+            "final_value": 208848,
+            "trades": 181
+          },
+          {
+            "start": "2017-01-07",
+            "end": "2022-01-07",
+            "xirr": 0.1358,
+            "total_invested": 163500,
+            "final_value": 225033,
+            "trades": 189
+          },
+          {
+            "start": "2016-07-07",
+            "end": "2021-07-07",
+            "xirr": 0.1279,
+            "total_invested": 142500,
+            "final_value": 187430,
+            "trades": 171
+          },
+          {
+            "start": "2016-04-07",
+            "end": "2021-04-07",
+            "xirr": 0.1183,
+            "total_invested": 139250,
+            "final_value": 175491,
+            "trades": 162
+          },
+          {
+            "start": "2021-07-07",
+            "end": "2026-07-07",
+            "xirr": 0.1154,
+            "total_invested": 191000,
+            "final_value": 29036,
+            "trades": 207
+          },
+          {
+            "start": "2015-01-07",
+            "end": "2020-01-07",
+            "xirr": 0.0953,
+            "total_invested": 120250,
+            "final_value": 130077,
+            "trades": 133
+          },
+          {
+            "start": "2021-04-07",
+            "end": "2026-04-07",
+            "xirr": 0.0851,
+            "total_invested": 194000,
+            "final_value": 26593,
+            "trades": 217
+          },
+          {
+            "start": "2017-07-07",
+            "end": "2022-07-07",
+            "xirr": 0.0704,
+            "total_invested": 195000,
+            "final_value": 232074,
+            "trades": 214
+          },
+          {
+            "start": "2017-04-07",
+            "end": "2022-04-07",
+            "xirr": 0.0691,
+            "total_invested": 177000,
+            "final_value": 209663,
+            "trades": 201
+          },
+          {
+            "start": "2020-10-07",
+            "end": "2025-10-07",
+            "xirr": 0.0669,
+            "total_invested": 197750,
+            "final_value": 73561,
+            "trades": 227
+          },
+          {
+            "start": "2021-01-07",
+            "end": "2026-01-07",
+            "xirr": 0.0667,
+            "total_invested": 196750,
+            "final_value": 36574,
+            "trades": 226
+          },
+          {
+            "start": "2018-04-07",
+            "end": "2023-04-07",
+            "xirr": 0.0577,
+            "total_invested": 214000,
+            "final_value": 252077,
+            "trades": 229
+          },
+          {
+            "start": "2015-04-07",
+            "end": "2020-04-07",
+            "xirr": 0.038,
+            "total_invested": 131500,
+            "final_value": 135485,
+            "trades": 145
+          },
+          {
+            "start": "2018-01-07",
+            "end": "2023-01-07",
+            "xirr": 0.0359,
+            "total_invested": 217250,
+            "final_value": 239216,
+            "trades": 233
+          },
+          {
+            "start": "2018-07-07",
+            "end": "2023-07-07",
+            "xirr": 0.0332,
+            "total_invested": 198500,
+            "final_value": 218255,
+            "trades": 227
+          },
+          {
+            "start": "2014-07-07",
+            "end": "2019-07-07",
+            "xirr": 0.0229,
+            "total_invested": 92750,
+            "final_value": 91698,
+            "trades": 113
+          },
+          {
+            "start": "2017-10-07",
+            "end": "2022-10-07",
+            "xirr": 0.0229,
+            "total_invested": 209500,
+            "final_value": 222031,
+            "trades": 226
+          },
+          {
+            "start": "2020-07-07",
+            "end": "2025-07-07",
+            "xirr": 0.0228,
+            "total_invested": 197750,
+            "final_value": 92004,
+            "trades": 225
+          },
+          {
+            "start": "2014-10-07",
+            "end": "2019-10-07",
+            "xirr": 0.017,
+            "total_invested": 108750,
+            "final_value": 107714,
+            "trades": 126
+          },
+          {
+            "start": "2018-10-07",
+            "end": "2023-10-07",
+            "xirr": 0.012,
+            "total_invested": 186000,
+            "final_value": 192362,
+            "trades": 227
+          },
+          {
+            "start": "2020-04-07",
+            "end": "2025-04-07",
+            "xirr": -0.0004,
+            "total_invested": 191000,
+            "final_value": 125861,
+            "trades": 225
+          },
+          {
+            "start": "2020-01-07",
+            "end": "2025-01-07",
+            "xirr": -0.0014,
+            "total_invested": 185000,
+            "final_value": 115200,
+            "trades": 224
+          },
+          {
+            "start": "2019-10-07",
+            "end": "2024-10-07",
+            "xirr": -0.0194,
+            "total_invested": 187250,
+            "final_value": 179861,
+            "trades": 227
+          },
+          {
+            "start": "2019-01-07",
+            "end": "2024-01-07",
+            "xirr": -0.0212,
+            "total_invested": 176750,
+            "final_value": 166963,
+            "trades": 227
+          },
+          {
+            "start": "2019-04-07",
+            "end": "2024-04-07",
+            "xirr": -0.0248,
+            "total_invested": 179750,
+            "final_value": 169139,
+            "trades": 227
+          },
+          {
+            "start": "2019-07-07",
+            "end": "2024-07-07",
+            "xirr": -0.0735,
+            "total_invested": 184750,
+            "final_value": 156073,
+            "trades": 227
+          },
+          {
+            "start": "2013-10-07",
+            "end": "2018-10-07",
+            "xirr": -0.3014,
+            "total_invested": 47000,
+            "final_value": 38461,
+            "trades": 80
+          },
+          {
+            "start": "2014-01-07",
+            "end": "2019-01-07",
+            "xirr": -0.3113,
+            "total_invested": 68000,
+            "final_value": 54629,
+            "trades": 94
+          }
+        ]
+      },
+      "hold_10yr": {
+        "windows": 27,
+        "xirr_min": -4.42,
+        "xirr_max": 20.47,
+        "xirr_mean": 6.38,
+        "xirr_median": 6.46,
+        "xirr_std": 6.39,
+        "win_rate": 77.8,
+        "xirr_series": [
+          {
+            "start": "2010-07-07",
+            "end": "2020-07-07",
+            "xirr": 0.2047,
+            "total_invested": 157750,
+            "final_value": 200159,
+            "trades": 149
+          },
+          {
+            "start": "2011-01-07",
+            "end": "2021-01-07",
+            "xirr": 0.1589,
+            "total_invested": 164500,
+            "final_value": 211898,
+            "trades": 175
+          },
+          {
+            "start": "2010-10-07",
+            "end": "2020-10-07",
+            "xirr": 0.1559,
+            "total_invested": 160750,
+            "final_value": 199147,
+            "trades": 161
+          },
+          {
+            "start": "2011-10-07",
+            "end": "2021-10-07",
+            "xirr": 0.1439,
+            "total_invested": 198000,
+            "final_value": 263129,
+            "trades": 213
+          },
+          {
+            "start": "2012-01-07",
+            "end": "2022-01-07",
+            "xirr": 0.1396,
+            "total_invested": 216000,
+            "final_value": 288723,
+            "trades": 227
+          },
+          {
+            "start": "2011-07-07",
+            "end": "2021-07-07",
+            "xirr": 0.1322,
+            "total_invested": 181000,
+            "final_value": 233254,
+            "trades": 201
+          },
+          {
+            "start": "2011-04-07",
+            "end": "2021-04-07",
+            "xirr": 0.1225,
+            "total_invested": 170000,
+            "final_value": 211742,
+            "trades": 188
+          },
+          {
+            "start": "2010-01-07",
+            "end": "2020-01-07",
+            "xirr": 0.1046,
+            "total_invested": 133250,
+            "final_value": 146166,
+            "trades": 124
+          },
+          {
+            "start": "2016-07-07",
+            "end": "2026-07-07",
+            "xirr": 0.0953,
+            "total_invested": 452000,
+            "final_value": 229560,
+            "trades": 445
+          },
+          {
+            "start": "2016-01-07",
+            "end": "2026-01-07",
+            "xirr": 0.0837,
+            "total_invested": 450000,
+            "final_value": 633005,
+            "trades": 432
+          },
+          {
+            "start": "2016-04-07",
+            "end": "2026-04-07",
+            "xirr": 0.0826,
+            "total_invested": 450500,
+            "final_value": 313153,
+            "trades": 437
+          },
+          {
+            "start": "2015-10-07",
+            "end": "2025-10-07",
+            "xirr": 0.0734,
+            "total_invested": 446250,
+            "final_value": 591506,
+            "trades": 418
+          },
+          {
+            "start": "2012-07-07",
+            "end": "2022-07-07",
+            "xirr": 0.066,
+            "total_invested": 252500,
+            "final_value": 293281,
+            "trades": 252
+          },
+          {
+            "start": "2012-04-07",
+            "end": "2022-04-07",
+            "xirr": 0.0646,
+            "total_invested": 233000,
+            "final_value": 268502,
+            "trades": 239
+          },
+          {
+            "start": "2013-04-07",
+            "end": "2023-04-07",
+            "xirr": 0.0511,
+            "total_invested": 289750,
+            "final_value": 332517,
+            "trades": 289
+          },
+          {
+            "start": "2010-04-07",
+            "end": "2020-04-07",
+            "xirr": 0.0387,
+            "total_invested": 148750,
+            "final_value": 154856,
+            "trades": 136
+          },
+          {
+            "start": "2013-01-07",
+            "end": "2023-01-07",
+            "xirr": 0.0292,
+            "total_invested": 284500,
+            "final_value": 306012,
+            "trades": 277
+          },
+          {
+            "start": "2013-07-07",
+            "end": "2023-07-07",
+            "xirr": 0.0221,
+            "total_invested": 298250,
+            "final_value": 317791,
+            "trades": 302
+          },
+          {
+            "start": "2015-07-07",
+            "end": "2025-07-07",
+            "xirr": 0.0169,
+            "total_invested": 439750,
+            "final_value": 467528,
+            "trades": 406
+          },
+          {
+            "start": "2012-10-07",
+            "end": "2022-10-07",
+            "xirr": 0.015,
+            "total_invested": 270500,
+            "final_value": 280222,
+            "trades": 264
+          },
+          {
+            "start": "2013-10-07",
+            "end": "2023-10-07",
+            "xirr": 0.0042,
+            "total_invested": 311250,
+            "final_value": 315164,
+            "trades": 314
+          },
+          {
+            "start": "2015-04-07",
+            "end": "2025-04-07",
+            "xirr": -0.0011,
+            "total_invested": 421250,
+            "final_value": 419674,
+            "trades": 393
+          },
+          {
+            "start": "2014-10-07",
+            "end": "2024-10-07",
+            "xirr": -0.0039,
+            "total_invested": 383750,
+            "final_value": 378841,
+            "trades": 365
+          },
+          {
+            "start": "2015-01-07",
+            "end": "2025-01-07",
+            "xirr": -0.0056,
+            "total_invested": 402250,
+            "final_value": 394668,
+            "trades": 380
+          },
+          {
+            "start": "2014-04-07",
+            "end": "2024-04-07",
+            "xirr": -0.0123,
+            "total_invested": 345250,
+            "final_value": 332044,
+            "trades": 339
+          },
+          {
+            "start": "2014-01-07",
+            "end": "2024-01-07",
+            "xirr": -0.0156,
+            "total_invested": 327250,
+            "final_value": 311837,
+            "trades": 327
+          },
+          {
+            "start": "2014-07-07",
+            "end": "2024-07-07",
+            "xirr": -0.0442,
+            "total_invested": 364750,
+            "final_value": 316197,
+            "trades": 352
+          }
+        ]
+      }
+    }
+  },
+  "000852": {
+    "name": "中证1000",
+    "params": {
+      "buy_floor": 0.08,
+      "buy_low": 0.15,
+      "buy_mid": 0.22,
+      "buy_high": 0.4,
+      "sell_heavy": 0.8,
+      "sell_extreme": 0.9,
+      "fed_gate": null,
+      "pb_veto": null,
+      "pb_sell": null,
+      "signal_mode": "FED_only"
+    },
+    "holds": {
+      "hold_3yr": {
+        "windows": 24,
+        "xirr_min": -18.13,
+        "xirr_max": 31.18,
+        "xirr_mean": 9.33,
+        "xirr_median": 11.32,
+        "xirr_std": 13.47,
+        "win_rate": 75.0,
+        "xirr_series": [
+          {
+            "start": "2023-07-11",
+            "end": "2026-07-11",
+            "xirr": 0.3118,
+            "total_invested": 100750,
+            "final_value": 22338,
+            "trades": 97
+          },
+          {
+            "start": "2019-01-11",
+            "end": "2022-01-11",
+            "xirr": 0.2857,
+            "total_invested": 50000,
+            "final_value": 18137,
+            "trades": 96
+          },
+          {
+            "start": "2019-07-11",
+            "end": "2022-07-11",
+            "xirr": 0.2539,
+            "total_invested": 57750,
+            "final_value": 36818,
+            "trades": 94
+          },
+          {
+            "start": "2023-04-11",
+            "end": "2026-04-11",
+            "xirr": 0.2484,
+            "total_invested": 107250,
+            "final_value": 21676,
+            "trades": 107
+          },
+          {
+            "start": "2018-10-11",
+            "end": "2021-10-11",
+            "xirr": 0.2323,
+            "total_invested": 68250,
+            "final_value": 34801,
+            "trades": 101
+          },
+          {
+            "start": "2019-04-11",
+            "end": "2022-04-11",
+            "xirr": 0.2036,
+            "total_invested": 49750,
+            "final_value": 19772,
+            "trades": 94
+          },
+          {
+            "start": "2018-07-11",
+            "end": "2021-07-11",
+            "xirr": 0.1982,
+            "total_invested": 84750,
+            "final_value": 49755,
+            "trades": 106
+          },
+          {
+            "start": "2023-01-11",
+            "end": "2026-01-11",
+            "xirr": 0.1812,
+            "total_invested": 110000,
+            "final_value": 21470,
+            "trades": 114
+          },
+          {
+            "start": "2018-04-11",
+            "end": "2021-04-11",
+            "xirr": 0.1414,
+            "total_invested": 101750,
+            "final_value": 50737,
+            "trades": 111
+          },
+          {
+            "start": "2022-10-11",
+            "end": "2025-10-11",
+            "xirr": 0.1385,
+            "total_invested": 123250,
+            "final_value": 35063,
+            "trades": 125
+          },
+          {
+            "start": "2017-10-11",
+            "end": "2020-10-11",
+            "xirr": 0.135,
+            "total_invested": 121250,
+            "final_value": 61491,
+            "trades": 132
+          },
+          {
+            "start": "2018-01-11",
+            "end": "2021-01-11",
+            "xirr": 0.1286,
+            "total_invested": 117500,
+            "final_value": 58631,
+            "trades": 124
+          },
+          {
+            "start": "2020-04-11",
+            "end": "2023-04-11",
+            "xirr": 0.0978,
+            "total_invested": 62250,
+            "final_value": 61390,
+            "trades": 88
+          },
+          {
+            "start": "2022-07-11",
+            "end": "2025-07-11",
+            "xirr": 0.0786,
+            "total_invested": 136250,
+            "final_value": 43560,
+            "trades": 136
+          },
+          {
+            "start": "2020-01-11",
+            "end": "2023-01-11",
+            "xirr": 0.0753,
+            "total_invested": 68000,
+            "final_value": 56871,
+            "trades": 91
+          },
+          {
+            "start": "2022-04-11",
+            "end": "2025-04-11",
+            "xirr": 0.042,
+            "total_invested": 148750,
+            "final_value": 50312,
+            "trades": 142
+          },
+          {
+            "start": "2019-10-11",
+            "end": "2022-10-11",
+            "xirr": 0.0297,
+            "total_invested": 62250,
+            "final_value": 41910,
+            "trades": 93
+          },
+          {
+            "start": "2022-01-11",
+            "end": "2025-01-11",
+            "xirr": 0.0039,
+            "total_invested": 153000,
+            "final_value": 96077,
+            "trades": 143
+          },
+          {
+            "start": "2020-07-11",
+            "end": "2023-07-11",
+            "xirr": -0.0,
+            "total_invested": 67250,
+            "final_value": 63890,
+            "trades": 93
+          },
+          {
+            "start": "2021-10-11",
+            "end": "2024-10-11",
+            "xirr": -0.031,
+            "total_invested": 149000,
+            "final_value": 142642,
+            "trades": 141
+          },
+          {
+            "start": "2020-10-11",
+            "end": "2023-10-11",
+            "xirr": -0.0666,
+            "total_invested": 83250,
+            "final_value": 74851,
+            "trades": 105
+          },
+          {
+            "start": "2021-04-11",
+            "end": "2024-04-11",
+            "xirr": -0.1303,
+            "total_invested": 118250,
+            "final_value": 99241,
+            "trades": 130
+          },
+          {
+            "start": "2021-01-11",
+            "end": "2024-01-11",
+            "xirr": -0.1365,
+            "total_invested": 100250,
+            "final_value": 83848,
+            "trades": 118
+          },
+          {
+            "start": "2021-07-11",
+            "end": "2024-07-11",
+            "xirr": -0.1813,
+            "total_invested": 133250,
+            "final_value": 105714,
+            "trades": 135
+          }
+        ]
+      },
+      "hold_5yr": {
+        "windows": 16,
+        "xirr_min": -11.73,
+        "xirr_max": 12.9,
+        "xirr_mean": 0.97,
+        "xirr_median": 0.15,
+        "xirr_std": 6.6,
+        "win_rate": 50.0,
+        "xirr_series": [
+          {
+            "start": "2021-07-11",
+            "end": "2026-07-11",
+            "xirr": 0.129,
+            "total_invested": 198750,
+            "final_value": 39109,
+            "trades": 212
+          },
+          {
+            "start": "2021-04-11",
+            "end": "2026-04-11",
+            "xirr": 0.0832,
+            "total_invested": 205500,
+            "final_value": 41006,
+            "trades": 222
+          },
+          {
+            "start": "2021-01-11",
+            "end": "2026-01-11",
+            "xirr": 0.0822,
+            "total_invested": 208750,
+            "final_value": 77120,
+            "trades": 233
+          },
+          {
+            "start": "2020-10-11",
+            "end": "2025-10-11",
+            "xirr": 0.0802,
+            "total_invested": 210000,
+            "final_value": 100746,
+            "trades": 237
+          },
+          {
+            "start": "2018-04-11",
+            "end": "2023-04-11",
+            "xirr": 0.0652,
+            "total_invested": 102500,
+            "final_value": 113878,
+            "trades": 158
+          },
+          {
+            "start": "2020-07-11",
+            "end": "2025-07-11",
+            "xirr": 0.0387,
+            "total_invested": 210000,
+            "final_value": 144985,
+            "trades": 235
+          },
+          {
+            "start": "2018-01-11",
+            "end": "2023-01-11",
+            "xirr": 0.0318,
+            "total_invested": 99250,
+            "final_value": 103859,
+            "trades": 146
+          },
+          {
+            "start": "2018-07-11",
+            "end": "2023-07-11",
+            "xirr": 0.0213,
+            "total_invested": 109500,
+            "final_value": 113686,
+            "trades": 171
+          },
+          {
+            "start": "2020-04-11",
+            "end": "2025-04-11",
+            "xirr": -0.0183,
+            "total_invested": 204500,
+            "final_value": 197935,
+            "trades": 234
+          },
+          {
+            "start": "2018-10-11",
+            "end": "2023-10-11",
+            "xirr": -0.0206,
+            "total_invested": 126000,
+            "final_value": 121488,
+            "trades": 183
+          },
+          {
+            "start": "2019-10-11",
+            "end": "2024-10-11",
+            "xirr": -0.0232,
+            "total_invested": 201000,
+            "final_value": 192263,
+            "trades": 234
+          },
+          {
+            "start": "2020-01-11",
+            "end": "2025-01-11",
+            "xirr": -0.0236,
+            "total_invested": 202000,
+            "final_value": 193431,
+            "trades": 233
+          },
+          {
+            "start": "2017-10-11",
+            "end": "2022-10-11",
+            "xirr": -0.0276,
+            "total_invested": 86250,
+            "final_value": 83038,
+            "trades": 133
+          },
+          {
+            "start": "2019-01-11",
+            "end": "2024-01-11",
+            "xirr": -0.0702,
+            "total_invested": 145000,
+            "final_value": 128073,
+            "trades": 196
+          },
+          {
+            "start": "2019-04-11",
+            "end": "2024-04-11",
+            "xirr": -0.0763,
+            "total_invested": 163000,
+            "final_value": 142044,
+            "trades": 208
+          },
+          {
+            "start": "2019-07-11",
+            "end": "2024-07-11",
+            "xirr": -0.1173,
+            "total_invested": 182500,
+            "final_value": 147141,
+            "trades": 221
+          }
+        ]
+      },
+      "hold_10yr": {
+        "windows": 0,
+        "xirr_series": []
+      }
+    }
+  },
+  "000015": {
+    "name": "上证红利",
+    "params": {
+      "buy_floor": 0.08,
+      "buy_low": 0.15,
+      "buy_mid": 0.22,
+      "buy_high": 0.4,
+      "sell_heavy": 0.8,
+      "sell_extreme": 0.9,
+      "fed_gate": null,
+      "pb_veto": null,
+      "pb_sell": null,
+      "signal_mode": "FED_only"
+    },
+    "holds": {
+      "hold_3yr": {
+        "windows": 63,
+        "xirr_min": -16.45,
+        "xirr_max": 90.82,
+        "xirr_mean": 11.29,
+        "xirr_median": 4.09,
+        "xirr_std": 23.97,
+        "win_rate": 69.8,
+        "xirr_series": [
+          {
+            "start": "2014-01-04",
+            "end": "2017-01-04",
+            "xirr": 0.9082,
+            "total_invested": 63250,
+            "final_value": 48022,
+            "trades": 64
+          },
+          {
+            "start": "2013-10-04",
+            "end": "2016-10-04",
+            "xirr": 0.8166,
+            "total_invested": 80000,
+            "final_value": 59776,
+            "trades": 75
+          },
+          {
+            "start": "2013-07-04",
+            "end": "2016-07-04",
+            "xirr": 0.7331,
+            "total_invested": 100000,
+            "final_value": 73589,
+            "trades": 89
+          },
+          {
+            "start": "2013-04-04",
+            "end": "2016-04-04",
+            "xirr": 0.6623,
+            "total_invested": 118000,
+            "final_value": 83860,
+            "trades": 101
+          },
+          {
+            "start": "2013-01-04",
+            "end": "2016-01-04",
+            "xirr": 0.6602,
+            "total_invested": 124500,
+            "final_value": 90706,
+            "trades": 109
+          },
+          {
+            "start": "2012-10-04",
+            "end": "2015-10-04",
+            "xirr": 0.5732,
+            "total_invested": 140250,
+            "final_value": 97492,
+            "trades": 120
+          },
+          {
+            "start": "2016-04-04",
+            "end": "2019-04-04",
+            "xirr": 0.5648,
+            "total_invested": 29750,
+            "final_value": 34190,
+            "trades": 50
+          },
+          {
+            "start": "2012-07-04",
+            "end": "2015-07-04",
+            "xirr": 0.5301,
+            "total_invested": 159750,
+            "final_value": 122529,
+            "trades": 132
+          },
+          {
+            "start": "2012-04-04",
+            "end": "2015-04-04",
+            "xirr": 0.3574,
+            "total_invested": 172500,
+            "final_value": 193209,
+            "trades": 142
+          },
+          {
+            "start": "2012-01-04",
+            "end": "2015-01-04",
+            "xirr": 0.2631,
+            "total_invested": 182500,
+            "final_value": 261743,
+            "trades": 152
+          },
+          {
+            "start": "2015-04-04",
+            "end": "2018-04-04",
+            "xirr": 0.2148,
+            "total_invested": 2500,
+            "final_value": 573,
+            "trades": 21
+          },
+          {
+            "start": "2015-01-04",
+            "end": "2018-01-04",
+            "xirr": 0.1777,
+            "total_invested": 2500,
+            "final_value": 645,
+            "trades": 19
+          },
+          {
+            "start": "2015-10-04",
+            "end": "2018-10-04",
+            "xirr": 0.1625,
+            "total_invested": 7000,
+            "final_value": 5221,
+            "trades": 30
+          },
+          {
+            "start": "2016-07-04",
+            "end": "2019-07-04",
+            "xirr": 0.1513,
+            "total_invested": 34000,
+            "final_value": 35655,
+            "trades": 59
+          },
+          {
+            "start": "2015-07-04",
+            "end": "2018-07-04",
+            "xirr": 0.1396,
+            "total_invested": 4250,
+            "final_value": 2045,
+            "trades": 23
+          },
+          {
+            "start": "2023-07-04",
+            "end": "2026-07-04",
+            "xirr": 0.1187,
+            "total_invested": 2500,
+            "final_value": 128,
+            "trades": 27
+          },
+          {
+            "start": "2008-04-04",
+            "end": "2011-04-04",
+            "xirr": 0.1092,
+            "total_invested": 73750,
+            "final_value": 73034,
+            "trades": 90
+          },
+          {
+            "start": "2017-01-04",
+            "end": "2020-01-04",
+            "xirr": 0.0972,
+            "total_invested": 59750,
+            "final_value": 63174,
+            "trades": 84
+          },
+          {
+            "start": "2023-04-04",
+            "end": "2026-04-04",
+            "xirr": 0.0898,
+            "total_invested": 3250,
+            "final_value": 161,
+            "trades": 27
+          },
+          {
+            "start": "2022-10-04",
+            "end": "2025-10-04",
+            "xirr": 0.0881,
+            "total_invested": 32250,
+            "final_value": 2565,
+            "trades": 50
+          },
+          {
+            "start": "2023-01-04",
+            "end": "2026-01-04",
+            "xirr": 0.0834,
+            "total_invested": 14750,
+            "final_value": 950,
+            "trades": 39
+          },
+          {
+            "start": "2018-10-04",
+            "end": "2021-10-04",
+            "xirr": 0.0825,
+            "total_invested": 143000,
+            "final_value": 160707,
+            "trades": 149
+          },
+          {
+            "start": "2019-04-04",
+            "end": "2022-04-04",
+            "xirr": 0.0791,
+            "total_invested": 153500,
+            "final_value": 170641,
+            "trades": 149
+          },
+          {
+            "start": "2022-07-04",
+            "end": "2025-07-04",
+            "xirr": 0.0763,
+            "total_invested": 50750,
+            "final_value": 4193,
+            "trades": 62
+          },
+          {
+            "start": "2018-07-04",
+            "end": "2021-07-04",
+            "xirr": 0.0698,
+            "total_invested": 127500,
+            "final_value": 140810,
+            "trades": 147
+          },
+          {
+            "start": "2022-04-04",
+            "end": "2025-04-04",
+            "xirr": 0.0592,
+            "total_invested": 64750,
+            "final_value": 4962,
+            "trades": 74
+          },
+          {
+            "start": "2018-04-04",
+            "end": "2021-04-04",
+            "xirr": 0.0534,
+            "total_invested": 112500,
+            "final_value": 121079,
+            "trades": 135
+          },
+          {
+            "start": "2019-07-04",
+            "end": "2022-07-04",
+            "xirr": 0.0463,
+            "total_invested": 164000,
+            "final_value": 175276,
+            "trades": 155
+          },
+          {
+            "start": "2020-04-04",
+            "end": "2023-04-04",
+            "xirr": 0.0458,
+            "total_invested": 167250,
+            "final_value": 178148,
+            "trades": 152
+          },
+          {
+            "start": "2022-01-04",
+            "end": "2025-01-04",
+            "xirr": 0.0437,
+            "total_invested": 79750,
+            "final_value": 9584,
+            "trades": 83
+          },
+          {
+            "start": "2008-01-04",
+            "end": "2011-01-04",
+            "xirr": 0.0409,
+            "total_invested": 70750,
+            "final_value": 66108,
+            "trades": 78
+          },
+          {
+            "start": "2021-07-04",
+            "end": "2024-07-04",
+            "xirr": 0.0409,
+            "total_invested": 118750,
+            "final_value": 36704,
+            "trades": 106
+          },
+          {
+            "start": "2021-10-04",
+            "end": "2024-10-04",
+            "xirr": 0.0404,
+            "total_invested": 99250,
+            "final_value": 16528,
+            "trades": 95
+          },
+          {
+            "start": "2019-01-04",
+            "end": "2022-01-04",
+            "xirr": 0.039,
+            "total_invested": 152000,
+            "final_value": 160316,
+            "trades": 151
+          },
+          {
+            "start": "2021-04-04",
+            "end": "2024-04-04",
+            "xirr": 0.0357,
+            "total_invested": 134500,
+            "final_value": 75580,
+            "trades": 117
+          },
+          {
+            "start": "2011-10-04",
+            "end": "2014-10-04",
+            "xirr": 0.0324,
+            "total_invested": 190750,
+            "final_value": 199777,
+            "trades": 155
+          },
+          {
+            "start": "2016-10-04",
+            "end": "2019-10-04",
+            "xirr": 0.0289,
+            "total_invested": 48750,
+            "final_value": 48544,
+            "trades": 72
+          },
+          {
+            "start": "2020-10-04",
+            "end": "2023-10-04",
+            "xirr": 0.0266,
+            "total_invested": 141500,
+            "final_value": 147487,
+            "trades": 135
+          },
+          {
+            "start": "2020-07-04",
+            "end": "2023-07-04",
+            "xirr": 0.025,
+            "total_invested": 148750,
+            "final_value": 154199,
+            "trades": 141
+          },
+          {
+            "start": "2021-01-04",
+            "end": "2024-01-04",
+            "xirr": 0.0131,
+            "total_invested": 138750,
+            "final_value": 142031,
+            "trades": 127
+          },
+          {
+            "start": "2019-10-04",
+            "end": "2022-10-04",
+            "xirr": 0.0126,
+            "total_invested": 167000,
+            "final_value": 169954,
+            "trades": 153
+          },
+          {
+            "start": "2018-01-04",
+            "end": "2021-01-04",
+            "xirr": 0.0072,
+            "total_invested": 108750,
+            "final_value": 109701,
+            "trades": 123
+          },
+          {
+            "start": "2020-01-04",
+            "end": "2023-01-04",
+            "xirr": 0.0053,
+            "total_invested": 174500,
+            "final_value": 175798,
+            "trades": 152
+          },
+          {
+            "start": "2008-07-04",
+            "end": "2011-07-04",
+            "xirr": 0.0038,
+            "total_invested": 84250,
+            "final_value": 78546,
+            "trades": 104
+          },
+          {
+            "start": "2014-04-04",
+            "end": "2017-04-04",
+            "xirr": 0.0,
+            "total_invested": 45500,
+            "final_value": 33564,
+            "trades": 53
+          },
+          {
+            "start": "2014-07-04",
+            "end": "2017-07-04",
+            "xirr": 0.0,
+            "total_invested": 26500,
+            "final_value": 17721,
+            "trades": 40
+          },
+          {
+            "start": "2014-10-04",
+            "end": "2017-10-04",
+            "xirr": 0.0,
+            "total_invested": 12000,
+            "final_value": 6577,
+            "trades": 29
+          },
+          {
+            "start": "2017-10-04",
+            "end": "2020-10-04",
+            "xirr": -0.0043,
+            "total_invested": 104750,
+            "final_value": 104305,
+            "trades": 111
+          },
+          {
+            "start": "2010-04-04",
+            "end": "2013-04-04",
+            "xirr": -0.0211,
+            "total_invested": 170000,
+            "final_value": 164441,
+            "trades": 154
+          },
+          {
+            "start": "2010-01-04",
+            "end": "2013-01-04",
+            "xirr": -0.0225,
+            "total_invested": 171750,
+            "final_value": 166137,
+            "trades": 154
+          },
+          {
+            "start": "2017-07-04",
+            "end": "2020-07-04",
+            "xirr": -0.0388,
+            "total_invested": 95750,
+            "final_value": 92727,
+            "trades": 98
+          },
+          {
+            "start": "2010-10-04",
+            "end": "2013-10-04",
+            "xirr": -0.0474,
+            "total_invested": 170000,
+            "final_value": 159044,
+            "trades": 154
+          },
+          {
+            "start": "2016-01-04",
+            "end": "2019-01-04",
+            "xirr": -0.0578,
+            "total_invested": 20500,
+            "final_value": 17764,
+            "trades": 43
+          },
+          {
+            "start": "2011-07-04",
+            "end": "2014-07-04",
+            "xirr": -0.0589,
+            "total_invested": 195250,
+            "final_value": 179219,
+            "trades": 155
+          },
+          {
+            "start": "2011-01-04",
+            "end": "2014-01-04",
+            "xirr": -0.0721,
+            "total_invested": 170000,
+            "final_value": 154056,
+            "trades": 155
+          },
+          {
+            "start": "2011-04-04",
+            "end": "2014-04-04",
+            "xirr": -0.0788,
+            "total_invested": 186250,
+            "final_value": 166337,
+            "trades": 155
+          },
+          {
+            "start": "2017-04-04",
+            "end": "2020-04-04",
+            "xirr": -0.1032,
+            "total_invested": 76750,
+            "final_value": 70922,
+            "trades": 85
+          },
+          {
+            "start": "2010-07-04",
+            "end": "2013-07-04",
+            "xirr": -0.1156,
+            "total_invested": 171000,
+            "final_value": 143349,
+            "trades": 154
+          },
+          {
+            "start": "2009-04-04",
+            "end": "2012-04-04",
+            "xirr": -0.1174,
+            "total_invested": 123250,
+            "final_value": 107329,
+            "trades": 114
+          },
+          {
+            "start": "2009-07-04",
+            "end": "2012-07-04",
+            "xirr": -0.1192,
+            "total_invested": 137500,
+            "final_value": 117639,
+            "trades": 128
+          },
+          {
+            "start": "2008-10-04",
+            "end": "2011-10-04",
+            "xirr": -0.1252,
+            "total_invested": 101250,
+            "final_value": 84580,
+            "trades": 116
+          },
+          {
+            "start": "2009-10-04",
+            "end": "2012-10-04",
+            "xirr": -0.152,
+            "total_invested": 155500,
+            "final_value": 125845,
+            "trades": 140
+          },
+          {
+            "start": "2009-01-04",
+            "end": "2012-01-04",
+            "xirr": -0.1645,
+            "total_invested": 116750,
+            "final_value": 96920,
+            "trades": 116
+          }
+        ]
+      },
+      "hold_5yr": {
+        "windows": 55,
+        "xirr_min": -12.19,
+        "xirr_max": 57.9,
+        "xirr_mean": 14.27,
+        "xirr_median": 4.78,
+        "xirr_std": 18.42,
+        "win_rate": 83.6,
+        "xirr_series": [
+          {
+            "start": "2014-04-04",
+            "end": "2019-04-04",
+            "xirr": 0.579,
+            "total_invested": 75250,
+            "final_value": 50982,
+            "trades": 140
+          },
+          {
+            "start": "2014-01-04",
+            "end": "2019-01-04",
+            "xirr": 0.5725,
+            "total_invested": 89500,
+            "final_value": 65836,
+            "trades": 141
+          },
+          {
+            "start": "2013-10-04",
+            "end": "2018-10-04",
+            "xirr": 0.5445,
+            "total_invested": 105000,
+            "final_value": 84138,
+            "trades": 143
+          },
+          {
+            "start": "2014-07-04",
+            "end": "2019-07-04",
+            "xirr": 0.5169,
+            "total_invested": 58250,
+            "final_value": 29800,
+            "trades": 136
+          },
+          {
+            "start": "2013-07-04",
+            "end": "2018-07-04",
+            "xirr": 0.5134,
+            "total_invested": 124750,
+            "final_value": 102785,
+            "trades": 152
+          },
+          {
+            "start": "2013-04-04",
+            "end": "2018-04-04",
+            "xirr": 0.4778,
+            "total_invested": 142250,
+            "final_value": 116156,
+            "trades": 161
+          },
+          {
+            "start": "2013-01-04",
+            "end": "2018-01-04",
+            "xirr": 0.4469,
+            "total_invested": 155750,
+            "final_value": 125372,
+            "trades": 172
+          },
+          {
+            "start": "2012-10-04",
+            "end": "2017-10-04",
+            "xirr": 0.3953,
+            "total_invested": 173250,
+            "final_value": 139212,
+            "trades": 181
+          },
+          {
+            "start": "2012-07-04",
+            "end": "2017-07-04",
+            "xirr": 0.3131,
+            "total_invested": 192750,
+            "final_value": 153311,
+            "trades": 191
+          },
+          {
+            "start": "2014-10-04",
+            "end": "2019-10-04",
+            "xirr": 0.2999,
+            "total_invested": 51250,
+            "final_value": 25799,
+            "trades": 135
+          },
+          {
+            "start": "2012-04-04",
+            "end": "2017-04-04",
+            "xirr": 0.2947,
+            "total_invested": 210250,
+            "final_value": 159077,
+            "trades": 204
+          },
+          {
+            "start": "2012-01-04",
+            "end": "2017-01-04",
+            "xirr": 0.2798,
+            "total_invested": 224500,
+            "final_value": 161629,
+            "trades": 215
+          },
+          {
+            "start": "2011-01-04",
+            "end": "2016-01-04",
+            "xirr": 0.2662,
+            "total_invested": 270000,
+            "final_value": 200095,
+            "trades": 231
+          },
+          {
+            "start": "2011-10-04",
+            "end": "2016-10-04",
+            "xirr": 0.264,
+            "total_invested": 241500,
+            "final_value": 166001,
+            "trades": 223
+          },
+          {
+            "start": "2010-07-04",
+            "end": "2015-07-04",
+            "xirr": 0.2459,
+            "total_invested": 290500,
+            "final_value": 246180,
+            "trades": 244
+          },
+          {
+            "start": "2011-07-04",
+            "end": "2016-07-04",
+            "xirr": 0.2436,
+            "total_invested": 259000,
+            "final_value": 166881,
+            "trades": 230
+          },
+          {
+            "start": "2011-04-04",
+            "end": "2016-04-04",
+            "xirr": 0.2412,
+            "total_invested": 269250,
+            "final_value": 175933,
+            "trades": 229
+          },
+          {
+            "start": "2010-10-04",
+            "end": "2015-10-04",
+            "xirr": 0.2401,
+            "total_invested": 281000,
+            "final_value": 182724,
+            "trades": 238
+          },
+          {
+            "start": "2010-04-04",
+            "end": "2015-04-04",
+            "xirr": 0.2188,
+            "total_invested": 295250,
+            "final_value": 485644,
+            "trades": 253
+          },
+          {
+            "start": "2010-01-04",
+            "end": "2015-01-04",
+            "xirr": 0.1467,
+            "total_invested": 293250,
+            "final_value": 397663,
+            "trades": 245
+          },
+          {
+            "start": "2015-01-04",
+            "end": "2020-01-04",
+            "xirr": 0.1296,
+            "total_invested": 51250,
+            "final_value": 40084,
+            "trades": 136
+          },
+          {
+            "start": "2016-10-04",
+            "end": "2021-10-04",
+            "xirr": 0.0964,
+            "total_invested": 144750,
+            "final_value": 161007,
+            "trades": 171
+          },
+          {
+            "start": "2016-07-04",
+            "end": "2021-07-04",
+            "xirr": 0.0879,
+            "total_invested": 127000,
+            "final_value": 136842,
+            "trades": 165
+          },
+          {
+            "start": "2017-04-04",
+            "end": "2022-04-04",
+            "xirr": 0.0785,
+            "total_invested": 181000,
+            "final_value": 201907,
+            "trades": 181
+          },
+          {
+            "start": "2016-04-04",
+            "end": "2021-04-04",
+            "xirr": 0.0755,
+            "total_invested": 112250,
+            "final_value": 114635,
+            "trades": 165
+          },
+          {
+            "start": "2021-07-04",
+            "end": "2026-07-04",
+            "xirr": 0.0584,
+            "total_invested": 140000,
+            "final_value": 12149,
+            "trades": 146
+          },
+          {
+            "start": "2019-07-04",
+            "end": "2024-07-04",
+            "xirr": 0.0522,
+            "total_invested": 251750,
+            "final_value": 233650,
+            "trades": 236
+          },
+          {
+            "start": "2019-04-04",
+            "end": "2024-04-04",
+            "xirr": 0.0478,
+            "total_invested": 254000,
+            "final_value": 288308,
+            "trades": 243
+          },
+          {
+            "start": "2021-01-04",
+            "end": "2026-01-04",
+            "xirr": 0.0458,
+            "total_invested": 167750,
+            "final_value": 15349,
+            "trades": 168
+          },
+          {
+            "start": "2017-07-04",
+            "end": "2022-07-04",
+            "xirr": 0.0455,
+            "total_invested": 200000,
+            "final_value": 214229,
+            "trades": 195
+          },
+          {
+            "start": "2021-04-04",
+            "end": "2026-04-04",
+            "xirr": 0.0444,
+            "total_invested": 158000,
+            "final_value": 14229,
+            "trades": 155
+          },
+          {
+            "start": "2017-01-04",
+            "end": "2022-01-04",
+            "xirr": 0.0428,
+            "total_invested": 165000,
+            "final_value": 173877,
+            "trades": 182
+          },
+          {
+            "start": "2020-01-04",
+            "end": "2025-01-04",
+            "xirr": 0.0424,
+            "total_invested": 227500,
+            "final_value": 68517,
+            "trades": 213
+          },
+          {
+            "start": "2020-04-04",
+            "end": "2025-04-04",
+            "xirr": 0.0424,
+            "total_invested": 209500,
+            "final_value": 24974,
+            "trades": 205
+          },
+          {
+            "start": "2019-10-04",
+            "end": "2024-10-04",
+            "xirr": 0.0403,
+            "total_invested": 240500,
+            "final_value": 141677,
+            "trades": 224
+          },
+          {
+            "start": "2020-10-04",
+            "end": "2025-10-04",
+            "xirr": 0.0396,
+            "total_invested": 176000,
+            "final_value": 16332,
+            "trades": 180
+          },
+          {
+            "start": "2018-04-04",
+            "end": "2023-04-04",
+            "xirr": 0.0395,
+            "total_invested": 252000,
+            "final_value": 271386,
+            "trades": 232
+          },
+          {
+            "start": "2020-07-04",
+            "end": "2025-07-04",
+            "xirr": 0.0365,
+            "total_invested": 190000,
+            "final_value": 20846,
+            "trades": 192
+          },
+          {
+            "start": "2018-10-04",
+            "end": "2023-10-04",
+            "xirr": 0.0323,
+            "total_invested": 258250,
+            "final_value": 277926,
+            "trades": 250
+          },
+          {
+            "start": "2018-07-04",
+            "end": "2023-07-04",
+            "xirr": 0.0304,
+            "total_invested": 255250,
+            "final_value": 272046,
+            "trades": 244
+          },
+          {
+            "start": "2016-01-04",
+            "end": "2021-01-04",
+            "xirr": 0.0295,
+            "total_invested": 107250,
+            "final_value": 99085,
+            "trades": 165
+          },
+          {
+            "start": "2015-10-04",
+            "end": "2020-10-04",
+            "xirr": 0.0254,
+            "total_invested": 99250,
+            "final_value": 88852,
+            "trades": 156
+          },
+          {
+            "start": "2019-01-04",
+            "end": "2024-01-04",
+            "xirr": 0.0224,
+            "total_invested": 257500,
+            "final_value": 272149,
+            "trades": 252
+          },
+          {
+            "start": "2017-10-04",
+            "end": "2022-10-04",
+            "xirr": 0.0134,
+            "total_invested": 218000,
+            "final_value": 222811,
+            "trades": 207
+          },
+          {
+            "start": "2018-01-04",
+            "end": "2023-01-04",
+            "xirr": 0.0073,
+            "total_invested": 237500,
+            "final_value": 240540,
+            "trades": 220
+          },
+          {
+            "start": "2015-07-04",
+            "end": "2020-07-04",
+            "xirr": 0.0048,
+            "total_invested": 86750,
+            "final_value": 73099,
+            "trades": 149
+          },
+          {
+            "start": "2009-10-04",
+            "end": "2014-10-04",
+            "xirr": -0.002,
+            "total_invested": 280250,
+            "final_value": 279181,
+            "trades": 232
+          },
+          {
+            "start": "2008-01-04",
+            "end": "2013-01-04",
+            "xirr": -0.003,
+            "total_invested": 153250,
+            "final_value": 152729,
+            "trades": 141
+          },
+          {
+            "start": "2008-04-04",
+            "end": "2013-04-04",
+            "xirr": -0.0131,
+            "total_invested": 165750,
+            "final_value": 162957,
+            "trades": 153
+          },
+          {
+            "start": "2015-04-04",
+            "end": "2020-04-04",
+            "xirr": -0.0449,
+            "total_invested": 67250,
+            "final_value": 51392,
+            "trades": 136
+          },
+          {
+            "start": "2008-10-04",
+            "end": "2013-10-04",
+            "xirr": -0.0509,
+            "total_invested": 204750,
+            "final_value": 189619,
+            "trades": 179
+          },
+          {
+            "start": "2009-07-04",
+            "end": "2014-07-04",
+            "xirr": -0.0683,
+            "total_invested": 263750,
+            "final_value": 232458,
+            "trades": 219
+          },
+          {
+            "start": "2009-01-04",
+            "end": "2014-01-04",
+            "xirr": -0.0773,
+            "total_invested": 224750,
+            "final_value": 198129,
+            "trades": 193
+          },
+          {
+            "start": "2009-04-04",
+            "end": "2014-04-04",
+            "xirr": -0.0829,
+            "total_invested": 244250,
+            "final_value": 211394,
+            "trades": 206
+          },
+          {
+            "start": "2008-07-04",
+            "end": "2013-07-04",
+            "xirr": -0.1219,
+            "total_invested": 185250,
+            "final_value": 155421,
+            "trades": 166
+          }
+        ]
+      },
+      "hold_10yr": {
+        "windows": 35,
+        "xirr_min": -3.02,
+        "xirr_max": 11.19,
+        "xirr_mean": 2.77,
+        "xirr_median": 2.92,
+        "xirr_std": 2.6,
+        "win_rate": 88.6,
+        "xirr_series": [
+          {
+            "start": "2008-01-04",
+            "end": "2018-01-04",
+            "xirr": 0.1119,
+            "total_invested": 50250,
+            "final_value": 60502,
+            "trades": 121
+          },
+          {
+            "start": "2009-04-04",
+            "end": "2019-04-04",
+            "xirr": 0.0818,
+            "total_invested": 75000,
+            "final_value": 89152,
+            "trades": 172
+          },
+          {
+            "start": "2008-04-04",
+            "end": "2018-04-04",
+            "xirr": 0.0649,
+            "total_invested": 50500,
+            "final_value": 57190,
+            "trades": 122
+          },
+          {
+            "start": "2011-10-04",
+            "end": "2021-10-04",
+            "xirr": 0.049,
+            "total_invested": 185250,
+            "final_value": 209751,
+            "trades": 302
+          },
+          {
+            "start": "2012-04-04",
+            "end": "2022-04-04",
+            "xirr": 0.0466,
+            "total_invested": 222750,
+            "final_value": 251213,
+            "trades": 327
+          },
+          {
+            "start": "2014-07-04",
+            "end": "2024-07-04",
+            "xirr": 0.0416,
+            "total_invested": 337750,
+            "final_value": 393684,
+            "trades": 441
+          },
+          {
+            "start": "2011-07-04",
+            "end": "2021-07-04",
+            "xirr": 0.0406,
+            "total_invested": 165750,
+            "final_value": 183855,
+            "trades": 289
+          },
+          {
+            "start": "2014-04-04",
+            "end": "2024-04-04",
+            "xirr": 0.0383,
+            "total_invested": 334500,
+            "final_value": 382003,
+            "trades": 428
+          },
+          {
+            "start": "2016-07-04",
+            "end": "2026-07-04",
+            "xirr": 0.0381,
+            "total_invested": 317500,
+            "final_value": 38940,
+            "trades": 431
+          },
+          {
+            "start": "2014-10-04",
+            "end": "2024-10-04",
+            "xirr": 0.0374,
+            "total_invested": 341000,
+            "final_value": 394415,
+            "trades": 454
+          },
+          {
+            "start": "2009-07-04",
+            "end": "2019-07-04",
+            "xirr": 0.0353,
+            "total_invested": 78750,
+            "final_value": 85316,
+            "trades": 185
+          },
+          {
+            "start": "2015-01-04",
+            "end": "2025-01-04",
+            "xirr": 0.0351,
+            "total_invested": 344500,
+            "final_value": 397927,
+            "trades": 468
+          },
+          {
+            "start": "2010-01-04",
+            "end": "2020-01-04",
+            "xirr": 0.0325,
+            "total_invested": 94750,
+            "final_value": 102266,
+            "trades": 212
+          },
+          {
+            "start": "2012-07-04",
+            "end": "2022-07-04",
+            "xirr": 0.0305,
+            "total_invested": 243750,
+            "final_value": 263798,
+            "trades": 341
+          },
+          {
+            "start": "2011-04-04",
+            "end": "2021-04-04",
+            "xirr": 0.0297,
+            "total_invested": 149750,
+            "final_value": 161555,
+            "trades": 276
+          },
+          {
+            "start": "2013-04-04",
+            "end": "2023-04-04",
+            "xirr": 0.0295,
+            "total_invested": 299250,
+            "final_value": 325071,
+            "trades": 378
+          },
+          {
+            "start": "2015-04-04",
+            "end": "2025-04-04",
+            "xirr": 0.0293,
+            "total_invested": 342500,
+            "final_value": 387413,
+            "trades": 468
+          },
+          {
+            "start": "2015-07-04",
+            "end": "2025-07-04",
+            "xirr": 0.0292,
+            "total_invested": 342250,
+            "final_value": 249631,
+            "trades": 469
+          },
+          {
+            "start": "2016-04-04",
+            "end": "2026-04-04",
+            "xirr": 0.0291,
+            "total_invested": 324500,
+            "final_value": 51817,
+            "trades": 441
+          },
+          {
+            "start": "2016-01-04",
+            "end": "2026-01-04",
+            "xirr": 0.0272,
+            "total_invested": 333500,
+            "final_value": 78138,
+            "trades": 451
+          },
+          {
+            "start": "2012-01-04",
+            "end": "2022-01-04",
+            "xirr": 0.0261,
+            "total_invested": 206250,
+            "final_value": 220235,
+            "trades": 316
+          },
+          {
+            "start": "2013-10-04",
+            "end": "2023-10-04",
+            "xirr": 0.0258,
+            "total_invested": 320750,
+            "final_value": 347241,
+            "trades": 403
+          },
+          {
+            "start": "2015-10-04",
+            "end": "2025-10-04",
+            "xirr": 0.0241,
+            "total_invested": 338250,
+            "final_value": 150593,
+            "trades": 461
+          },
+          {
+            "start": "2013-07-04",
+            "end": "2023-07-04",
+            "xirr": 0.0239,
+            "total_invested": 308250,
+            "final_value": 330884,
+            "trades": 391
+          },
+          {
+            "start": "2008-10-04",
+            "end": "2018-10-04",
+            "xirr": 0.021,
+            "total_invested": 58250,
+            "final_value": 60932,
+            "trades": 147
+          },
+          {
+            "start": "2014-01-04",
+            "end": "2024-01-04",
+            "xirr": 0.019,
+            "total_invested": 330250,
+            "final_value": 351255,
+            "trades": 416
+          },
+          {
+            "start": "2012-10-04",
+            "end": "2022-10-04",
+            "xirr": 0.0121,
+            "total_invested": 261750,
+            "final_value": 270210,
+            "trades": 353
+          },
+          {
+            "start": "2009-10-04",
+            "end": "2019-10-04",
+            "xirr": 0.011,
+            "total_invested": 87250,
+            "final_value": 89463,
+            "trades": 198
+          },
+          {
+            "start": "2013-01-04",
+            "end": "2023-01-04",
+            "xirr": 0.0082,
+            "total_invested": 281250,
+            "final_value": 287574,
+            "trades": 366
+          },
+          {
+            "start": "2011-01-04",
+            "end": "2021-01-04",
+            "xirr": 0.0047,
+            "total_invested": 143500,
+            "final_value": 145149,
+            "trades": 264
+          },
+          {
+            "start": "2008-07-04",
+            "end": "2018-07-04",
+            "xirr": 0.0026,
+            "total_invested": 54500,
+            "final_value": 54787,
+            "trades": 135
+          },
+          {
+            "start": "2010-10-04",
+            "end": "2020-10-04",
+            "xirr": -0.0003,
+            "total_invested": 135750,
+            "final_value": 135643,
+            "trades": 250
+          },
+          {
+            "start": "2010-07-04",
+            "end": "2020-07-04",
+            "xirr": -0.0128,
+            "total_invested": 125250,
+            "final_value": 121766,
+            "trades": 237
+          },
+          {
+            "start": "2009-01-04",
+            "end": "2019-01-04",
+            "xirr": -0.0237,
+            "total_invested": 68000,
+            "final_value": 64708,
+            "trades": 160
+          },
+          {
+            "start": "2010-04-04",
+            "end": "2020-04-04",
+            "xirr": -0.0302,
+            "total_invested": 109250,
+            "final_value": 102068,
+            "trades": 224
+          }
+        ]
+      }
+    }
+  },
+  "399324": {
+    "name": "深证红利",
+    "params": {
+      "buy_floor": 0.08,
+      "buy_low": 0.15,
+      "buy_mid": 0.22,
+      "buy_high": 0.4,
+      "sell_heavy": 0.8,
+      "sell_extreme": 0.9,
+      "fed_gate": null,
+      "pb_veto": null,
+      "pb_sell": null,
+      "signal_mode": "FED_only"
+    },
+    "holds": {
+      "hold_3yr": {
+        "windows": 59,
+        "xirr_min": -17.6,
+        "xirr_max": 60.97,
+        "xirr_mean": 19.08,
+        "xirr_median": 13.4,
+        "xirr_std": 23.66,
+        "win_rate": 69.5,
+        "xirr_series": [
+          {
+            "start": "2018-07-21",
+            "end": "2021-07-21",
+            "xirr": 0.6097,
+            "total_invested": 37250,
+            "final_value": 19628,
+            "trades": 63
+          },
+          {
+            "start": "2018-04-21",
+            "end": "2021-04-21",
+            "xirr": 0.5886,
+            "total_invested": 38250,
+            "final_value": 20377,
+            "trades": 65
+          },
+          {
+            "start": "2016-07-21",
+            "end": "2019-07-21",
+            "xirr": 0.5677,
+            "total_invested": 30000,
+            "final_value": 25397,
+            "trades": 48
+          },
+          {
+            "start": "2018-10-21",
+            "end": "2021-10-21",
+            "xirr": 0.5619,
+            "total_invested": 34000,
+            "final_value": 15214,
+            "trades": 64
+          },
+          {
+            "start": "2016-04-21",
+            "end": "2019-04-21",
+            "xirr": 0.5213,
+            "total_invested": 36000,
+            "final_value": 35155,
+            "trades": 60
+          },
+          {
+            "start": "2013-10-21",
+            "end": "2016-10-21",
+            "xirr": 0.5188,
+            "total_invested": 62250,
+            "final_value": 45783,
+            "trades": 92
+          },
+          {
+            "start": "2017-01-21",
+            "end": "2020-01-21",
+            "xirr": 0.5126,
+            "total_invested": 29000,
+            "final_value": 18219,
+            "trades": 40
+          },
+          {
+            "start": "2016-10-21",
+            "end": "2019-10-21",
+            "xirr": 0.5006,
+            "total_invested": 28750,
+            "final_value": 25172,
+            "trades": 43
+          },
+          {
+            "start": "2018-01-21",
+            "end": "2021-01-21",
+            "xirr": 0.4685,
+            "total_invested": 38250,
+            "final_value": 22961,
+            "trades": 62
+          },
+          {
+            "start": "2017-07-21",
+            "end": "2020-07-21",
+            "xirr": 0.4681,
+            "total_invested": 38250,
+            "final_value": 25307,
+            "trades": 61
+          },
+          {
+            "start": "2013-07-21",
+            "end": "2016-07-21",
+            "xirr": 0.4662,
+            "total_invested": 68750,
+            "final_value": 43344,
+            "trades": 97
+          },
+          {
+            "start": "2014-04-21",
+            "end": "2017-04-21",
+            "xirr": 0.4451,
+            "total_invested": 59750,
+            "final_value": 50863,
+            "trades": 84
+          },
+          {
+            "start": "2017-10-21",
+            "end": "2020-10-21",
+            "xirr": 0.4404,
+            "total_invested": 38250,
+            "final_value": 19439,
+            "trades": 62
+          },
+          {
+            "start": "2014-01-21",
+            "end": "2017-01-21",
+            "xirr": 0.4349,
+            "total_invested": 62250,
+            "final_value": 45734,
+            "trades": 92
+          },
+          {
+            "start": "2013-04-21",
+            "end": "2016-04-21",
+            "xirr": 0.4047,
+            "total_invested": 74250,
+            "final_value": 38446,
+            "trades": 97
+          },
+          {
+            "start": "2013-01-21",
+            "end": "2016-01-21",
+            "xirr": 0.4044,
+            "total_invested": 66500,
+            "final_value": 27986,
+            "trades": 97
+          },
+          {
+            "start": "2012-10-21",
+            "end": "2015-10-21",
+            "xirr": 0.3979,
+            "total_invested": 78000,
+            "final_value": 36286,
+            "trades": 103
+          },
+          {
+            "start": "2019-01-21",
+            "end": "2022-01-21",
+            "xirr": 0.3908,
+            "total_invested": 25750,
+            "final_value": 15965,
+            "trades": 64
+          },
+          {
+            "start": "2012-07-21",
+            "end": "2015-07-21",
+            "xirr": 0.3897,
+            "total_invested": 86500,
+            "final_value": 46964,
+            "trades": 106
+          },
+          {
+            "start": "2017-04-21",
+            "end": "2020-04-21",
+            "xirr": 0.3801,
+            "total_invested": 36000,
+            "final_value": 23044,
+            "trades": 52
+          },
+          {
+            "start": "2015-04-21",
+            "end": "2018-04-21",
+            "xirr": 0.3344,
+            "total_invested": 36250,
+            "final_value": 20910,
+            "trades": 54
+          },
+          {
+            "start": "2015-01-21",
+            "end": "2018-01-21",
+            "xirr": 0.3168,
+            "total_invested": 36250,
+            "final_value": 26915,
+            "trades": 52
+          },
+          {
+            "start": "2014-07-21",
+            "end": "2017-07-21",
+            "xirr": 0.3144,
+            "total_invested": 41750,
+            "final_value": 41833,
+            "trades": 72
+          },
+          {
+            "start": "2015-07-21",
+            "end": "2018-07-21",
+            "xirr": 0.2943,
+            "total_invested": 37250,
+            "final_value": 19130,
+            "trades": 58
+          },
+          {
+            "start": "2014-10-21",
+            "end": "2017-10-21",
+            "xirr": 0.2888,
+            "total_invested": 39000,
+            "final_value": 43906,
+            "trades": 62
+          },
+          {
+            "start": "2012-04-21",
+            "end": "2015-04-21",
+            "xirr": 0.2503,
+            "total_invested": 100500,
+            "final_value": 64012,
+            "trades": 116
+          },
+          {
+            "start": "2016-01-21",
+            "end": "2019-01-21",
+            "xirr": 0.2291,
+            "total_invested": 49750,
+            "final_value": 35201,
+            "trades": 68
+          },
+          {
+            "start": "2015-10-21",
+            "end": "2018-10-21",
+            "xirr": 0.2046,
+            "total_invested": 35750,
+            "final_value": 15652,
+            "trades": 62
+          },
+          {
+            "start": "2012-01-21",
+            "end": "2015-01-21",
+            "xirr": 0.1813,
+            "total_invested": 114500,
+            "final_value": 77824,
+            "trades": 127
+          },
+          {
+            "start": "2023-07-21",
+            "end": "2026-07-21",
+            "xirr": 0.134,
+            "total_invested": 112500,
+            "final_value": 11630,
+            "trades": 115
+          },
+          {
+            "start": "2023-01-21",
+            "end": "2026-01-21",
+            "xirr": 0.0958,
+            "total_invested": 117750,
+            "final_value": 24505,
+            "trades": 117
+          },
+          {
+            "start": "2023-04-21",
+            "end": "2026-04-21",
+            "xirr": 0.0929,
+            "total_invested": 117750,
+            "final_value": 12757,
+            "trades": 120
+          },
+          {
+            "start": "2022-10-21",
+            "end": "2025-10-21",
+            "xirr": 0.085,
+            "total_invested": 123500,
+            "final_value": 47141,
+            "trades": 121
+          },
+          {
+            "start": "2020-01-21",
+            "end": "2023-01-21",
+            "xirr": 0.0702,
+            "total_invested": 64750,
+            "final_value": 57267,
+            "trades": 97
+          },
+          {
+            "start": "2022-07-21",
+            "end": "2025-07-21",
+            "xirr": 0.0533,
+            "total_invested": 131250,
+            "final_value": 116053,
+            "trades": 129
+          },
+          {
+            "start": "2010-01-21",
+            "end": "2013-01-21",
+            "xirr": 0.0365,
+            "total_invested": 93000,
+            "final_value": 95829,
+            "trades": 117
+          },
+          {
+            "start": "2022-04-21",
+            "end": "2025-04-21",
+            "xirr": 0.0338,
+            "total_invested": 133500,
+            "final_value": 112734,
+            "trades": 130
+          },
+          {
+            "start": "2021-10-21",
+            "end": "2024-10-21",
+            "xirr": 0.0273,
+            "total_invested": 132750,
+            "final_value": 106776,
+            "trades": 128
+          },
+          {
+            "start": "2011-10-21",
+            "end": "2014-10-21",
+            "xirr": 0.0215,
+            "total_invested": 127500,
+            "final_value": 132455,
+            "trades": 133
+          },
+          {
+            "start": "2022-01-21",
+            "end": "2025-01-21",
+            "xirr": 0.0197,
+            "total_invested": 136000,
+            "final_value": 110164,
+            "trades": 129
+          },
+          {
+            "start": "2019-07-21",
+            "end": "2022-07-21",
+            "xirr": 0.0182,
+            "total_invested": 52250,
+            "final_value": 41292,
+            "trades": 83
+          },
+          {
+            "start": "2019-04-21",
+            "end": "2022-04-21",
+            "xirr": -0.0007,
+            "total_invested": 39750,
+            "final_value": 28379,
+            "trades": 70
+          },
+          {
+            "start": "2010-04-21",
+            "end": "2013-04-21",
+            "xirr": -0.0114,
+            "total_invested": 99250,
+            "final_value": 98108,
+            "trades": 128
+          },
+          {
+            "start": "2020-04-21",
+            "end": "2023-04-21",
+            "xirr": -0.0134,
+            "total_invested": 58000,
+            "final_value": 54181,
+            "trades": 85
+          },
+          {
+            "start": "2009-04-21",
+            "end": "2012-04-21",
+            "xirr": -0.0188,
+            "total_invested": 44250,
+            "final_value": 43768,
+            "trades": 77
+          },
+          {
+            "start": "2021-04-21",
+            "end": "2024-04-21",
+            "xirr": -0.0336,
+            "total_invested": 108500,
+            "final_value": 104082,
+            "trades": 115
+          },
+          {
+            "start": "2010-10-21",
+            "end": "2013-10-21",
+            "xirr": -0.0411,
+            "total_invested": 111000,
+            "final_value": 105584,
+            "trades": 123
+          },
+          {
+            "start": "2009-01-21",
+            "end": "2012-01-21",
+            "xirr": -0.0474,
+            "total_invested": 33750,
+            "final_value": 30503,
+            "trades": 75
+          },
+          {
+            "start": "2011-07-21",
+            "end": "2014-07-21",
+            "xirr": -0.0521,
+            "total_invested": 129500,
+            "final_value": 118856,
+            "trades": 135
+          },
+          {
+            "start": "2011-04-21",
+            "end": "2014-04-21",
+            "xirr": -0.0653,
+            "total_invested": 114000,
+            "final_value": 102246,
+            "trades": 130
+          },
+          {
+            "start": "2020-07-21",
+            "end": "2023-07-21",
+            "xirr": -0.0673,
+            "total_invested": 61500,
+            "final_value": 56801,
+            "trades": 78
+          },
+          {
+            "start": "2011-01-21",
+            "end": "2014-01-21",
+            "xirr": -0.0841,
+            "total_invested": 111000,
+            "final_value": 97968,
+            "trades": 123
+          },
+          {
+            "start": "2009-07-21",
+            "end": "2012-07-21",
+            "xirr": -0.0897,
+            "total_invested": 58250,
+            "final_value": 54853,
+            "trades": 90
+          },
+          {
+            "start": "2021-07-21",
+            "end": "2024-07-21",
+            "xirr": -0.0906,
+            "total_invested": 121250,
+            "final_value": 107241,
+            "trades": 128
+          },
+          {
+            "start": "2010-07-21",
+            "end": "2013-07-21",
+            "xirr": -0.1105,
+            "total_invested": 107000,
+            "final_value": 94604,
+            "trades": 128
+          },
+          {
+            "start": "2020-10-21",
+            "end": "2023-10-21",
+            "xirr": -0.1199,
+            "total_invested": 73500,
+            "final_value": 63359,
+            "trades": 90
+          },
+          {
+            "start": "2009-10-21",
+            "end": "2012-10-21",
+            "xirr": -0.146,
+            "total_invested": 76250,
+            "final_value": 68342,
+            "trades": 102
+          },
+          {
+            "start": "2021-01-21",
+            "end": "2024-01-21",
+            "xirr": -0.1496,
+            "total_invested": 92500,
+            "final_value": 77173,
+            "trades": 103
+          },
+          {
+            "start": "2019-10-21",
+            "end": "2022-10-21",
+            "xirr": -0.176,
+            "total_invested": 61000,
+            "final_value": 43884,
+            "trades": 95
+          }
+        ]
+      },
+      "hold_5yr": {
+        "windows": 51,
+        "xirr_min": -8.28,
+        "xirr_max": 58.6,
+        "xirr_mean": 25.5,
+        "xirr_median": 26.66,
+        "xirr_std": 19.96,
+        "win_rate": 88.2,
+        "xirr_series": [
+          {
+            "start": "2013-07-21",
+            "end": "2018-07-21",
+            "xirr": 0.586,
+            "total_invested": 96250,
+            "final_value": 60215,
+            "trades": 151
+          },
+          {
+            "start": "2013-10-21",
+            "end": "2018-10-21",
+            "xirr": 0.5853,
+            "total_invested": 96500,
+            "final_value": 51560,
+            "trades": 150
+          },
+          {
+            "start": "2016-07-21",
+            "end": "2021-07-21",
+            "xirr": 0.5769,
+            "total_invested": 39000,
+            "final_value": 21741,
+            "trades": 88
+          },
+          {
+            "start": "2013-04-21",
+            "end": "2018-04-21",
+            "xirr": 0.5538,
+            "total_invested": 105000,
+            "final_value": 69230,
+            "trades": 160
+          },
+          {
+            "start": "2014-04-21",
+            "end": "2019-04-21",
+            "xirr": 0.5537,
+            "total_invested": 108250,
+            "final_value": 57268,
+            "trades": 145
+          },
+          {
+            "start": "2016-10-21",
+            "end": "2021-10-21",
+            "xirr": 0.5321,
+            "total_invested": 41250,
+            "final_value": 21030,
+            "trades": 90
+          },
+          {
+            "start": "2013-01-21",
+            "end": "2018-01-21",
+            "xirr": 0.53,
+            "total_invested": 111000,
+            "final_value": 74428,
+            "trades": 170
+          },
+          {
+            "start": "2014-01-21",
+            "end": "2019-01-21",
+            "xirr": 0.5288,
+            "total_invested": 113500,
+            "final_value": 51382,
+            "trades": 154
+          },
+          {
+            "start": "2016-04-21",
+            "end": "2021-04-21",
+            "xirr": 0.4938,
+            "total_invested": 48750,
+            "final_value": 24567,
+            "trades": 98
+          },
+          {
+            "start": "2012-10-21",
+            "end": "2017-10-21",
+            "xirr": 0.4702,
+            "total_invested": 126500,
+            "final_value": 86937,
+            "trades": 181
+          },
+          {
+            "start": "2017-01-21",
+            "end": "2022-01-21",
+            "xirr": 0.4325,
+            "total_invested": 49250,
+            "final_value": 21460,
+            "trades": 84
+          },
+          {
+            "start": "2012-07-21",
+            "end": "2017-07-21",
+            "xirr": 0.4179,
+            "total_invested": 143000,
+            "final_value": 100333,
+            "trades": 190
+          },
+          {
+            "start": "2014-07-21",
+            "end": "2019-07-21",
+            "xirr": 0.4078,
+            "total_invested": 88750,
+            "final_value": 34753,
+            "trades": 133
+          },
+          {
+            "start": "2012-04-21",
+            "end": "2017-04-21",
+            "xirr": 0.3782,
+            "total_invested": 151750,
+            "final_value": 101589,
+            "trades": 201
+          },
+          {
+            "start": "2016-01-21",
+            "end": "2021-01-21",
+            "xirr": 0.3678,
+            "total_invested": 65250,
+            "final_value": 30155,
+            "trades": 107
+          },
+          {
+            "start": "2015-10-21",
+            "end": "2020-10-21",
+            "xirr": 0.3366,
+            "total_invested": 72750,
+            "final_value": 28412,
+            "trades": 118
+          },
+          {
+            "start": "2017-04-21",
+            "end": "2022-04-21",
+            "xirr": 0.3341,
+            "total_invested": 63250,
+            "final_value": 28363,
+            "trades": 96
+          },
+          {
+            "start": "2014-10-21",
+            "end": "2019-10-21",
+            "xirr": 0.328,
+            "total_invested": 83000,
+            "final_value": 29774,
+            "trades": 120
+          },
+          {
+            "start": "2010-07-21",
+            "end": "2015-07-21",
+            "xirr": 0.3259,
+            "total_invested": 133750,
+            "final_value": 105854,
+            "trades": 183
+          },
+          {
+            "start": "2017-07-21",
+            "end": "2022-07-21",
+            "xirr": 0.3104,
+            "total_invested": 74000,
+            "final_value": 39465,
+            "trades": 109
+          },
+          {
+            "start": "2015-01-21",
+            "end": "2020-01-21",
+            "xirr": 0.3044,
+            "total_invested": 77500,
+            "final_value": 28328,
+            "trades": 110
+          },
+          {
+            "start": "2015-07-21",
+            "end": "2020-07-21",
+            "xirr": 0.3008,
+            "total_invested": 83000,
+            "final_value": 31445,
+            "trades": 126
+          },
+          {
+            "start": "2010-04-21",
+            "end": "2015-04-21",
+            "xirr": 0.299,
+            "total_invested": 133750,
+            "final_value": 156689,
+            "trades": 181
+          },
+          {
+            "start": "2012-01-21",
+            "end": "2017-01-21",
+            "xirr": 0.2973,
+            "total_invested": 160750,
+            "final_value": 99203,
+            "trades": 210
+          },
+          {
+            "start": "2018-01-21",
+            "end": "2023-01-21",
+            "xirr": 0.2766,
+            "total_invested": 84250,
+            "final_value": 41938,
+            "trades": 128
+          },
+          {
+            "start": "2010-10-21",
+            "end": "2015-10-21",
+            "xirr": 0.2666,
+            "total_invested": 145500,
+            "final_value": 93956,
+            "trades": 193
+          },
+          {
+            "start": "2015-04-21",
+            "end": "2020-04-21",
+            "xirr": 0.2566,
+            "total_invested": 81750,
+            "final_value": 26173,
+            "trades": 120
+          },
+          {
+            "start": "2018-04-21",
+            "end": "2023-04-21",
+            "xirr": 0.2524,
+            "total_invested": 84250,
+            "final_value": 20741,
+            "trades": 131
+          },
+          {
+            "start": "2011-10-21",
+            "end": "2016-10-21",
+            "xirr": 0.246,
+            "total_invested": 174000,
+            "final_value": 131592,
+            "trades": 219
+          },
+          {
+            "start": "2011-01-21",
+            "end": "2016-01-21",
+            "xirr": 0.2433,
+            "total_invested": 153000,
+            "final_value": 94813,
+            "trades": 204
+          },
+          {
+            "start": "2011-04-21",
+            "end": "2016-04-21",
+            "xirr": 0.2341,
+            "total_invested": 169000,
+            "final_value": 111288,
+            "trades": 216
+          },
+          {
+            "start": "2011-07-21",
+            "end": "2016-07-21",
+            "xirr": 0.2339,
+            "total_invested": 176000,
+            "final_value": 122714,
+            "trades": 221
+          },
+          {
+            "start": "2018-07-21",
+            "end": "2023-07-21",
+            "xirr": 0.2333,
+            "total_invested": 87750,
+            "final_value": 24004,
+            "trades": 136
+          },
+          {
+            "start": "2017-10-21",
+            "end": "2022-10-21",
+            "xirr": 0.217,
+            "total_invested": 80000,
+            "final_value": 39762,
+            "trades": 121
+          },
+          {
+            "start": "2010-01-21",
+            "end": "2015-01-21",
+            "xirr": 0.2083,
+            "total_invested": 133750,
+            "final_value": 193848,
+            "trades": 179
+          },
+          {
+            "start": "2018-10-21",
+            "end": "2023-10-21",
+            "xirr": 0.161,
+            "total_invested": 88750,
+            "final_value": 29960,
+            "trades": 136
+          },
+          {
+            "start": "2021-01-21",
+            "end": "2026-01-21",
+            "xirr": 0.0559,
+            "total_invested": 181250,
+            "final_value": 136979,
+            "trades": 195
+          },
+          {
+            "start": "2021-04-21",
+            "end": "2026-04-21",
+            "xirr": 0.0401,
+            "total_invested": 181250,
+            "final_value": 67273,
+            "trades": 198
+          },
+          {
+            "start": "2019-10-21",
+            "end": "2024-10-21",
+            "xirr": 0.0384,
+            "total_invested": 138000,
+            "final_value": 107321,
+            "trades": 168
+          },
+          {
+            "start": "2020-10-21",
+            "end": "2025-10-21",
+            "xirr": 0.0317,
+            "total_invested": 181250,
+            "final_value": 161067,
+            "trades": 194
+          },
+          {
+            "start": "2021-07-21",
+            "end": "2026-07-21",
+            "xirr": 0.0247,
+            "total_invested": 181250,
+            "final_value": 27339,
+            "trades": 201
+          },
+          {
+            "start": "2009-10-21",
+            "end": "2014-10-21",
+            "xirr": 0.0228,
+            "total_invested": 129250,
+            "final_value": 134254,
+            "trades": 173
+          },
+          {
+            "start": "2019-04-21",
+            "end": "2024-04-21",
+            "xirr": 0.0127,
+            "total_invested": 103750,
+            "final_value": 69124,
+            "trades": 141
+          },
+          {
+            "start": "2020-01-21",
+            "end": "2025-01-21",
+            "xirr": 0.0111,
+            "total_invested": 154000,
+            "final_value": 120030,
+            "trades": 182
+          },
+          {
+            "start": "2020-07-21",
+            "end": "2025-07-21",
+            "xirr": 0.008,
+            "total_invested": 179250,
+            "final_value": 152331,
+            "trades": 186
+          },
+          {
+            "start": "2020-04-21",
+            "end": "2025-04-21",
+            "xirr": -0.0015,
+            "total_invested": 167000,
+            "final_value": 136238,
+            "trades": 186
+          },
+          {
+            "start": "2009-07-21",
+            "end": "2014-07-21",
+            "xirr": -0.051,
+            "total_invested": 123500,
+            "final_value": 114304,
+            "trades": 160
+          },
+          {
+            "start": "2019-07-21",
+            "end": "2024-07-21",
+            "xirr": -0.0589,
+            "total_invested": 120750,
+            "final_value": 79193,
+            "trades": 154
+          },
+          {
+            "start": "2019-01-21",
+            "end": "2024-01-21",
+            "xirr": -0.0619,
+            "total_invested": 89250,
+            "final_value": 44992,
+            "trades": 136
+          },
+          {
+            "start": "2009-04-21",
+            "end": "2014-04-21",
+            "xirr": -0.0632,
+            "total_invested": 104500,
+            "final_value": 94849,
+            "trades": 147
+          },
+          {
+            "start": "2009-01-21",
+            "end": "2014-01-21",
+            "xirr": -0.0828,
+            "total_invested": 96500,
+            "final_value": 85820,
+            "trades": 134
+          }
+        ]
+      },
+      "hold_10yr": {
+        "windows": 31,
+        "xirr_min": 7.76,
+        "xirr_max": 32.07,
+        "xirr_mean": 21.81,
+        "xirr_median": 21.12,
+        "xirr_std": 5.79,
+        "win_rate": 100.0,
+        "xirr_series": [
+          {
+            "start": "2011-07-21",
+            "end": "2021-07-21",
+            "xirr": 0.3207,
+            "total_invested": 89000,
+            "final_value": 77880,
+            "trades": 135
+          },
+          {
+            "start": "2011-04-21",
+            "end": "2021-04-21",
+            "xirr": 0.3158,
+            "total_invested": 89000,
+            "final_value": 78221,
+            "trades": 132
+          },
+          {
+            "start": "2011-10-21",
+            "end": "2021-10-21",
+            "xirr": 0.31,
+            "total_invested": 91750,
+            "final_value": 77525,
+            "trades": 145
+          },
+          {
+            "start": "2012-01-21",
+            "end": "2022-01-21",
+            "xirr": 0.2994,
+            "total_invested": 96000,
+            "final_value": 78262,
+            "trades": 158
+          },
+          {
+            "start": "2011-01-21",
+            "end": "2021-01-21",
+            "xirr": 0.2765,
+            "total_invested": 89000,
+            "final_value": 79504,
+            "trades": 129
+          },
+          {
+            "start": "2012-04-21",
+            "end": "2022-04-21",
+            "xirr": 0.2764,
+            "total_invested": 107500,
+            "final_value": 75211,
+            "trades": 170
+          },
+          {
+            "start": "2013-04-21",
+            "end": "2023-04-21",
+            "xirr": 0.2662,
+            "total_invested": 127750,
+            "final_value": 76954,
+            "trades": 206
+          },
+          {
+            "start": "2009-04-21",
+            "end": "2019-04-21",
+            "xirr": 0.2592,
+            "total_invested": 80000,
+            "final_value": 124787,
+            "trades": 103
+          },
+          {
+            "start": "2012-07-21",
+            "end": "2022-07-21",
+            "xirr": 0.2584,
+            "total_invested": 118500,
+            "final_value": 75790,
+            "trades": 183
+          },
+          {
+            "start": "2013-07-21",
+            "end": "2023-07-21",
+            "xirr": 0.2576,
+            "total_invested": 132250,
+            "final_value": 76388,
+            "trades": 215
+          },
+          {
+            "start": "2013-01-21",
+            "end": "2023-01-21",
+            "xirr": 0.2568,
+            "total_invested": 127750,
+            "final_value": 77441,
+            "trades": 203
+          },
+          {
+            "start": "2013-10-21",
+            "end": "2023-10-21",
+            "xirr": 0.2429,
+            "total_invested": 142250,
+            "final_value": 74437,
+            "trades": 227
+          },
+          {
+            "start": "2012-10-21",
+            "end": "2022-10-21",
+            "xirr": 0.2415,
+            "total_invested": 123500,
+            "final_value": 70922,
+            "trades": 195
+          },
+          {
+            "start": "2014-01-21",
+            "end": "2024-01-21",
+            "xirr": 0.2184,
+            "total_invested": 161250,
+            "final_value": 71860,
+            "trades": 240
+          },
+          {
+            "start": "2010-10-21",
+            "end": "2020-10-21",
+            "xirr": 0.2159,
+            "total_invested": 89000,
+            "final_value": 70581,
+            "trades": 127
+          },
+          {
+            "start": "2010-01-21",
+            "end": "2020-01-21",
+            "xirr": 0.2112,
+            "total_invested": 80250,
+            "final_value": 133430,
+            "trades": 104
+          },
+          {
+            "start": "2010-07-21",
+            "end": "2020-07-21",
+            "xirr": 0.2108,
+            "total_invested": 89000,
+            "final_value": 126207,
+            "trades": 124
+          },
+          {
+            "start": "2009-07-21",
+            "end": "2019-07-21",
+            "xirr": 0.2081,
+            "total_invested": 80250,
+            "final_value": 120330,
+            "trades": 104
+          },
+          {
+            "start": "2014-04-21",
+            "end": "2024-04-21",
+            "xirr": 0.2027,
+            "total_invested": 179250,
+            "final_value": 78358,
+            "trades": 252
+          },
+          {
+            "start": "2009-10-21",
+            "end": "2019-10-21",
+            "xirr": 0.1871,
+            "total_invested": 80250,
+            "final_value": 120855,
+            "trades": 104
+          },
+          {
+            "start": "2014-10-21",
+            "end": "2024-10-21",
+            "xirr": 0.1858,
+            "total_invested": 215250,
+            "final_value": 106826,
+            "trades": 279
+          },
+          {
+            "start": "2014-07-21",
+            "end": "2024-07-21",
+            "xirr": 0.1781,
+            "total_invested": 196750,
+            "final_value": 77653,
+            "trades": 265
+          },
+          {
+            "start": "2015-01-21",
+            "end": "2025-01-21",
+            "xirr": 0.177,
+            "total_invested": 235250,
+            "final_value": 123442,
+            "trades": 293
+          },
+          {
+            "start": "2016-01-21",
+            "end": "2026-01-21",
+            "xirr": 0.1712,
+            "total_invested": 279500,
+            "final_value": 150461,
+            "trades": 345
+          },
+          {
+            "start": "2015-04-21",
+            "end": "2025-04-21",
+            "xirr": 0.1707,
+            "total_invested": 254250,
+            "final_value": 141750,
+            "trades": 306
+          },
+          {
+            "start": "2015-10-21",
+            "end": "2025-10-21",
+            "xirr": 0.168,
+            "total_invested": 276500,
+            "final_value": 173970,
+            "trades": 332
+          },
+          {
+            "start": "2015-07-21",
+            "end": "2025-07-21",
+            "xirr": 0.1674,
+            "total_invested": 271250,
+            "final_value": 161506,
+            "trades": 319
+          },
+          {
+            "start": "2016-04-21",
+            "end": "2026-04-21",
+            "xirr": 0.1588,
+            "total_invested": 265500,
+            "final_value": 117626,
+            "trades": 343
+          },
+          {
+            "start": "2010-04-21",
+            "end": "2020-04-21",
+            "xirr": 0.1411,
+            "total_invested": 86750,
+            "final_value": 123601,
+            "trades": 115
+          },
+          {
+            "start": "2016-07-21",
+            "end": "2026-07-21",
+            "xirr": 0.1311,
+            "total_invested": 251750,
+            "final_value": 53797,
+            "trades": 335
+          },
+          {
+            "start": "2009-01-21",
+            "end": "2019-01-21",
+            "xirr": 0.0776,
+            "total_invested": 76000,
+            "final_value": 85992,
+            "trades": 96
+          }
+        ]
+      }
+    }
+  }
+}

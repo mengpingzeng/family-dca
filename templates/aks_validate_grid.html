@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>策略验证 — Family-DCA</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:18px;font-weight:600}
+.container{max-width:1400px;margin:0 auto;padding:16px 24px}
+.params-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:#94a3b8}
+.params-row b{color:#e2e8f0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1e293b;color:#94a3b8;padding:8px 10px;text-align:left;border:1px solid #334155}
+td{padding:7px 10px;border:1px solid #334155;color:#e2e8f0}
+tr:hover td{background:#1e293b}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#fbbf24}
+.tag{display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;margin:1px}
+.tag-buy{background:#166534;color:#4ade80}
+.tag-sell{background:#7f1d1d;color:#f87171}
+a.chart-link{color:#60a5fa;text-decoration:none}
+a.chart-link:hover{color:#93c5fd}
+.note{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;line-height:1.8;color:#94a3b8}
+.note b{color:#e2e8f0}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/aks-strict/grid-search">← 严格买入 网格结果</a>
+  <h1>策略验证（严格买入统一最优 · 应用到 3 新指数）</h1>
+</header>
+<div class="container">
+  <div class="note">
+    <b>验证策略:</b>
+    买入 <span class="tag tag-buy">&lt;8%→3x</span><span class="tag tag-buy">8-12%→2x</span><span class="tag tag-buy">12-22%→1x</span><span class="tag tag-buy">22-40%→0.5x</span>
+    | 卖出 <span class="tag tag-sell">≥75%→20%</span><span class="tag tag-sell">极≥85%→清仓</span>
+    | FED=off PBv=off
+    <br><b>参数:</b> 不限本金 · ¥500/笔 · 闲置现金2%/年 · 最少10笔 · 10年滚动窗口(第11年首日可交易)
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<script>
+async function init() {
+  try {
+    const r = await fetch('/api/aks-validate');
+    const data = await r.json();
+    if (data.error) {
+      document.getElementById('content').innerHTML = '<p style="color:#94a3b8">' + data.error + '</p>';
+      return;
+    }
+    render(data);
+  } catch(e) {
+    document.getElementById('content').innerHTML = '<p style="color:#f87171">加载失败: ' + e + '</p>';
+  }
+}
+
+function render(data) {
+  const rows = data.summary || [];
+  let html = '<div class="params-row">';
+  html += '<span>生成时间: <b>' + (data.generated || '') + '</b></span>';
+  html += '<span>验证标的数: <b>' + rows.length + '</b></span>';
+  html += '</div>';
+
+  html += '<table>';
+  html += '<thead><tr>';
+  html += '<th>指数</th><th>代码</th><th>窗口</th><th>XIRR</th><th>总回报</th><th>累计投入</th><th>总资产</th><th>交易</th><th>买</th><th>卖</th><th>详情</th>';
+  html += '</tr></thead><tbody>';
+
+  for (const r of rows) {
+    const xirrCls = r.xirr >= 0.15 ? 'green' : (r.xirr >= 0.05 ? 'yellow' : 'red');
+    const retCls = r.final_return >= 0 ? 'green' : 'red';
+    html += '<tr>';
+    html += '<td>' + r.name + '</td>';
+    html += '<td>' + r.code + '</td>';
+    html += '<td>' + r.window + '年</td>';
+    html += '<td class="' + xirrCls + '">' + (r.xirr*100).toFixed(2) + '%</td>';
+    html += '<td class="' + retCls + '">' + (r.final_return*100).toFixed(1) + '%</td>';
+    html += '<td>¥' + (r.total_invested||0).toLocaleString() + '</td>';
+    html += '<td>¥' + (r.final_value||0).toLocaleString() + '</td>';
+    html += '<td>' + r.trades + '</td>';
+    html += '<td>' + r.buys + '</td>';
+    html += '<td>' + r.sells + '</td>';
+    html += '<td><a class="chart-link" href="/aks-validate/' + r.code + '?w=' + r.window + '">查看曲线 →</a></td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+
+  if (rows.length === 0) {
+    html = '<p style="color:#94a3b8">暂无验证数据，请先运行 grid_search_aks/validate_strategy.py</p>';
+  }
+
+  document.getElementById('content').innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>

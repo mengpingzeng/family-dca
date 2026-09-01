@@ -1,0 +1,1128 @@
+{
+  "title": "均衡策略 v3 (PB×PE 信号质量) vs v2 vs 基线 — 固定30万口径",
+  "note": "v3 = v2(更早止盈0.80+20周均线β0.5+γ1.5) + 买入需PE%≤45% + 卖出需PB%≥70%",
+  "base_params": {
+    "buy_signal": "PB",
+    "buy_gate": "FED",
+    "buy_gate_cap": 0.55,
+    "sell_signal": "PE",
+    "sell_gate": null,
+    "sell_gate_floor": null,
+    "buy_floor": 0.1,
+    "buy_low": 0.15,
+    "buy_mid": 0.25,
+    "buy_high": 0.7,
+    "sell_heavy": 0.85,
+    "sell_extreme": 0.95
+  },
+  "v2_params": {
+    "buy_signal": "PB",
+    "buy_gate": "FED",
+    "buy_gate_cap": 0.55,
+    "sell_signal": "PE",
+    "sell_gate": null,
+    "sell_gate_floor": null,
+    "buy_floor": 0.1,
+    "buy_low": 0.15,
+    "buy_mid": 0.25,
+    "buy_high": 0.7,
+    "sell_heavy": 0.8,
+    "sell_extreme": 0.95
+  },
+  "v2_kw": {
+    "ma_window": 20,
+    "ma_below": 0.5,
+    "ma_above": 1.5
+  },
+  "v3_params": {
+    "buy_signal": "PB",
+    "buy_gate": [
+      "FED",
+      "PE"
+    ],
+    "buy_gate_cap": [
+      0.55,
+      0.45
+    ],
+    "sell_signal": "PE",
+    "sell_gate": [
+      "PB"
+    ],
+    "sell_gate_floor": [
+      0.7
+    ],
+    "buy_floor": 0.1,
+    "buy_low": 0.15,
+    "buy_mid": 0.25,
+    "buy_high": 0.7,
+    "sell_heavy": 0.8,
+    "sell_extreme": 0.95
+  },
+  "v3_kw": {
+    "ma_window": 20,
+    "ma_below": 0.5,
+    "ma_above": 1.5
+  },
+  "cost_model": {
+    "commission_rate": 0.0005,
+    "min_commission": 5.0
+  },
+  "principal": {
+    "threshold": 200000,
+    "cap": 300000,
+    "pool": 300000,
+    "base": 1000,
+    "mults": [
+      8,
+      4,
+      2,
+      0
+    ]
+  },
+  "risk_free_rate": 0.013,
+  "sharpe_note": "超额夏普=(收益均值-周期无风险利率)/收益标准差×√每年周期数; 数据周频, 无风险利率按年化1.3%/52扣减",
+  "valuation_logic": [
+    [
+      "PE低、PB不低",
+      "利润可能处于周期高点",
+      "检查 ROE 与盈利增速"
+    ],
+    [
+      "PB低、PE高",
+      "盈利能力可能正在下降",
+      "避免仅因'破净'加满仓"
+    ],
+    [
+      "PE、PB都低",
+      "可能真便宜, 也可能风险溢价上升",
+      "分批投入, 不赌单点反转"
+    ],
+    [
+      "低PB、ROE稳定",
+      "更接近有质量的低估",
+      "可提高配置权重"
+    ]
+  ],
+  "broad": [
+    "000300",
+    "000905",
+    "000852",
+    "000016",
+    "000688",
+    "399006",
+    "399330"
+  ],
+  "summary": {
+    "base": {
+      "annual_mean": 0.06462857142857144,
+      "sharpe_mean": 0.45783113441299295,
+      "mdd_mean": 0.28194645625889864,
+      "occupancy_mean": 0.43961919380842224,
+      "efficiency_mean": 0.21894050642415008
+    },
+    "v2": {
+      "annual_mean": 0.061857142857142854,
+      "sharpe_mean": 0.4868732650787634,
+      "mdd_mean": 0.23555099324495435,
+      "occupancy_mean": 0.36642376467218024,
+      "efficiency_mean": 0.28226230806592306
+    },
+    "v3": {
+      "annual_mean": 0.06168571428571428,
+      "sharpe_mean": 0.4887170065775903,
+      "mdd_mean": 0.23503555734908113,
+      "occupancy_mean": 0.37033701463037344,
+      "efficiency_mean": 0.2960091315655788
+    }
+  },
+  "win_sharpe": 3,
+  "n_broad": 7,
+  "results": [
+    {
+      "code": "000300",
+      "name": "沪深300",
+      "base": {
+        "principal_annual": 0.0583,
+        "xirr": 0.1276,
+        "sharpe": 0.4430810353495516,
+        "max_drawdown": 0.17933015844628605,
+        "occupancy": 0.3947074195402299,
+        "efficiency": 0.20120642600852662,
+        "buys": 163,
+        "sells": 24,
+        "principal_final": 569857.0
+      },
+      "v2": {
+        "principal_annual": 0.0503,
+        "xirr": 0.1326,
+        "sharpe": 0.419213860270586,
+        "max_drawdown": 0.15867089049870722,
+        "occupancy": 0.3183941494252874,
+        "efficiency": 0.20619356729984245,
+        "buys": 201,
+        "sells": 26,
+        "principal_final": 523078.0
+      },
+      "v3": {
+        "principal_annual": 0.0507,
+        "xirr": 0.1092,
+        "sharpe": 0.3948204598784944,
+        "max_drawdown": 0.23439219631311048,
+        "occupancy": 0.4200496724137931,
+        "efficiency": 0.15770615623742298,
+        "buys": 178,
+        "sells": 7,
+        "principal_final": 525095.0
+      },
+      "etf_base": {
+        "etf_code": "510300",
+        "etf_name": "华泰柏瑞沪深300ETF",
+        "principal_annual": 0.0601,
+        "xirr": 0.133,
+        "sharpe": 0.4890560701709508,
+        "max_drawdown": 0.16145467981859804,
+        "occupancy": 0.38817840229885053,
+        "efficiency": 0.2132721582309942,
+        "buys": 165,
+        "sells": 24,
+        "principal_final": 581308.0
+      },
+      "etf_v2": {
+        "etf_code": "510300",
+        "etf_name": "华泰柏瑞沪深300ETF",
+        "principal_annual": 0.0511,
+        "xirr": 0.137,
+        "sharpe": 0.4556991801294589,
+        "max_drawdown": 0.1287661299429991,
+        "occupancy": 0.31094051724137933,
+        "efficiency": 0.2153679447422364,
+        "buys": 203,
+        "sells": 26,
+        "principal_final": 527549.0
+      },
+      "etf_v3": {
+        "etf_code": "510300",
+        "etf_name": "华泰柏瑞沪深300ETF",
+        "principal_annual": 0.0528,
+        "xirr": 0.1149,
+        "sharpe": 0.44313239701602436,
+        "max_drawdown": 0.18542403288453835,
+        "occupancy": 0.4133527413793104,
+        "efficiency": 0.1690184810302984,
+        "buys": 179,
+        "sells": 7,
+        "principal_final": 537395.0
+      }
+    },
+    {
+      "code": "000905",
+      "name": "中证500",
+      "base": {
+        "principal_annual": 0.0545,
+        "xirr": 0.0692,
+        "sharpe": 0.31464339329840935,
+        "max_drawdown": 0.4133681724062539,
+        "occupancy": 0.7737838900203666,
+        "efficiency": 0.08947640221561894,
+        "buys": 47,
+        "sells": 8,
+        "principal_final": 499034.0
+      },
+      "v2": {
+        "principal_annual": 0.0465,
+        "xirr": 0.0632,
+        "sharpe": 0.27804117853281624,
+        "max_drawdown": 0.414332376087862,
+        "occupancy": 0.721541439239647,
+        "efficiency": 0.07893035131250287,
+        "buys": 65,
+        "sells": 11,
+        "principal_final": 463721.0
+      },
+      "v3": {
+        "principal_annual": 0.0464,
+        "xirr": 0.0631,
+        "sharpe": 0.27734808147624973,
+        "max_drawdown": 0.41400864009628413,
+        "occupancy": 0.7203616361167685,
+        "efficiency": 0.07876505852592926,
+        "buys": 65,
+        "sells": 11,
+        "principal_final": 463111.0
+      },
+      "etf_base": {
+        "etf_code": "510500",
+        "etf_name": "南方中证500ETF",
+        "principal_annual": 0.0681,
+        "xirr": 0.0864,
+        "sharpe": 0.3697755382788842,
+        "max_drawdown": 0.3821194637569203,
+        "occupancy": 0.7736635302104549,
+        "efficiency": 0.11874416237786542,
+        "buys": 47,
+        "sells": 8,
+        "principal_final": 564097.0
+      },
+      "etf_v2": {
+        "etf_code": "510500",
+        "etf_name": "南方中证500ETF",
+        "principal_annual": 0.0586,
+        "xirr": 0.0798,
+        "sharpe": 0.33162886698917177,
+        "max_drawdown": 0.38245142612319943,
+        "occupancy": 0.7186611133740666,
+        "efficiency": 0.1054867189087547,
+        "buys": 64,
+        "sells": 11,
+        "principal_final": 517932.0
+      },
+      "etf_v3": {
+        "etf_code": "510500",
+        "etf_name": "南方中证500ETF",
+        "principal_annual": 0.0586,
+        "xirr": 0.0798,
+        "sharpe": 0.33162886698917177,
+        "max_drawdown": 0.38245142612319943,
+        "occupancy": 0.7186611133740666,
+        "efficiency": 0.1054867189087547,
+        "buys": 64,
+        "sells": 11,
+        "principal_final": 517932.0
+      }
+    },
+    {
+      "code": "000015",
+      "name": "上证红利",
+      "base": {
+        "principal_annual": 0.0202,
+        "xirr": 0.0235,
+        "sharpe": 0.12409133911501509,
+        "max_drawdown": 0.2785639792026674,
+        "occupancy": 0.8491943563799887,
+        "efficiency": 0.026568430077687565,
+        "buys": 63,
+        "sells": 9,
+        "principal_final": 378350.0
+      },
+      "v2": {
+        "principal_annual": 0.0188,
+        "xirr": 0.0223,
+        "sharpe": 0.11408028731891678,
+        "max_drawdown": 0.27914226506892514,
+        "occupancy": 0.8274017931422147,
+        "efficiency": 0.02511702634326235,
+        "buys": 74,
+        "sells": 11,
+        "principal_final": 372169.0
+      },
+      "v3": {
+        "principal_annual": 0.0207,
+        "xirr": 0.0229,
+        "sharpe": 0.12823039304356892,
+        "max_drawdown": 0.27914226506892514,
+        "occupancy": 0.9027935694210232,
+        "efficiency": 0.02563983037430754,
+        "buys": 74,
+        "sells": 0,
+        "principal_final": 380384.0
+      },
+      "etf_base": {
+        "etf_code": "510880",
+        "etf_name": "华泰柏瑞红利ETF",
+        "principal_annual": 0.0454,
+        "xirr": 0.0525,
+        "sharpe": 0.34857673088447066,
+        "max_drawdown": 0.1879600175034048,
+        "occupancy": 0.8444626306913997,
+        "efficiency": 0.06871068769665319,
+        "buys": 64,
+        "sells": 9,
+        "principal_final": 501498.0
+      },
+      "etf_v2": {
+        "etf_code": "510880",
+        "etf_name": "华泰柏瑞红利ETF",
+        "principal_annual": 0.043,
+        "xirr": 0.0514,
+        "sharpe": 0.33083537721980166,
+        "max_drawdown": 0.1886035997611533,
+        "occupancy": 0.8160689657110737,
+        "efficiency": 0.06654305879435801,
+        "buys": 77,
+        "sells": 11,
+        "principal_final": 488580.0
+      },
+      "etf_v3": {
+        "etf_code": "510880",
+        "etf_name": "华泰柏瑞红利ETF",
+        "principal_annual": 0.046,
+        "xirr": 0.0512,
+        "sharpe": 0.35002149710137054,
+        "max_drawdown": 0.1886035997611533,
+        "occupancy": 0.8995779595278246,
+        "efficiency": 0.06564786573789526,
+        "buys": 77,
+        "sells": 0,
+        "principal_final": 505081.0
+      }
+    },
+    {
+      "code": "000016",
+      "name": "上证50",
+      "base": {
+        "principal_annual": 0.0738,
+        "xirr": 0.124,
+        "sharpe": 0.4319646533577775,
+        "max_drawdown": 0.41392204387128245,
+        "occupancy": 0.4934232556935818,
+        "efficiency": 0.23334919126269477,
+        "buys": 97,
+        "sells": 16,
+        "principal_final": 733607.0
+      },
+      "v2": {
+        "principal_annual": 0.0685,
+        "xirr": 0.1244,
+        "sharpe": 0.40560311033179747,
+        "max_drawdown": 0.4151872000897103,
+        "occupancy": 0.48023790890269147,
+        "efficiency": 0.21523946026228885,
+        "buys": 100,
+        "sells": 26,
+        "principal_final": 689268.0
+      },
+      "v3": {
+        "principal_annual": 0.0676,
+        "xirr": 0.1092,
+        "sharpe": 0.3936982780014826,
+        "max_drawdown": 0.4151872000897103,
+        "occupancy": 0.5291161231884057,
+        "efficiency": 0.19173286634248354,
+        "buys": 70,
+        "sells": 12,
+        "principal_final": 682048.0
+      },
+      "etf_base": {
+        "etf_code": "510050",
+        "etf_name": "华夏上证50ETF",
+        "principal_annual": 0.0732,
+        "xirr": 0.1227,
+        "sharpe": 0.5155796650460682,
+        "max_drawdown": 0.374420405707695,
+        "occupancy": 0.49311682194616974,
+        "efficiency": 0.2304635627771017,
+        "buys": 98,
+        "sells": 16,
+        "principal_final": 727979.0
+      },
+      "etf_v2": {
+        "etf_code": "510050",
+        "etf_name": "华夏上证50ETF",
+        "principal_annual": 0.0693,
+        "xirr": 0.1239,
+        "sharpe": 0.49274102061114017,
+        "max_drawdown": 0.3739817403393948,
+        "occupancy": 0.48961677018633537,
+        "efficiency": 0.21446811198206386,
+        "buys": 98,
+        "sells": 26,
+        "principal_final": 695448.0
+      },
+      "etf_v3": {
+        "etf_code": "510050",
+        "etf_name": "华夏上证50ETF",
+        "principal_annual": 0.0694,
+        "xirr": 0.1097,
+        "sharpe": 0.48389075151798916,
+        "max_drawdown": 0.3739817403393948,
+        "occupancy": 0.5389900621118012,
+        "efficiency": 0.1954950917937845,
+        "buys": 68,
+        "sells": 12,
+        "principal_final": 696814.0
+      }
+    },
+    {
+      "code": "000852",
+      "name": "中证1000",
+      "base": {
+        "principal_annual": 0.0663,
+        "xirr": 0.26,
+        "sharpe": 0.8351850168651912,
+        "max_drawdown": 0.04996983975731932,
+        "occupancy": 0.23743473684210525,
+        "efficiency": 0.2869675307690408,
+        "buys": 33,
+        "sells": 4,
+        "principal_final": 337216.0
+      },
+      "v2": {
+        "principal_annual": 0.0673,
+        "xirr": 0.2764,
+        "sharpe": 0.9239769611593235,
+        "max_drawdown": 0.03383363342671979,
+        "occupancy": 0.21997287719298247,
+        "efficiency": 0.314599841643726,
+        "buys": 33,
+        "sells": 7,
+        "principal_final": 337799.0
+      },
+      "v3": {
+        "principal_annual": 0.0277,
+        "xirr": 0.3232,
+        "sharpe": 0.6788676248075154,
+        "max_drawdown": 0.012734456665373718,
+        "occupancy": 0.07488561403508773,
+        "efficiency": 0.37369249207479677,
+        "buys": 9,
+        "sells": 6,
+        "principal_final": 315285.0
+      },
+      "etf_base": {
+        "etf_code": "512100",
+        "etf_name": "南方中证1000ETF",
+        "principal_annual": 0.0688,
+        "xirr": 0.2733,
+        "sharpe": 0.8850887094614901,
+        "max_drawdown": 0.04846280318351787,
+        "occupancy": 0.23343031578947368,
+        "efficiency": 0.3028942932591627,
+        "buys": 33,
+        "sells": 4,
+        "principal_final": 338619.0
+      },
+      "etf_v2": {
+        "etf_code": "512100",
+        "etf_name": "南方中证1000ETF",
+        "principal_annual": 0.0588,
+        "xirr": 0.3008,
+        "sharpe": 0.9509571817544045,
+        "max_drawdown": 0.026392770392039074,
+        "occupancy": 0.17495252631578947,
+        "efficiency": 0.34412145146485706,
+        "buys": 33,
+        "sells": 7,
+        "principal_final": 332884.0
+      },
+      "etf_v3": {
+        "etf_code": "512100",
+        "etf_name": "南方中证1000ETF",
+        "principal_annual": 0.0273,
+        "xirr": 0.3448,
+        "sharpe": 0.7052755872940029,
+        "max_drawdown": 0.011820618658422273,
+        "occupancy": 0.06891094736842106,
+        "efficiency": 0.40099104696090276,
+        "buys": 9,
+        "sells": 6,
+        "principal_final": 315093.0
+      }
+    },
+    {
+      "code": "399006",
+      "name": "创业板指",
+      "base": {
+        "principal_annual": 0.1069,
+        "xirr": 0.2585,
+        "sharpe": 0.5437557864619055,
+        "max_drawdown": 0.21305836203713233,
+        "occupancy": 0.44331489028213167,
+        "efficiency": 0.319370312079529,
+        "buys": 48,
+        "sells": 0,
+        "principal_final": 563743.0
+      },
+      "v2": {
+        "principal_annual": 0.1135,
+        "xirr": 0.3067,
+        "sharpe": 0.5872576833892273,
+        "max_drawdown": 0.2134245744398529,
+        "occupancy": 0.4036621630094044,
+        "efficiency": 0.37891206469300714,
+        "buys": 68,
+        "sells": 0,
+        "principal_final": 584925.0
+      },
+      "v3": {
+        "principal_annual": 0.1135,
+        "xirr": 0.3067,
+        "sharpe": 0.5872576833892273,
+        "max_drawdown": 0.2134245744398529,
+        "occupancy": 0.4036621630094044,
+        "efficiency": 0.37891206469300714,
+        "buys": 68,
+        "sells": 0,
+        "principal_final": 584925.0
+      },
+      "etf_base": {
+        "etf_code": "159915",
+        "etf_name": "易方达创业板ETF",
+        "principal_annual": 0.1123,
+        "xirr": 0.2747,
+        "sharpe": 0.5541467477496953,
+        "max_drawdown": 0.21004000523790536,
+        "occupancy": 0.4389235423197492,
+        "efficiency": 0.34342310278392524,
+        "buys": 49,
+        "sells": 0,
+        "principal_final": 580797.0
+      },
+      "etf_v2": {
+        "etf_code": "159915",
+        "etf_name": "易方达创业板ETF",
+        "principal_annual": 0.12,
+        "xirr": 0.3279,
+        "sharpe": 0.5968560942377417,
+        "max_drawdown": 0.21096496664563238,
+        "occupancy": 0.401190355276907,
+        "efficiency": 0.4097486178329187,
+        "buys": 70,
+        "sells": 0,
+        "principal_final": 606226.0
+      },
+      "etf_v3": {
+        "etf_code": "159915",
+        "etf_name": "易方达创业板ETF",
+        "principal_annual": 0.12,
+        "xirr": 0.3279,
+        "sharpe": 0.5968560942377417,
+        "max_drawdown": 0.21096496664563238,
+        "occupancy": 0.401190355276907,
+        "efficiency": 0.4097486178329187,
+        "buys": 70,
+        "sells": 0,
+        "principal_final": 606226.0
+      }
+    },
+    {
+      "code": "399330",
+      "name": "深证100",
+      "base": {
+        "principal_annual": 0.0738,
+        "xirr": 0.1572,
+        "sharpe": 0.5171197114639735,
+        "max_drawdown": 0.39583775630954865,
+        "occupancy": 0.33850968299711814,
+        "efficiency": 0.3535361834512746,
+        "buys": 169,
+        "sells": 25,
+        "principal_final": 785779.0
+      },
+      "v2": {
+        "principal_annual": 0.0516,
+        "xirr": 0.2333,
+        "sharpe": 0.568898261467856,
+        "max_drawdown": 0.168705490336338,
+        "occupancy": 0.10859405379442844,
+        "efficiency": 0.6635349170734721,
+        "buys": 169,
+        "sells": 36,
+        "principal_final": 592485.0
+      },
+      "v3": {
+        "principal_annual": 0.0527,
+        "xirr": 0.2331,
+        "sharpe": 0.573052049213332,
+        "max_drawdown": 0.168705490336338,
+        "occupancy": 0.11461189721421709,
+        "efficiency": 0.6467466350745804,
+        "buys": 155,
+        "sells": 33,
+        "principal_final": 600883.0
+      },
+      "etf_base": {
+        "etf_code": "159901",
+        "etf_name": "易方达深证100ETF",
+        "principal_annual": 0.0747,
+        "xirr": 0.1641,
+        "sharpe": 0.5391123490527253,
+        "max_drawdown": 0.3604288435954192,
+        "occupancy": 0.3146528914505284,
+        "efficiency": 0.3877689373802425,
+        "buys": 169,
+        "sells": 24,
+        "principal_final": 795266.0
+      },
+      "etf_v2": {
+        "etf_code": "159901",
+        "etf_name": "易方达深证100ETF",
+        "principal_annual": 0.0508,
+        "xirr": 0.2361,
+        "sharpe": 0.5850140029787243,
+        "max_drawdown": 0.1491644320899259,
+        "occupancy": 0.10080800672430355,
+        "efficiency": 0.6999645700440194,
+        "buys": 169,
+        "sells": 29,
+        "principal_final": 586421.0
+      },
+      "etf_v3": {
+        "etf_code": "159901",
+        "etf_name": "易方达深证100ETF",
+        "principal_annual": 0.0519,
+        "xirr": 0.2354,
+        "sharpe": 0.5865103247821023,
+        "max_drawdown": 0.1491644320899259,
+        "occupancy": 0.10858510566762729,
+        "efficiency": 0.6684176004129582,
+        "buys": 155,
+        "sells": 26,
+        "principal_final": 594613.0
+      }
+    },
+    {
+      "code": "HSI",
+      "name": "恒生指数",
+      "base": {
+        "principal_annual": 0.0402,
+        "xirr": 0.0496,
+        "sharpe": -0.014875666988123211,
+        "max_drawdown": 0.3455525010428341,
+        "occupancy": 0.7536866892502257,
+        "efficiency": 0.06988240936651488,
+        "buys": 142,
+        "sells": 9,
+        "principal_final": 523180.0
+      },
+      "v2": {
+        "principal_annual": 0.0447,
+        "xirr": 0.0597,
+        "sharpe": -0.008997608066056095,
+        "max_drawdown": 0.34706806123071293,
+        "occupancy": 0.6511060252935862,
+        "efficiency": 0.09288112461972124,
+        "buys": 187,
+        "sells": 17,
+        "principal_final": 556257.0
+      },
+      "v3": {
+        "principal_annual": 0.0243,
+        "xirr": 0.0277,
+        "sharpe": -0.04672704413886454,
+        "max_drawdown": 0.4717218383069769,
+        "occupancy": 0.8556407046070461,
+        "efficiency": 0.0334145351529693,
+        "buys": 87,
+        "sells": 10,
+        "principal_final": 421150.0
+      },
+      "etf_base": {
+        "etf_code": "159920",
+        "etf_name": "华夏恒生ETF",
+        "principal_annual": 0.0539,
+        "xirr": 0.0664,
+        "sharpe": 0.33695207707510044,
+        "max_drawdown": 0.2851500809411416,
+        "occupancy": 0.7446389459084605,
+        "efficiency": 0.1034244594370392,
+        "buys": 147,
+        "sells": 8,
+        "principal_final": 618809.0
+      },
+      "etf_v2": {
+        "etf_code": "159920",
+        "etf_name": "华夏恒生ETF",
+        "principal_annual": 0.0541,
+        "xirr": 0.076,
+        "sharpe": 0.36171868303911137,
+        "max_drawdown": 0.28473500714841105,
+        "occupancy": 0.591277891816921,
+        "efficiency": 0.13105637077837765,
+        "buys": 189,
+        "sells": 17,
+        "principal_final": 620783.0
+      },
+      "etf_v3": {
+        "etf_code": "159920",
+        "etf_name": "华夏恒生ETF",
+        "principal_annual": 0.036,
+        "xirr": 0.04,
+        "sharpe": 0.21664957908757096,
+        "max_drawdown": 0.4503058984202858,
+        "occupancy": 0.8835296070272769,
+        "efficiency": 0.05155317050824367,
+        "buys": 57,
+        "sells": 9,
+        "principal_final": 488555.0
+      }
+    },
+    {
+      "code": "HSTECH",
+      "name": "恒生科技",
+      "base": {
+        "principal_annual": 0.0768,
+        "xirr": 0.1323,
+        "sharpe": 0.38583342139112853,
+        "max_drawdown": 0.29344610862062287,
+        "occupancy": 0.5697547291666667,
+        "efficiency": 0.1456786869781022,
+        "buys": 36,
+        "sells": 1,
+        "principal_final": 375877.0
+      },
+      "v2": {
+        "principal_annual": 0.0429,
+        "xirr": 0.1318,
+        "sharpe": 0.2868596533114406,
+        "max_drawdown": 0.19461962972783434,
+        "occupancy": 0.3095394791666667,
+        "efficiency": 0.14483805944551925,
+        "buys": 36,
+        "sells": 1,
+        "principal_final": 340985.0
+      },
+      "v3": {
+        "principal_annual": 0.0419,
+        "xirr": 0.1286,
+        "sharpe": 0.27947980129881334,
+        "max_drawdown": 0.19461962972783434,
+        "occupancy": 0.31088197916666666,
+        "efficiency": 0.14075022766326584,
+        "buys": 36,
+        "sells": 0,
+        "principal_final": 340001.0
+      },
+      "etf_base": {
+        "etf_code": "513180",
+        "etf_name": "华夏恒生科技ETF",
+        "principal_annual": 0.0591,
+        "xirr": 0.1026,
+        "sharpe": 0.32643416822654736,
+        "max_drawdown": 0.31096528673600593,
+        "occupancy": 0.5674478958333333,
+        "efficiency": 0.11065211209196667,
+        "buys": 36,
+        "sells": 1,
+        "principal_final": 357400.0
+      },
+      "etf_v2": {
+        "etf_code": "513180",
+        "etf_name": "华夏恒生科技ETF",
+        "principal_annual": 0.0339,
+        "xirr": 0.0954,
+        "sharpe": 0.22635742312565185,
+        "max_drawdown": 0.2191237612659794,
+        "occupancy": 0.3432852708333333,
+        "efficiency": 0.10231643883185154,
+        "buys": 36,
+        "sells": 1,
+        "principal_final": 332109.0
+      },
+      "etf_v3": {
+        "etf_code": "513180",
+        "etf_name": "华夏恒生科技ETF",
+        "principal_annual": 0.033,
+        "xirr": 0.0927,
+        "sharpe": 0.2191554133672955,
+        "max_drawdown": 0.2191237612659794,
+        "occupancy": 0.34464339583333337,
+        "efficiency": 0.09909475174895663,
+        "buys": 36,
+        "sells": 0,
+        "principal_final": 331221.0
+      }
+    },
+    {
+      "code": "SPX500",
+      "name": "标普500",
+      "base": {
+        "principal_annual": 0.0088,
+        "xirr": 0.0597,
+        "sharpe": -0.024478601647054295,
+        "max_drawdown": 0.560256730849379,
+        "occupancy": 0.14479777097366808,
+        "efficiency": 0.08025224584313599,
+        "buys": 85,
+        "sells": 76,
+        "principal_final": 517897.0
+      },
+      "v2": {
+        "principal_annual": 0.0076,
+        "xirr": 0.0542,
+        "sharpe": -0.04097021416415047,
+        "max_drawdown": 0.5615799518301331,
+        "occupancy": 0.138167558685446,
+        "efficiency": 0.07050375542680935,
+        "buys": 95,
+        "sells": 91,
+        "principal_final": 482483.0
+      },
+      "v3": {
+        "principal_annual": 0.0095,
+        "xirr": 0.0593,
+        "sharpe": -0.012375912359513044,
+        "max_drawdown": 0.5615799518301331,
+        "occupancy": 0.1534316850377628,
+        "efficiency": 0.08420366477529681,
+        "buys": 75,
+        "sells": 73,
+        "principal_final": 542314.0
+      },
+      "etf_base": {
+        "etf_code": "513500",
+        "etf_name": "博时标普500ETF",
+        "principal_annual": 0.0,
+        "xirr": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "occupancy": 0.0,
+        "efficiency": null,
+        "buys": 0,
+        "sells": 0,
+        "principal_final": 300000.0
+      },
+      "etf_v2": {
+        "etf_code": "513500",
+        "etf_name": "博时标普500ETF",
+        "principal_annual": 0.0,
+        "xirr": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "occupancy": 0.0,
+        "efficiency": null,
+        "buys": 0,
+        "sells": 0,
+        "principal_final": 300000.0
+      },
+      "etf_v3": {
+        "etf_code": "513500",
+        "etf_name": "博时标普500ETF",
+        "principal_annual": 0.0,
+        "xirr": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "occupancy": 0.0,
+        "efficiency": null,
+        "buys": 0,
+        "sells": 0,
+        "principal_final": 300000.0
+      }
+    },
+    {
+      "code": "NDX100",
+      "name": "纳斯达克100",
+      "base": {
+        "principal_annual": 0.0,
+        "xirr": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "occupancy": 0.0,
+        "efficiency": null,
+        "buys": 0,
+        "sells": 0,
+        "principal_final": 300000.0
+      },
+      "v2": {
+        "principal_annual": 0.0,
+        "xirr": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "occupancy": 0.0,
+        "efficiency": null,
+        "buys": 0,
+        "sells": 0,
+        "principal_final": 300000.0
+      },
+      "v3": {
+        "principal_annual": 0.0,
+        "xirr": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "occupancy": 0.0,
+        "efficiency": null,
+        "buys": 0,
+        "sells": 0,
+        "principal_final": 300000.0
+      },
+      "etf_base": {
+        "etf_code": "513100",
+        "etf_name": "国泰纳指100ETF",
+        "principal_annual": 0.0,
+        "xirr": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "occupancy": 0.0,
+        "efficiency": null,
+        "buys": 0,
+        "sells": 0,
+        "principal_final": 300000.0
+      },
+      "etf_v2": {
+        "etf_code": "513100",
+        "etf_name": "国泰纳指100ETF",
+        "principal_annual": 0.0,
+        "xirr": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "occupancy": 0.0,
+        "efficiency": null,
+        "buys": 0,
+        "sells": 0,
+        "principal_final": 300000.0
+      },
+      "etf_v3": {
+        "etf_code": "513100",
+        "etf_name": "国泰纳指100ETF",
+        "principal_annual": 0.0,
+        "xirr": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "occupancy": 0.0,
+        "efficiency": null,
+        "buys": 0,
+        "sells": 0,
+        "principal_final": 300000.0
+      }
+    },
+    {
+      "code": "930931",
+      "name": "港股通50",
+      "base": {
+        "principal_annual": 0.0751,
+        "xirr": 0.0924,
+        "sharpe": 0.3963233049225652,
+        "max_drawdown": 0.29411218047383675,
+        "occupancy": 0.7943505555555556,
+        "efficiency": 0.1080566268904807,
+        "buys": 38,
+        "sells": 3,
+        "principal_final": 417948.0
+      },
+      "v2": {
+        "principal_annual": 0.0942,
+        "xirr": 0.1615,
+        "sharpe": 0.5599369411929004,
+        "max_drawdown": 0.17187087639988946,
+        "occupancy": 0.545583763888889,
+        "efficiency": 0.20428395809412975,
+        "buys": 68,
+        "sells": 8,
+        "principal_final": 453152.0
+      },
+      "v3": {
+        "principal_annual": 0.0941,
+        "xirr": 0.162,
+        "sharpe": 0.5606689612805341,
+        "max_drawdown": 0.17091846239831088,
+        "occupancy": 0.5428506805555555,
+        "efficiency": 0.20498670303843283,
+        "buys": 67,
+        "sells": 8,
+        "principal_final": 452909.0
+      }
+    },
+    {
+      "code": "930930",
+      "name": "港股综合",
+      "base": {
+        "principal_annual": 0.0682,
+        "xirr": 0.3241,
+        "sharpe": 0.7361977982251927,
+        "max_drawdown": 0.08173210885617424,
+        "occupancy": 0.18193771428571429,
+        "efficiency": 0.40542835000787175,
+        "buys": 17,
+        "sells": 12,
+        "principal_final": 373793.0
+      },
+      "v2": {
+        "principal_annual": 0.0302,
+        "xirr": 0.3472,
+        "sharpe": 0.5000137389328495,
+        "max_drawdown": 0.03495824190830289,
+        "occupancy": 0.07091897142857144,
+        "efficiency": 0.4406178833071261,
+        "buys": 17,
+        "sells": 16,
+        "principal_final": 331261.0
+      },
+      "v3": {
+        "principal_annual": 0.0323,
+        "xirr": 0.3157,
+        "sharpe": 0.503180179883301,
+        "max_drawdown": 0.04369361401026004,
+        "occupancy": 0.08558699047619048,
+        "efficiency": 0.3918028717560646,
+        "buys": 17,
+        "sells": 15,
+        "principal_final": 333547.0
+      }
+    },
+    {
+      "code": "000688",
+      "name": "科创50",
+      "base": {
+        "principal_annual": 0.0188,
+        "xirr": 0.0453,
+        "sharpe": 0.1190683440941422,
+        "max_drawdown": 0.30813886098446797,
+        "occupancy": 0.39616048128342246,
+        "efficiency": 0.0486774991823657,
+        "buys": 50,
+        "sells": 19,
+        "principal_final": 321066.0
+      },
+      "v2": {
+        "principal_annual": 0.0353,
+        "xirr": 0.1048,
+        "sharpe": 0.22512180039973625,
+        "max_drawdown": 0.2447027878354901,
+        "occupancy": 0.31256376114081996,
+        "efficiency": 0.1184259541766219,
+        "buys": 79,
+        "sells": 20,
+        "principal_final": 340436.0
+      },
+      "v3": {
+        "principal_annual": 0.0732,
+        "xirr": 0.1972,
+        "sharpe": 0.5159748692768309,
+        "max_drawdown": 0.18679634350289825,
+        "occupancy": 0.3296719964349376,
+        "efficiency": 0.24450864801083178,
+        "buys": 53,
+        "sells": 13,
+        "principal_final": 388056.0
+      },
+      "etf_base": {
+        "etf_code": "588000",
+        "etf_name": "华夏科创50ETF",
+        "principal_annual": 0.022,
+        "xirr": 0.0532,
+        "sharpe": 0.13834091195169912,
+        "max_drawdown": 0.3084404071922688,
+        "occupancy": 0.3925277183600713,
+        "efficiency": 0.05766581413841459,
+        "buys": 51,
+        "sells": 19,
+        "principal_final": 324727.0
+      },
+      "etf_v2": {
+        "etf_code": "588000",
+        "etf_name": "华夏科创50ETF",
+        "principal_annual": 0.0359,
+        "xirr": 0.1023,
+        "sharpe": 0.22131183523155465,
+        "max_drawdown": 0.2555492518261116,
+        "occupancy": 0.3247279679144385,
+        "efficiency": 0.11574600280693313,
+        "buys": 78,
+        "sells": 20,
+        "principal_final": 341059.0
+      },
+      "etf_v3": {
+        "etf_code": "588000",
+        "etf_name": "华夏科创50ETF",
+        "principal_annual": 0.0763,
+        "xirr": 0.1952,
+        "sharpe": 0.5024858798359985,
+        "max_drawdown": 0.19958932635338564,
+        "occupancy": 0.3475737254901961,
+        "efficiency": 0.24268720361344195,
+        "buys": 53,
+        "sells": 13,
+        "principal_final": 392146.0
+      }
+    }
+  ]
+}

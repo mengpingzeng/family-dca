@@ -1,0 +1,359 @@
+{
+  "title": "档位结构调整 (低位多买/高位少买)",
+  "note": "固定30万口径: 从回测区间第一天(pe_pct首次有效)固化30万, 闲置部分无息",
+  "cost_model": {
+    "commission_rate": 0.0005,
+    "min_commission": 5.0,
+    "lot_size": 0
+  },
+  "principal_threshold": 200000,
+  "principal_cap": 300000,
+  "principal_pool": 300000,
+  "base_amount": 1000,
+  "strategies": {
+    "策略B": {
+      "buy_signal": "PB",
+      "buy_gate": "FED",
+      "buy_gate_cap": 0.55,
+      "sell_signal": "PE",
+      "sell_gate": null,
+      "sell_gate_floor": null,
+      "buy_floor": 0.1,
+      "buy_low": 0.15,
+      "buy_mid": 0.3,
+      "buy_high": 0.7,
+      "sell_heavy": 0.85,
+      "sell_extreme": 0.95
+    },
+    "固定年化最优": {
+      "buy_signal": "PB",
+      "buy_gate": "PB",
+      "buy_gate_cap": 0.6,
+      "sell_signal": "FED",
+      "sell_gate": "PB",
+      "sell_gate_floor": 0.7,
+      "buy_floor": 0.1,
+      "buy_low": 0.2,
+      "buy_mid": 0.3,
+      "buy_high": 0.5,
+      "sell_heavy": 0.8,
+      "sell_extreme": 0.95
+    }
+  },
+  "tiers": {
+    "3/2/1/0.5x": [
+      3,
+      2,
+      1,
+      0.5
+    ],
+    "3/2/1/0x": [
+      3,
+      2,
+      1,
+      0
+    ],
+    "4/2/1/0x": [
+      4,
+      2,
+      1,
+      0
+    ],
+    "5/3/1/0x": [
+      5,
+      3,
+      1,
+      0
+    ]
+  },
+  "combos": [
+    {
+      "strategy": "策略B",
+      "tier": "3/2/1/0.5x",
+      "mults": [
+        3,
+        2,
+        1,
+        0.5
+      ],
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "xirr": 0.1151,
+          "final_return": 0.3732,
+          "total_invested": 298645.0,
+          "principal_final": 411443.0,
+          "principal_annual": 0.0283,
+          "principal_return": 0.3715,
+          "buys": 229,
+          "sells": 24
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "xirr": 0.0674,
+          "final_return": 0.6092,
+          "total_invested": 297755.0,
+          "principal_final": 481400.0,
+          "principal_annual": 0.0506,
+          "principal_return": 0.6047,
+          "buys": 151,
+          "sells": 8
+        }
+      ]
+    },
+    {
+      "strategy": "策略B",
+      "tier": "3/2/1/0x",
+      "mults": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "xirr": 0.1197,
+          "final_return": 0.3733,
+          "total_invested": 297960.0,
+          "principal_final": 411239.0,
+          "principal_annual": 0.0282,
+          "principal_return": 0.3708,
+          "buys": 192,
+          "sells": 24
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "xirr": 0.0713,
+          "final_return": 0.6255,
+          "total_invested": 299570.0,
+          "principal_final": 487396.0,
+          "principal_annual": 0.0519,
+          "principal_return": 0.6247,
+          "buys": 114,
+          "sells": 8
+        }
+      ]
+    },
+    {
+      "strategy": "策略B",
+      "tier": "4/2/1/0x",
+      "mults": [
+        4,
+        2,
+        1,
+        0
+      ],
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "xirr": 0.123,
+          "final_return": 0.3835,
+          "total_invested": 297915.0,
+          "principal_final": 414257.0,
+          "principal_annual": 0.0289,
+          "principal_return": 0.3809,
+          "buys": 183,
+          "sells": 24
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "xirr": 0.0714,
+          "final_return": 0.6524,
+          "total_invested": 298445.0,
+          "principal_final": 494710.0,
+          "principal_annual": 0.0536,
+          "principal_return": 0.649,
+          "buys": 89,
+          "sells": 8
+        }
+      ]
+    },
+    {
+      "strategy": "策略B",
+      "tier": "5/3/1/0x",
+      "mults": [
+        5,
+        3,
+        1,
+        0
+      ],
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "xirr": 0.1311,
+          "final_return": 0.4204,
+          "total_invested": 298780.0,
+          "principal_final": 425596.0,
+          "principal_annual": 0.0314,
+          "principal_return": 0.4187,
+          "buys": 156,
+          "sells": 24
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "xirr": 0.0701,
+          "final_return": 0.6543,
+          "total_invested": 298370.0,
+          "principal_final": 495234.0,
+          "principal_annual": 0.0537,
+          "principal_return": 0.6508,
+          "buys": 74,
+          "sells": 8
+        }
+      ]
+    },
+    {
+      "strategy": "固定年化最优",
+      "tier": "3/2/1/0.5x",
+      "mults": [
+        3,
+        2,
+        1,
+        0.5
+      ],
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "xirr": 0.1005,
+          "final_return": 0.4739,
+          "total_invested": 299125.0,
+          "principal_final": 441758.0,
+          "principal_annual": 0.0348,
+          "principal_return": 0.4725,
+          "buys": 225,
+          "sells": 7
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "xirr": 0.0608,
+          "final_return": 0.5739,
+          "total_invested": 299260.0,
+          "principal_final": 471743.0,
+          "principal_annual": 0.0484,
+          "principal_return": 0.5725,
+          "buys": 152,
+          "sells": 0
+        }
+      ]
+    },
+    {
+      "strategy": "固定年化最优",
+      "tier": "3/2/1/0x",
+      "mults": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "xirr": 0.1056,
+          "final_return": 0.4647,
+          "total_invested": 299870.0,
+          "principal_final": 439340.0,
+          "principal_annual": 0.0343,
+          "principal_return": 0.4645,
+          "buys": 174,
+          "sells": 7
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "xirr": 0.0647,
+          "final_return": 0.5929,
+          "total_invested": 299555.0,
+          "principal_final": 477614.0,
+          "principal_annual": 0.0497,
+          "principal_return": 0.592,
+          "buys": 111,
+          "sells": 0
+        }
+      ]
+    },
+    {
+      "strategy": "固定年化最优",
+      "tier": "4/2/1/0x",
+      "mults": [
+        4,
+        2,
+        1,
+        0
+      ],
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "xirr": 0.1092,
+          "final_return": 0.4838,
+          "total_invested": 299825.0,
+          "principal_final": 445046.0,
+          "principal_annual": 0.0354,
+          "principal_return": 0.4835,
+          "buys": 165,
+          "sells": 7
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "xirr": 0.0648,
+          "final_return": 0.6168,
+          "total_invested": 296435.0,
+          "principal_final": 482835.0,
+          "principal_annual": 0.0509,
+          "principal_return": 0.6095,
+          "buys": 87,
+          "sells": 0
+        }
+      ]
+    },
+    {
+      "strategy": "固定年化最优",
+      "tier": "5/3/1/0x",
+      "mults": [
+        5,
+        3,
+        1,
+        0
+      ],
+      "results": [
+        {
+          "code": "000300",
+          "name": "沪深300",
+          "xirr": 0.114,
+          "final_return": 0.5529,
+          "total_invested": 299635.0,
+          "principal_final": 465675.0,
+          "principal_annual": 0.0396,
+          "principal_return": 0.5523,
+          "buys": 127,
+          "sells": 7
+        },
+        {
+          "code": "000905",
+          "name": "中证500",
+          "xirr": 0.0628,
+          "final_return": 0.6095,
+          "total_invested": 298360.0,
+          "principal_final": 481858.0,
+          "principal_annual": 0.0507,
+          "principal_return": 0.6062,
+          "buys": 72,
+          "sells": 0
+        }
+      ]
+    }
+  ]
+}
