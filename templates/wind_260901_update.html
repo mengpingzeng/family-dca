@@ -23,6 +23,7 @@ header h1{font-size:20px;font-weight:600}
 .tag-mode{background:#1e40af;color:#93c5fd}
 .tag-cap{background:#854d0e;color:#fbbf24}
 .tag-new{background:#9d174d;color:#f9a8d4}
+.tag-train{background:#312e81;color:#c7d2fe}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #334155;white-space:nowrap}
 th{color:#94a3b8;font-weight:600;position:sticky;top:0;background:#1e293b}
@@ -56,7 +57,7 @@ tr.sel td{background:#1e40af22}
   </div>
 
   <div class="card">
-    <h2>策略对比 (harvest vs balanced, 12 测试集指数)</h2>
+    <h2>策略对比 (harvest vs balanced, 14 指数)</h2>
     <table id="compare-table"><thead><tr>
       <th class="l">指数</th><th>harvest年化</th><th>balanced年化</th><th>Δ年化</th>
       <th>harvest夏普</th><th>balanced夏普</th><th>Δ夏普</th>
@@ -65,7 +66,7 @@ tr.sel td{background:#1e40af22}
   </div>
 
   <div class="card">
-    <h2>harvest 明细 (12 测试集指数)</h2>
+    <h2>harvest 明细 (14 指数)</h2>
     <div style="max-height:420px;overflow-y:auto"><table id="test-table"><thead><tr>
       <th class="l">指数</th><th>窗口</th><th>固定年化</th><th>XIRR</th><th>夏普</th><th>满仓持有年化</th>
       <th>账户终值</th><th>买/卖/收割</th><th>抽出利润</th>
@@ -123,7 +124,8 @@ function renderCompare(){
     const dh=c.delta_annual, ds=c.delta_sharpe;
     const cls=d=>d>0.0005?'green':(d<-0.0005?'red':'dim');
     const win=dh>0.0005?'harvest优':(dh<-0.0005?'balanced优':'持平');
-    tr.innerHTML='<td class="l">'+c.name+'</td>'+
+    const tag=c.train?' <span class="tag tag-train">训练</span>':'';
+    tr.innerHTML='<td class="l">'+c.name+tag+'</td>'+
       '<td class="'+(h.principal_annual>0?'green':'dim')+'">'+fmtPct(h.principal_annual)+'</td>'+
       '<td>'+fmtPct(b.principal_annual)+'</td>'+
       '<td class="'+cls(dh)+'">'+(dh>=0?'+':'')+(dh*100).toFixed(2)+'pp</td>'+
@@ -143,7 +145,9 @@ function renderTest(){
   tb.innerHTML='';
   data.harvest_results.forEach(h=>{
     const tr=document.createElement('tr');
-    tr.innerHTML='<td class="l">'+h.name+'</td><td>'+h.window+'yr</td>'+
+    const isTrain=data.compare.some(c=>c.code===h.code && c.train);
+    const tag=isTrain?' <span class="tag tag-train">训练</span>':'';
+    tr.innerHTML='<td class="l">'+h.name+tag+'</td><td>'+h.window+'yr</td>'+
       '<td class="green">'+fmtPct(h.principal_annual)+'</td>'+
       '<td>'+fmtX(h.xirr)+'</td>'+
       '<td>'+(h.sharpe==null?'—':h.sharpe.toFixed(2))+'</td>'+

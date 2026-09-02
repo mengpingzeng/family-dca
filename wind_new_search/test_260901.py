@@ -130,19 +130,22 @@ def main():
               f"(夏普{h['sharpe']}) vs balanced {b['principal_annual']*100:.2f}% (训练)")
 
     print()
+    ALL_CODES = TRAIN_CODES + TEST_CODES
     harvest_results, balanced_results, compare = [], [], []
-    for code in TEST_CODES:
+    for code in ALL_CODES:
         h = backtest_harvest(code)
         b = backtest_balanced(code)
         harvest_results.append(h); balanced_results.append(b)
         dh = h["principal_annual"] - b["principal_annual"]
         dsharpe = (h["sharpe"] or 0) - (b["sharpe"] or 0)
         compare.append({"code": code, "name": h["name"], "window": h["window"],
+                        "train": code in TRAIN_CODES,
                         "harvest": h, "balanced": b,
                         "delta_annual": round(dh, 4), "delta_sharpe": round(dsharpe, 4)})
+        tag = "(训练)" if code in TRAIN_CODES else ""
         print(f"{code} {h['name']:8} harvest{h['principal_annual']*100:6.2f}% "
               f"vs balanced {b['principal_annual']*100:6.2f}%  Δ{dh*100:+5.2f}pp  "
-              f"买{h['buys']}/卖{h['sells']}/收割{h['harvests']} 抽¥{h['withdrawn']:,.0f}")
+              f"买{h['buys']}/卖{h['sells']}/收割{h['harvests']} 抽¥{h['withdrawn']:,.0f} {tag}")
 
     def _med(rows):
         vals = [r["principal_annual"] for r in rows if r["principal_annual"] > 0.005]

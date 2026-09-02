@@ -110,6 +110,42 @@
   },
   "harvest_results": [
     {
+      "code": "000300",
+      "name": "沪深300",
+      "window": 10,
+      "xirr": 0.2921,
+      "final_return": -0.9068,
+      "total_invested": 943050.0,
+      "withdrawn": 1029370.0,
+      "final_value": 87848.0,
+      "position_value": 0,
+      "principal_final": 474169.0,
+      "principal_annual": 0.0412,
+      "buys": 210,
+      "sells": 1,
+      "harvests": 36,
+      "buy_hold_annual": 0.0013,
+      "sharpe": 0.723
+    },
+    {
+      "code": "000905",
+      "name": "中证500",
+      "window": 10,
+      "xirr": 0.114,
+      "final_return": 0.2256,
+      "total_invested": 298235.0,
+      "withdrawn": 122221.0,
+      "final_value": 365524.0,
+      "position_value": 276253.0,
+      "principal_final": 489510.0,
+      "principal_annual": 0.0524,
+      "buys": 47,
+      "sells": 1,
+      "harvests": 8,
+      "buy_hold_annual": 0.0269,
+      "sharpe": 0.547
+    },
+    {
       "code": "000015",
       "name": "上证红利",
       "window": 10,
@@ -328,6 +364,38 @@
   ],
   "balanced_results": [
     {
+      "code": "000300",
+      "name": "沪深300",
+      "window": 10,
+      "xirr": 0.1276,
+      "final_return": 0.3744,
+      "total_invested": 720815.0,
+      "final_value": 990672.0,
+      "position_value": 39519.0,
+      "principal_final": 569857.0,
+      "principal_annual": 0.0583,
+      "buys": 163,
+      "sells": 24,
+      "buy_hold_annual": 0.0013,
+      "sharpe": 0.888
+    },
+    {
+      "code": "000905",
+      "name": "中证500",
+      "window": 10,
+      "xirr": 0.0692,
+      "final_return": 0.6674,
+      "total_invested": 298235.0,
+      "final_value": 497269.0,
+      "position_value": 81896.0,
+      "principal_final": 499034.0,
+      "principal_annual": 0.0545,
+      "buys": 47,
+      "sells": 8,
+      "buy_hold_annual": 0.0269,
+      "sharpe": 0.565
+    },
+    {
       "code": "000015",
       "name": "上证红利",
       "window": 10,
@@ -522,9 +590,94 @@
   ],
   "compare": [
     {
+      "code": "000300",
+      "name": "沪深300",
+      "window": 10,
+      "train": true,
+      "harvest": {
+        "code": "000300",
+        "name": "沪深300",
+        "window": 10,
+        "xirr": 0.2921,
+        "final_return": -0.9068,
+        "total_invested": 943050.0,
+        "withdrawn": 1029370.0,
+        "final_value": 87848.0,
+        "position_value": 0,
+        "principal_final": 474169.0,
+        "principal_annual": 0.0412,
+        "buys": 210,
+        "sells": 1,
+        "harvests": 36,
+        "buy_hold_annual": 0.0013,
+        "sharpe": 0.723
+      },
+      "balanced": {
+        "code": "000300",
+        "name": "沪深300",
+        "window": 10,
+        "xirr": 0.1276,
+        "final_return": 0.3744,
+        "total_invested": 720815.0,
+        "final_value": 990672.0,
+        "position_value": 39519.0,
+        "principal_final": 569857.0,
+        "principal_annual": 0.0583,
+        "buys": 163,
+        "sells": 24,
+        "buy_hold_annual": 0.0013,
+        "sharpe": 0.888
+      },
+      "delta_annual": -0.0171,
+      "delta_sharpe": -0.165
+    },
+    {
+      "code": "000905",
+      "name": "中证500",
+      "window": 10,
+      "train": true,
+      "harvest": {
+        "code": "000905",
+        "name": "中证500",
+        "window": 10,
+        "xirr": 0.114,
+        "final_return": 0.2256,
+        "total_invested": 298235.0,
+        "withdrawn": 122221.0,
+        "final_value": 365524.0,
+        "position_value": 276253.0,
+        "principal_final": 489510.0,
+        "principal_annual": 0.0524,
+        "buys": 47,
+        "sells": 1,
+        "harvests": 8,
+        "buy_hold_annual": 0.0269,
+        "sharpe": 0.547
+      },
+      "balanced": {
+        "code": "000905",
+        "name": "中证500",
+        "window": 10,
+        "xirr": 0.0692,
+        "final_return": 0.6674,
+        "total_invested": 298235.0,
+        "final_value": 497269.0,
+        "position_value": 81896.0,
+        "principal_final": 499034.0,
+        "principal_annual": 0.0545,
+        "buys": 47,
+        "sells": 8,
+        "buy_hold_annual": 0.0269,
+        "sharpe": 0.565
+      },
+      "delta_annual": -0.0021,
+      "delta_sharpe": -0.018
+    },
+    {
       "code": "000015",
       "name": "上证红利",
       "window": 10,
+      "train": false,
       "harvest": {
         "code": "000015",
         "name": "上证红利",
@@ -566,6 +719,7 @@
       "code": "000016",
       "name": "上证50",
       "window": 10,
+      "train": false,
       "harvest": {
         "code": "000016",
         "name": "上证50",
@@ -607,6 +761,7 @@
       "code": "000852",
       "name": "中证1000",
       "window": 10,
+      "train": false,
       "harvest": {
         "code": "000852",
         "name": "中证1000",
@@ -648,6 +803,7 @@
       "code": "399006",
       "name": "创业板指",
       "window": 10,
+      "train": false,
       "harvest": {
         "code": "399006",
         "name": "创业板指",
@@ -689,6 +845,7 @@
       "code": "399330",
       "name": "深证100",
       "window": 10,
+      "train": false,
       "harvest": {
         "code": "399330",
         "name": "深证100",
@@ -730,6 +887,7 @@
       "code": "HSI",
       "name": "恒生指数",
       "window": 10,
+      "train": false,
       "harvest": {
         "code": "HSI",
         "name": "恒生指数",
@@ -771,6 +929,7 @@
       "code": "NDX100",
       "name": "纳斯达克100",
       "window": 10,
+      "train": false,
       "harvest": {
         "code": "NDX100",
         "name": "纳斯达克100",
@@ -812,6 +971,7 @@
       "code": "SPX500",
       "name": "标普500",
       "window": 10,
+      "train": false,
       "harvest": {
         "code": "SPX500",
         "name": "标普500",
@@ -853,6 +1013,7 @@
       "code": "930931",
       "name": "港股通50",
       "window": 5,
+      "train": false,
       "harvest": {
         "code": "930931",
         "name": "港股通50",
@@ -894,6 +1055,7 @@
       "code": "930930",
       "name": "港股综合",
       "window": 5,
+      "train": false,
       "harvest": {
         "code": "930930",
         "name": "港股综合",
@@ -935,6 +1097,7 @@
       "code": "000688",
       "name": "科创50",
       "window": 3,
+      "train": false,
       "harvest": {
         "code": "000688",
         "name": "科创50",
@@ -976,6 +1139,7 @@
       "code": "HSTECH",
       "name": "恒生科技",
       "window": 3,
+      "train": false,
       "harvest": {
         "code": "HSTECH",
         "name": "恒生科技",
@@ -1016,11 +1180,11 @@
   ],
   "summary": {
     "n_test": 12,
-    "harvest_annual_med": 0.0641,
-    "balanced_annual_med": 0.0682,
+    "harvest_annual_med": 0.0605,
+    "balanced_annual_med": 0.0663,
     "harvest_sharpe_med": 0.61,
     "balanced_sharpe_med": 0.664,
-    "harvest_avg_withdrawn": 410000.0,
+    "harvest_avg_withdrawn": 437633.0,
     "beats_annual": 4,
     "beats_sharpe": 4
   }
