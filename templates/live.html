@@ -83,7 +83,11 @@ tr.sel td{background:#1e40af22}
   </div>
 
   <div class="card">
-    <h2>成交流水表 (<span id="trades-name">—</span>)</h2>
+    <h2>成交流水表</h2>
+    <div class="tabs" style="margin-bottom:8px">
+      <select id="trades-select" onchange="selectTrades()"></select>
+      <span id="trades-name" class="dim"></span>
+    </div>
     <table id="trades-table">
       <thead><tr>
         <th class="l">日期</th><th class="l">方向</th><th>份额</th><th>价格(元)</th><th>金额(元)</th>
@@ -169,6 +173,17 @@ function selectCode(code){
   if(!code && live && live.rows.length) code=live.rows[0].code;
   curCode=code;
   document.getElementById('code-select').value=code;
+  document.getElementById('trades-select').value=code;
+  renderTable();
+  renderTrades(code);
+  loadCurve(code);
+}
+
+function selectTrades(){
+  const code=document.getElementById('trades-select').value;
+  if(!code) return;
+  document.getElementById('code-select').value=code;
+  curCode=code;
   renderTable();
   renderTrades(code);
   loadCurve(code);
@@ -326,9 +341,12 @@ async function init(){
   document.getElementById('rules').innerHTML=strategyText(live.strategy);
   document.getElementById('portfolio').innerHTML=portfolioText(live.rows);
   const sel=document.getElementById('code-select');
+  const selT=document.getElementById('trades-select');
   live.rows.forEach(r=>{
     const o=document.createElement('option');o.value=r.code;o.textContent=r.name;
     sel.appendChild(o);
+    const o2=document.createElement('option');o2.value=r.code;o2.textContent=r.name;
+    selT.appendChild(o2);
   });
   document.querySelectorAll('.tabs button').forEach(b=>{
     b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
