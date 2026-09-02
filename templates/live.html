@@ -82,6 +82,16 @@ tr.sel td{background:#1e40af22}
     <div class="chart-box" id="chart-trade"></div>
   </div>
 
+  <div class="card">
+    <h2>成交流水表 (<span id="trades-name">—</span>)</h2>
+    <table id="trades-table">
+      <thead><tr>
+        <th class="l">日期</th><th class="l">方向</th><th>份额</th><th>价格(元)</th><th>金额(元)</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
 </div>
 
 <script>
@@ -160,7 +170,31 @@ function selectCode(code){
   curCode=code;
   document.getElementById('code-select').value=code;
   renderTable();
+  renderTrades(code);
   loadCurve(code);
+}
+
+function renderTrades(code){
+  const row=live.rows.find(r=>r.code===code);
+  const tb=document.querySelector('#trades-table tbody');
+  document.getElementById('trades-name').textContent=row?row.name:'—';
+  tb.innerHTML='';
+  if(!row || !row.trades.length){
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td class="l dim" colspan="5">暂无成交记录（买入/卖出后点"📝 记录成交"记账）</td>';
+    tb.appendChild(tr);
+    return;
+  }
+  row.trades.slice().reverse().forEach(t=>{
+    const tr=document.createElement('tr');
+    const isBuy=t.action==='buy';
+    tr.innerHTML='<td class="l">'+t.date+'</td>'+
+      '<td class="l '+(isBuy?'sig-buy':'sig-sell')+'">'+(isBuy?'买入':'卖出')+'</td>'+
+      '<td>'+Number(t.shares).toLocaleString(undefined,{maximumFractionDigits:0})+'份</td>'+
+      '<td>'+Number(t.price).toFixed(3)+'</td>'+
+      '<td>'+fmtMoney(t.amount)+'</td>';
+    tb.appendChild(tr);
+  });
 }
 
 function fmtPctY(v){ return (v*100).toFixed(0)+'%'; }
