@@ -117,7 +117,8 @@ def run_harvest(df, params, base_amount=1000, commission_rate=0.0005,
             sell_month_done = False
             harvest_month_done = False
 
-        net_invested = total_invested - total_cash_in   # 净占用本金
+        pool_cash = total_cash_in - withdrawn          # 仍留在池内的现金 (已抽走的不算可用)
+        net_invested = total_invested - pool_cash        # 净占用本金 (买入封顶/底仓基准)
         floor_value = net_invested * floor_ratio         # 底仓市值 (永不卖穿)
         eq = shares * px                                  # 当前持仓市值
 
@@ -201,7 +202,8 @@ def run_harvest(df, params, base_amount=1000, commission_rate=0.0005,
         # ============ 买入 (每周≤1, 估值卖出当月不买; 收割当月仍可买) ============
         can_buy = (week_key != last_buy_week) and (not sell_month_done)
         if can_buy:
-            net_invested2 = total_invested - total_cash_in
+            pool_cash2 = total_cash_in - withdrawn
+            net_invested2 = total_invested - pool_cash2
             mult = mult_for(buy_exp[i], bf, bl, bm, bh, buy_mults)
             if mult > 0 and buy_gates:
                 for gp, cap in zip(gate_exps, buy_gate_caps):
