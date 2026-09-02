@@ -188,10 +188,10 @@ async function loadCurve(){
            {type:'value',scale:true,axisLabel:{color:'#94a3b8'},splitLine:{show:false}}],
     dataZoom:[{type:'slider',start:20,end:100,height:16,bottom:0}],
     series:[
-      {name:'PE%',type:'line',data:d.map(x=>x.pe_pct),lineStyle:{color:'#60a5fa',width:1.4},symbol:'none',connectNulls:true},
-      {name:'PB%',type:'line',data:d.map(x=>x.pb_pct),lineStyle:{color:'#a78bfa',width:1.4},symbol:'none',connectNulls:true},
-      {name:'FED%',type:'line',data:d.map(x=>x.fed_pct),lineStyle:{color:'#34d399',width:1.4},symbol:'none',connectNulls:true},
-      {name:'收盘价',type:'line',yAxisIndex:1,data:d.map(x=>x.price),lineStyle:{color:'#fbbf24',width:1.2},symbol:'none',connectNulls:true},
+      {name:'PE%',type:'line',data:d.map(x=>x.pe_pct),lineStyle:{color:'#60a5fa',width:1.4},itemStyle:{color:'#60a5fa'},symbol:'none',connectNulls:true},
+      {name:'PB%',type:'line',data:d.map(x=>x.pb_pct),lineStyle:{color:'#a78bfa',width:1.4},itemStyle:{color:'#a78bfa'},symbol:'none',connectNulls:true},
+      {name:'FED%',type:'line',data:d.map(x=>x.fed_pct),lineStyle:{color:'#34d399',width:1.4},itemStyle:{color:'#34d399'},symbol:'none',connectNulls:true},
+      {name:'收盘价',type:'line',yAxisIndex:1,data:d.map(x=>x.price),lineStyle:{color:'#fbbf24',width:1.2},itemStyle:{color:'#fbbf24'},symbol:'none',connectNulls:true},
     ]
   });
 
@@ -230,8 +230,8 @@ async function loadCurve(){
     yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
     dataZoom:[{type:'slider',start:20,end:100,height:16,bottom:0}],
     series:[
-      {name:'简单回报%',type:'line',data:d.map(x=>x.return_pct),lineStyle:{color:'#facc15',width:1.5},symbol:'none',connectNulls:true},
-      {name:'年化XIRR%',type:'line',data:d.map(x=>x.xirr!=null?(x.xirr*100).toFixed(2):null),lineStyle:{color:'#f97316',width:1.5},symbol:'none',connectNulls:true,
+      {name:'简单回报%',type:'line',data:d.map(x=>x.return_pct),lineStyle:{color:'#facc15',width:1.5},itemStyle:{color:'#facc15'},symbol:'none',connectNulls:true},
+      {name:'年化XIRR%',type:'line',data:d.map(x=>x.xirr!=null?(x.xirr*100).toFixed(2):null),lineStyle:{color:'#f97316',width:1.5},itemStyle:{color:'#f97316'},symbol:'none',connectNulls:true,
         markLine:{silent:true,symbol:'none',data:[{yAxis:0,lineStyle:{color:'#94a3b8',type:'dashed'}}]}},
     ]
   });

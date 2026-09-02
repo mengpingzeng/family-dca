@@ -236,16 +236,16 @@ async function loadCurve(code){
     ],
     dataZoom:[{type:'slider',start:30,end:100,height:14,bottom:0}],
     series:[
-      {name:'PE%',type:'line',data:pep,lineStyle:{color:'#60a5fa',width:1.4},symbol:'none',connectNulls:true},
-      {name:'PB%',type:'line',data:pbp,lineStyle:{color:'#a78bfa',width:1.4},symbol:'none',connectNulls:true},
-      {name:'FED%',type:'line',data:fed,lineStyle:{color:'#34d399',width:1.4},symbol:'none',connectNulls:true,
+      {name:'PE%',type:'line',data:pep,lineStyle:{color:'#60a5fa',width:1.4},itemStyle:{color:'#60a5fa'},symbol:'none',connectNulls:true},
+      {name:'PB%',type:'line',data:pbp,lineStyle:{color:'#a78bfa',width:1.4},itemStyle:{color:'#a78bfa'},symbol:'none',connectNulls:true},
+      {name:'FED%',type:'line',data:fed,lineStyle:{color:'#34d399',width:1.4},itemStyle:{color:'#34d399'},symbol:'none',connectNulls:true,
         markLine:{silent:true,symbol:'none',label:{color:'#94a3b8',fontSize:9},lineStyle:{color:'#64748b',type:'dashed'},data:[
           {yAxis:p.buy_floor,label:{formatter:'8x '+fmtPctY(p.buy_floor)}},
           {yAxis:p.buy_low,label:{formatter:'4x '+fmtPctY(p.buy_low)}},
           {yAxis:p.buy_mid,label:{formatter:'2x '+fmtPctY(p.buy_mid)}},
           {yAxis:p.sell_heavy,label:{formatter:'sell '+fmtPctY(p.sell_heavy)}},
           {yAxis:p.sell_extreme,label:{formatter:'sell '+fmtPctY(p.sell_extreme)}}]}},
-      {name:'价格',type:'line',yAxisIndex:1,data:px,lineStyle:{color:'#fbbf24',width:1.2},symbol:'none',connectNulls:true},
+      {name:'价格',type:'line',yAxisIndex:1,data:px,lineStyle:{color:'#fbbf24',width:1.2},itemStyle:{color:'#fbbf24'},symbol:'none',connectNulls:true},
     ]
   });
 
