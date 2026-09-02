@@ -3668,6 +3668,57 @@ def api_live_history(code: str):
             "name": cfg["indices"][code]["name"]}
 
 
+# ============================================================================
+# 均衡策略 + 收割/底仓优化 (260901)
+# ============================================================================
+
+@app.get("/wind-new/260901_update", response_class=HTMLResponse)
+def wind_new_260901_update_page():
+    with open(BASE / "templates" / "wind_260901_update.html") as f:
+        return f.read()
+
+
+@app.get("/api/wind-new/260901")
+def api_wind_new_260901():
+    import json as _json
+    p = WIND_NEW_OUT / "test_260901.json"
+    if not p.exists():
+        return {"error": "请先运行 wind_new_search/test_260901.py"}
+    return _json.load(open(p))
+
+
+@app.get("/api/wind-new/260901/curve/{code}")
+def api_wind_new_260901_curve(code: str, mode: str = "harvest"):
+    """单指数每日曲线. mode: harvest (新策略) | balanced (原策略)."""
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    from wind_new_search.engine_harvest import build_curve_harvest, run_harvest
+    from wind_new_search.engine import build_curve
+    path = WIND_NEW_MERGED_DIR / f"{code}.parquet"
+    if not path.exists():
+        raise HTTPException(404, f"指数 {code} 不存在")
+    df = pd.read_parquet(path)
+    df["date"] = pd.to_datetime(df["date"])
+    harvest_params = {"profit_ratio": 0.60, "profit_frac": 0.20, "floor_ratio": 0.20}
+    if mode == "harvest":
+        curve = build_curve_harvest(df, BALANCED_PARAMS, base_amount=BALANCED_BASE,
+                                    commission_rate=0.0005, min_commission=5.0,
+                                    lot_size=0, principal_threshold=BALANCED_THRESHOLD,
+                                    principal_cap=BALANCED_CAP, principal_pool=BALANCED_POOL,
+                                    buy_mults=BALANCED_MULTS, **harvest_params)
+    else:
+        curve = build_curve(df, BALANCED_PARAMS, base_amount=BALANCED_BASE,
+                            commission_rate=0.0005, min_commission=5.0,
+                            lot_size=0, principal_threshold=BALANCED_THRESHOLD,
+                            principal_cap=BALANCED_CAP, principal_pool=BALANCED_POOL,
+                            buy_mults=BALANCED_MULTS)
+    curve["meta"]["code"] = code
+    curve["meta"]["name"] = WIND_NEW_NAMES.get(code, code)
+    curve["meta"]["mode"] = mode
+    curve["meta"]["harvest_params"] = harvest_params
+    return curve
+
+
 if __name__ == "__main__":
     # 挂载成交记账路由 (方案A: 成交驱动记账, 与可视化同端口8000)
     import sys as _mount_sys

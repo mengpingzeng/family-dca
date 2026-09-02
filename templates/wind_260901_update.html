@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>均衡策略 + 收割/底仓优化 (260901) — Family-DCA</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #334155}
+header a{color:#94a3b8;text-decoration:none;font-size:14px}
+header a:hover{color:#e2e8f0}
+header h1{font-size:20px;font-weight:600}
+.meta{font-size:13px;color:#94a3b8;margin-left:auto}
+.container{max-width:1400px;margin:0 auto;padding:16px 24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 18px;margin-bottom:14px}
+.card h2{font-size:14px;color:#94a3b8;margin-bottom:10px;border-bottom:1px solid #334155;padding-bottom:6px}
+.rules-box{font-size:13px;line-height:1.9;color:#cbd5e1}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:0 2px}
+.tag-buy{background:#166534;color:#4ade80}
+.tag-sell{background:#7f1d1d;color:#f87171}
+.tag-mode{background:#1e40af;color:#93c5fd}
+.tag-cap{background:#854d0e;color:#fbbf24}
+.tag-new{background:#9d174d;color:#f9a8d4}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #334155;white-space:nowrap}
+th{color:#94a3b8;font-weight:600;position:sticky;top:0;background:#1e293b}
+td.l,th.l{text-align:left}
+tr:hover td{background:#263244}
+tr.sel td{background:#1e40af22}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}.dim{color:#64748b}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:#1e293b;border-radius:10px;border:1px solid #334155;height:340px}
+.tabs{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.tabs button{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+.tabs button.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+.tabs select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:13px;cursor:pointer}
+.concl{font-size:13px;line-height:1.9;color:#cbd5e1}
+.concl li{margin-left:18px}
+@media(max-width:1000px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 大盘总览</a>
+  <a href="/wind-new/balanced">← balanced 原版</a>
+  <h1>均衡策略 + 收割/底仓优化 (260901)</h1>
+  <span class="meta" id="meta-info"></span>
+</header>
+<div class="container">
+
+  <div class="card">
+    <h2>新增规则说明</h2>
+    <div class="rules-box" id="rules"></div>
+  </div>
+
+  <div class="card">
+    <h2>策略对比 (harvest vs balanced, 12 测试集指数)</h2>
+    <table id="compare-table"><thead><tr>
+      <th class="l">指数</th><th>harvest年化</th><th>balanced年化</th><th>Δ年化</th>
+      <th>harvest夏普</th><th>balanced夏普</th><th>Δ夏普</th>
+      <th>买/卖/收割</th><th>抽出利润</th><th class="l">优劣</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>harvest 明细 (12 测试集指数)</h2>
+    <div style="max-height:420px;overflow-y:auto"><table id="test-table"><thead><tr>
+      <th class="l">指数</th><th>窗口</th><th>固定年化</th><th>XIRR</th><th>夏普</th><th>满仓持有年化</th>
+      <th>账户终值</th><th>买/卖/收割</th><th>抽出利润</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>回测曲线</h2>
+    <div class="tabs">
+      <button class="active" id="mode-harvest">harvest</button>
+      <button id="mode-balanced">balanced</button>
+      <select id="picker"></select>
+      <span style="font-size:12px;color:#64748b" id="curve-meta"></span>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box" id="chart-pct"></div>
+      <div class="chart-box" id="chart-equity"></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box" id="chart-xirr"></div>
+      <div class="chart-box" id="chart-daily"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>结论与权衡</h2>
+    <div class="concl" id="conclusion"></div>
+  </div>
+
+</div>
+
+<script>
+let data=null, mode='harvest', cur='000300';
+let chartPct=null, chartEq=null, chartXirr=null, chartDaily=null;
+
+const fmtPct=v=>v==null?'—':(v*100).toFixed(2)+'%';
+const fmtPct0=v=>v==null?'—':(v*100).toFixed(0)+'%';
+const fmtX=v=>v==null?'—':(v*100).toFixed(1)+'%';
+const fmtMoney=v=>v==null?'—':'¥'+Number(v).toLocaleString();
+
+function rulesText(){
+  const p=data.harvest_params;
+  return '<b>在均衡策略基础上新增两条规则</b><br/>'+
+    '<span class="tag tag-new">规则1 盈利收割</span> 持仓市值 &gt; 净占用本金×(1+<b>'+fmtPct(p.profit_ratio)+'</b>) 时，'+
+    '卖出超额利润的 <b>'+fmtPct(p.profit_frac)+'</b> 抽出分配其他理财；不受月度限制，触发当月不再估值卖出<br/>'+
+    '<span class="tag tag-new">规则2 底仓保护</span> 任何卖出后持仓市值 ≥ 净占用本金×<b>'+fmtPct(p.floor_ratio)+'</b>，大牛市保留底仓';
+}
+
+function renderCompare(){
+  const tb=document.querySelector('#compare-table tbody');
+  tb.innerHTML='';
+  data.compare.forEach(c=>{
+    const tr=document.createElement('tr');
+    const h=c.harvest, b=c.balanced;
+    const dh=c.delta_annual, ds=c.delta_sharpe;
+    const cls=d=>d>0.0005?'green':(d<-0.0005?'red':'dim');
+    const win=dh>0.0005?'harvest优':(dh<-0.0005?'balanced优':'持平');
+    tr.innerHTML='<td class="l">'+c.name+'</td>'+
+      '<td class="'+(h.principal_annual>0?'green':'dim')+'">'+fmtPct(h.principal_annual)+'</td>'+
+      '<td>'+fmtPct(b.principal_annual)+'</td>'+
+      '<td class="'+cls(dh)+'">'+(dh>=0?'+':'')+(dh*100).toFixed(2)+'pp</td>'+
+      '<td>'+(h.sharpe==null?'—':h.sharpe.toFixed(2))+'</td>'+
+      '<td>'+(b.sharpe==null?'—':b.sharpe.toFixed(2))+'</td>'+
+      '<td class="'+cls(ds)+'">'+(ds>=0?'+':'')+(ds.toFixed(2))+'</td>'+
+      '<td>'+h.buys+'/'+h.sells+'/'+h.harvests+'</td>'+
+      '<td>'+fmtMoney(h.withdrawn)+'</td>'+
+      '<td class="l">'+win+'</td>';
+    tr.onclick=()=>{cur=c.code;document.getElementById('picker').value=c.code;loadCurve();};
+    tb.appendChild(tr);
+  });
+}
+
+function renderTest(){
+  const tb=document.querySelector('#test-table tbody');
+  tb.innerHTML='';
+  data.harvest_results.forEach(h=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td class="l">'+h.name+'</td><td>'+h.window+'yr</td>'+
+      '<td class="green">'+fmtPct(h.principal_annual)+'</td>'+
+      '<td>'+fmtX(h.xirr)+'</td>'+
+      '<td>'+(h.sharpe==null?'—':h.sharpe.toFixed(2))+'</td>'+
+      '<td>'+fmtPct(h.buy_hold_annual)+'</td>'+
+      '<td>'+fmtMoney(h.principal_final)+'</td>'+
+      '<td>'+h.buys+'/'+h.sells+'/'+h.harvests+'</td>'+
+      '<td>'+fmtMoney(h.withdrawn)+'</td>';
+    tb.appendChild(tr);
+  });
+}
+
+function renderConclusion(){
+  const s=data.summary;
+  const el=document.getElementById('conclusion');
+  el.innerHTML='<ul>'+
+    '<li>测试集固定年化中位：harvest <b class="'+(s.harvest_annual_med>=s.balanced_annual_med?'green':'yellow')+'">'+fmtPct(s.harvest_annual_med)+'</b> vs balanced <b>'+fmtPct(s.balanced_annual_med)+'</b></li>'+
+    '<li>夏普中位：harvest <b>'+(s.harvest_sharpe_med||0).toFixed(2)+'</b> vs balanced <b>'+(s.balanced_sharpe_med||0).toFixed(2)+'</b></li>'+
+    '<li>harvest 平均抽出利润 <b class="green">'+fmtMoney(s.harvest_avg_withdrawn)+'</b>（分配到其他理财），'+
+    '跑赢年化 <b>'+s.beats_annual+'/'+s.n_test+'</b>，跑赢夏普 <b>'+s.beats_sharpe+'/'+s.n_test+'</b></li>'+
+    '<li><b>权衡</b>：收割策略把利润抽出分配其他理财，换取稳定现金流；代价是池内复利基数被锁在30万本金池，'+
+    '对横盘震荡市（深证100/上证50/恒生）固定年化下降，对单边牛市（创业板/恒生科技/标普）改善或持平。</li>'+
+    '</ul>';
+}
+
+async function loadCurve(){
+  const res=await fetch('/api/wind-new/260901/curve/'+cur+'?mode='+mode);
+  const c=await res.json();
+  const d=c.daily, m=c.meta, dates=d.map(x=>x.date);
+  document.getElementById('curve-meta').textContent=m.name+' · '+mode+' · 固定年化'+fmtPct(m.principal_annual)+' · XIRR'+fmtX(m.xirr);
+  if(!chartPct) chartPct=echarts.init(document.getElementById('chart-pct'));
+  chartPct.setOption({
+    title:{text:m.name+' 估值百分位 (PE/PB/FED)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis',axisPointer:{type:'cross'}},
+    legend:{data:['PE%','PB%','FED%','收盘价'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:55,right:60,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:[{type:'value',min:0,max:1,axisLabel:{color:'#94a3b8',formatter:v=>(v*100).toFixed(0)+'%'},splitLine:{lineStyle:{color:'#334155'}}},
+           {type:'value',scale:true,axisLabel:{color:'#94a3b8'},splitLine:{show:false}}],
+    dataZoom:[{type:'slider',start:20,end:100,height:16,bottom:0}],
+    series:[
+      {name:'PE%',type:'line',data:d.map(x=>x.pe_pct),lineStyle:{color:'#60a5fa',width:1.4},symbol:'none',connectNulls:true},
+      {name:'PB%',type:'line',data:d.map(x=>x.pb_pct),lineStyle:{color:'#a78bfa',width:1.4},symbol:'none',connectNulls:true},
+      {name:'FED%',type:'line',data:d.map(x=>x.fed_pct),lineStyle:{color:'#34d399',width:1.4},symbol:'none',connectNulls:true},
+      {name:'收盘价',type:'line',yAxisIndex:1,data:d.map(x=>x.price),lineStyle:{color:'#fbbf24',width:1.2},symbol:'none',connectNulls:true},
+    ]
+  });
+
+  let cum=[],eq=[],tot=[],withd=[],buyMk=[],sellMk=[],harMk=[];
+  d.forEach(v=>{cum.push(v.cum_invested);eq.push(v.equity);tot.push(v.total_value);
+    withd.push(v.withdrawn);
+    buyMk.push(v.buy_amount>0?v.equity:null);sellMk.push(v.sell_amount>0?v.equity:null);
+    harMk.push(v.harvest_amount>0?v.equity:null)});
+  if(!chartEq) chartEq=echarts.init(document.getElementById('chart-equity'));
+  chartEq.setOption({
+    title:{text:m.name+' 资金曲线: 总投入/市值/池内总资产/累计抽出 (元)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['总投入','市值','池内总资产','累计抽出','买入','卖出','收割'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:70,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:v=>(v/10000).toFixed(0)+'万'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:20,end:100,height:16,bottom:0}],
+    series:[
+      {name:'总投入',type:'line',data:cum,lineStyle:{color:'#fb923c',width:2,type:'dashed'},itemStyle:{color:'#fb923c'},symbol:'none'},
+      {name:'市值',type:'line',data:eq,lineStyle:{color:'#c084fc',width:2},itemStyle:{color:'#c084fc'},symbol:'none'},
+      {name:'池内总资产',type:'line',data:tot,lineStyle:{color:'#60a5fa',width:1.5},itemStyle:{color:'#60a5fa'},areaStyle:{color:'rgba(96,165,250,0.1)'},symbol:'none'},
+      {name:'累计抽出',type:'line',data:withd,lineStyle:{color:'#f472b6',width:1.5,type:'dotted'},itemStyle:{color:'#f472b6'},symbol:'none'},
+      {name:'买入',type:'scatter',data:buyMk,symbolSize:7,itemStyle:{color:'#4ade80'},z:10},
+      {name:'卖出',type:'scatter',data:sellMk,symbolSize:7,itemStyle:{color:'#f87171'},z:10},
+      {name:'收割',type:'scatter',data:harMk,symbolSize:8,symbol:'diamond',itemStyle:{color:'#fbbf24'},z:10},
+    ]
+  });
+
+  if(!chartXirr) chartXirr=echarts.init(document.getElementById('chart-xirr'));
+  chartXirr.setOption({
+    title:{text:m.name+' 收益率 (简单回报% / 年化XIRR%)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['简单回报%','年化XIRR%'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:60,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:20,end:100,height:16,bottom:0}],
+    series:[
+      {name:'简单回报%',type:'line',data:d.map(x=>x.return_pct),lineStyle:{color:'#facc15',width:1.5},symbol:'none',connectNulls:true},
+      {name:'年化XIRR%',type:'line',data:d.map(x=>x.xirr!=null?(x.xirr*100).toFixed(2):null),lineStyle:{color:'#f97316',width:1.5},symbol:'none',connectNulls:true,
+        markLine:{silent:true,symbol:'none',data:[{yAxis:0,lineStyle:{color:'#94a3b8',type:'dashed'}}]}},
+    ]
+  });
+
+  if(!chartDaily) chartDaily=echarts.init(document.getElementById('chart-daily'));
+  chartDaily.setOption({
+    title:{text:m.name+' 日收益曲线 (固定口径日环比%)',left:'center',textStyle:{color:'#e2e8f0',fontSize:13}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['日收益%'],textStyle:{color:'#94a3b8'},top:25},
+    grid:{left:60,right:15,top:60,bottom:40},
+    xAxis:{type:'category',data:dates,axisLabel:{color:'#94a3b8',formatter:v=>v.slice(0,7),interval:Math.floor(dates.length/10)}},
+    yAxis:{type:'value',axisLabel:{color:'#94a3b8',formatter:'{value}%'},splitLine:{lineStyle:{color:'#334155'}}},
+    dataZoom:[{type:'slider',start:20,end:100,height:16,bottom:0}],
+    series:[
+      {name:'日收益%',type:'line',data:d.map(x=>x.daily_return),lineStyle:{color:'#22d3ee',width:1.2},itemStyle:{color:'#22d3ee'},symbol:'none',connectNulls:true,
+        areaStyle:{color:'rgba(34,211,238,0.08)'},
+        markLine:{silent:true,symbol:'none',data:[{yAxis:0,lineStyle:{color:'#94a3b8',type:'dashed'}}]}},
+    ]
+  });
+}
+
+function renderPicker(){
+  const sel=document.getElementById('picker');
+  sel.innerHTML='';
+  data.compare.forEach(c=>{
+    const o=document.createElement('option');o.value=c.code;o.textContent=c.name;
+    sel.appendChild(o);
+  });
+  sel.value=cur;
+}
+
+async function load(){
+  const res=await fetch('/api/wind-new/260901');
+  data=await res.json();
+  document.getElementById('meta-info').textContent='数据源: Wind 12指数 + ETF 口径';
+  document.getElementById('rules').innerHTML=rulesText();
+  renderCompare();
+  renderTest();
+  renderConclusion();
+  renderPicker();
+  document.getElementById('mode-harvest').onclick=()=>setMode('harvest');
+  document.getElementById('mode-balanced').onclick=()=>setMode('balanced');
+  document.getElementById('picker').onchange=e=>{cur=e.target.value;loadCurve();};
+  loadCurve();
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('mode-harvest').classList.toggle('active',m==='harvest');
+  document.getElementById('mode-balanced').classList.toggle('active',m==='balanced');
+  loadCurve();
+}
+load();
+</script>
+</body>
+</html>

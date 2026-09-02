@@ -1,0 +1,362 @@
+{
+  "params": {
+    "ratios": [
+      0.3,
+      0.4,
+      0.5,
+      0.6
+    ],
+    "fracs": [
+      0.15,
+      0.2,
+      0.3
+    ],
+    "floors": [
+      0.15,
+      0.2,
+      0.3
+    ]
+  },
+  "baseline": {
+    "000300": 0.0583,
+    "000905": 0.0545,
+    "000015": 0.0202,
+    "000016": 0.0738,
+    "000852": 0.0663,
+    "399006": 0.1069,
+    "399330": 0.0738,
+    "HSI": 0.0402,
+    "NDX100": 0.0,
+    "SPX500": 0.0088,
+    "930931": 0.0751,
+    "930930": 0.0682,
+    "000688": 0.0188,
+    "HSTECH": 0.0768
+  },
+  "rows": [
+    {
+      "profit_ratio": 0.6,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.2,
+      "train_med": 0.0524,
+      "test_med": 0.0605,
+      "test_eff_mean": 0.0534,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.6,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.3,
+      "train_med": 0.0524,
+      "test_med": 0.0605,
+      "test_eff_mean": 0.0531,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.6,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.15,
+      "train_med": 0.0524,
+      "test_med": 0.0588,
+      "test_eff_mean": 0.053,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.6,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.2,
+      "train_med": 0.0521,
+      "test_med": 0.0583,
+      "test_eff_mean": 0.0527,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.5,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.2,
+      "train_med": 0.0533,
+      "test_med": 0.0577,
+      "test_eff_mean": 0.0545,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.5,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.3,
+      "train_med": 0.0533,
+      "test_med": 0.0577,
+      "test_eff_mean": 0.0536,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.4,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.15,
+      "train_med": 0.0534,
+      "test_med": 0.054,
+      "test_eff_mean": 0.053,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.4,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.2,
+      "train_med": 0.0534,
+      "test_med": 0.054,
+      "test_eff_mean": 0.0536,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.4,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.3,
+      "train_med": 0.0534,
+      "test_med": 0.054,
+      "test_eff_mean": 0.054,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.6,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.15,
+      "train_med": 0.0521,
+      "test_med": 0.054,
+      "test_eff_mean": 0.0522,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.5,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.15,
+      "train_med": 0.0533,
+      "test_med": 0.053,
+      "test_eff_mean": 0.0536,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.3,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.3,
+      "train_med": 0.0704,
+      "test_med": 0.0511,
+      "test_eff_mean": 0.0564,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.4,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.3,
+      "train_med": 0.0545,
+      "test_med": 0.051,
+      "test_eff_mean": 0.0592,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.6,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.3,
+      "train_med": 0.0521,
+      "test_med": 0.051,
+      "test_eff_mean": 0.0523,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.3,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.15,
+      "train_med": 0.0531,
+      "test_med": 0.0491,
+      "test_eff_mean": 0.0544,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.5,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.3,
+      "train_med": 0.0543,
+      "test_med": 0.0485,
+      "test_eff_mean": 0.0552,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.4,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.3,
+      "train_med": 0.0537,
+      "test_med": 0.0483,
+      "test_eff_mean": 0.0552,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.4,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.15,
+      "train_med": 0.0545,
+      "test_med": 0.048,
+      "test_eff_mean": 0.0568,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.3,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.2,
+      "train_med": 0.0663,
+      "test_med": 0.0474,
+      "test_eff_mean": 0.0546,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.4,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.2,
+      "train_med": 0.0537,
+      "test_med": 0.0464,
+      "test_eff_mean": 0.0545,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.3,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.15,
+      "train_med": 0.0642,
+      "test_med": 0.046,
+      "test_eff_mean": 0.0533,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.4,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.2,
+      "train_med": 0.0545,
+      "test_med": 0.046,
+      "test_eff_mean": 0.0573,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.3,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.2,
+      "train_med": 0.0531,
+      "test_med": 0.0459,
+      "test_eff_mean": 0.0539,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.3,
+      "profit_frac": 0.15,
+      "floor_ratio": 0.3,
+      "train_med": 0.0531,
+      "test_med": 0.0459,
+      "test_eff_mean": 0.0539,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.5,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.2,
+      "train_med": 0.0536,
+      "test_med": 0.0456,
+      "test_eff_mean": 0.0515,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.5,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.2,
+      "train_med": 0.0543,
+      "test_med": 0.0452,
+      "test_eff_mean": 0.0552,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.4,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.15,
+      "train_med": 0.0537,
+      "test_med": 0.045,
+      "test_eff_mean": 0.0546,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.5,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.15,
+      "train_med": 0.0543,
+      "test_med": 0.0437,
+      "test_eff_mean": 0.0546,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.3,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.2,
+      "train_med": 0.054,
+      "test_med": 0.0436,
+      "test_eff_mean": 0.0505,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.3,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.15,
+      "train_med": 0.054,
+      "test_med": 0.0425,
+      "test_eff_mean": 0.0503,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.6,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.2,
+      "train_med": 0.0532,
+      "test_med": 0.0423,
+      "test_eff_mean": 0.0544,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.5,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.3,
+      "train_med": 0.0536,
+      "test_med": 0.0421,
+      "test_eff_mean": 0.0515,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.3,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.3,
+      "train_med": 0.054,
+      "test_med": 0.0416,
+      "test_eff_mean": 0.0509,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.5,
+      "profit_frac": 0.2,
+      "floor_ratio": 0.15,
+      "train_med": 0.0536,
+      "test_med": 0.0413,
+      "test_eff_mean": 0.0515,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.6,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.15,
+      "train_med": 0.0532,
+      "test_med": 0.0413,
+      "test_eff_mean": 0.0541,
+      "beats_base": 0
+    },
+    {
+      "profit_ratio": 0.6,
+      "profit_frac": 0.3,
+      "floor_ratio": 0.3,
+      "train_med": 0.0532,
+      "test_med": 0.0411,
+      "test_eff_mean": 0.0544,
+      "beats_base": 0
+    }
+  ]
+}
