@@ -3699,7 +3699,7 @@ def api_wind_new_260901_curve(code: str, mode: str = "harvest"):
         raise HTTPException(404, f"指数 {code} 不存在")
     df = pd.read_parquet(path)
     df["date"] = pd.to_datetime(df["date"])
-    harvest_params = {"profit_ratio": 0.60, "profit_frac": 0.20, "floor_ratio": 0.20}
+    harvest_params = {"profit_ratio": 0.30, "profit_frac": 0.30, "floor_ratio": 0.30}
     if mode == "harvest":
         curve = build_curve_harvest(df, BALANCED_PARAMS, base_amount=BALANCED_BASE,
                                     commission_rate=0.0005, min_commission=5.0,

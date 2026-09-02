@@ -37,7 +37,8 @@ PARAMS = {
 MULTS = (8, 4, 2, 0)
 BASE = 1000
 THRESHOLD, CAP, POOL = 200_000, 300_000, 300_000
-HARVEST_PARAMS = {"profit_ratio": 0.60, "profit_frac": 0.20, "floor_ratio": 0.20}
+# 参数由训练集(沪深300/中证500)上细网格扫描选出: 按两指数平均年化最优+min稳健
+HARVEST_PARAMS = {"profit_ratio": 0.30, "profit_frac": 0.30, "floor_ratio": 0.30}
 
 TRAIN_CODES = ["000300", "000905"]
 TEST_CODES = ["000015", "000016", "000852", "399006", "399330",
